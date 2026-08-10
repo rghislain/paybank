@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Page de Vente & Admin Stripe</title>
+    <!-- TailwindCSS v4 -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Stripe.js v3 -->
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body class="bg-gray-100 p-8">
+
+    <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+        
+        <!-- SECTION 1 : GESTION CLIENTS & PRODUITS -->
+        <div class="space-y-6">
+            
+            <!-- CRUD Client -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-bold mb-4">👤 Gestion des Clients</h2>
+                
+                <label class="block text-xs font-bold uppercase text-gray-500 mb-1">ID Client (requis pour Modifier / Supprimer / Payer)</label>
+                <input id="clientId" type="text" placeholder="UUID du client (généré après création ou BDD)" class="border p-2 Gaz w-full mb-2 rounded font-mono text-sm bg-gray-50">
+                
+                <input id="clientNom" type="text" placeholder="Nom complet" class="border p-2 w-full mb-2 rounded">
+                <input id="clientEmail" type="email" placeholder="Adresse Email" class="border p-2 w-full mb-4 rounded">
+                
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="creerClient()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold cursor-pointer text-center">Créer</button>
+                    <button onclick="modifierClient()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded font-semibold cursor-pointer text-center">Modifier</button>
+                    <button onclick="supprimerClient()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-semibold cursor-pointer text-center">Supprimer</button>
+                </div>
+            </div>
+
+            <!-- CRUD Produit & Tarif -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-bold mb-4">📦 Catalogue Produits & Tarifs</h2>
+                
+                <label class="block text-xs font-bold uppercase text-gray-500 mb-1">ID Produit (requis pour Modifier / Supprimer)</label>
+                <input id="prodId" type="text" placeholder="UUID du produit (pour Modifier/Supprimer)" class="border p-2 w-full mb-2 rounded font-mono text-sm bg-gray-50">
+                
+                <input id="prodNom" type="text" placeholder="Nom du produit" class="border p-2 w-full mb-2 rounded">
+                <input id="prodPrix" type="number" step="0.01" placeholder="Prix en EUR (Ex: 19.99)" class="border p-2 w-full mb-4 rounded">
+                
+                <div class="flex flex-col gap-2">
+                    <button onclick="creerProduitEtTarif()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-bold cursor-pointer text-center">Créer Produit + Tarif</button>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="modifierProduit()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded font-semibold cursor-pointer text-center">Modifier</button>
+                        <button onclick="supprimerProduit()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-semibold cursor-pointer text-center">Supprimer</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 2 : PAIEMENT & SOLDE STRIPE -->
+        <div class="space-y-6">
+            
+            <!-- Solde en temps réel -->
+            <div class="bg-gradient-to-r from-purple-700 to-indigo-800 text-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-semibold opacity-90">💰 Mon Solde Stripe (Test)</h2>
+                <p id="soldeAffichage" class="text-3xl font-bold mt-2">--,-- €</p>
+                <button onclick="chargerSolde()" class="mt-4 text-sm underline opacity-80 hover:opacity-100 cursor-pointer">Rafraîchir</button>
+            </div>
+
+            <!-- Gestion/Formulaire d'Achat (Stripe Elements) -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-bold mb-4">💳 Passer une commande</h2>
+                
+                <div class="mb-4">
+                    <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Montant de la commande (en EUR)</label>
+                    <input id="paiementMontant" type="number" step="0.01" placeholder="Ex: 45.00" class="border p-2 w-full rounded">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <button onclick="initialiserFormulairePaiement()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded text-sm font-semibold cursor-pointer text-center">1. Charger le formulaire</button>
+                    <button onclick="modifierMontantPaiementEnCours()" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-2 rounded text-sm font-semibold cursor-pointer text-center">Modifier Montant</button>
+                </div>
+
+                <!-- Conteneur dynamique où Stripe injectera la CB sécurisée -->
+                <div id="link-authentication-element" class="mb-2"></div>
+                <div id="payment-element" class="mb-4"></div>
+                
+                <div class="flex gap-2">
+                    <button id="submit-paiement" disabled class="bg-gray-400 text-white px-4 py-2 rounded w-full font-bold cursor-not-allowed opacity-50">2. Payer maintenant</button>
+                    <button onclick="annulerPaiementEnCours()" class="bg-red-100 text-red-700 hover:bg-red-200 px-4 py-2 rounded font-semibold text-sm cursor-pointer">Annuler l'achat</button>
+                </div>
+                
+                <div id="error-message" class="text-red-600 text-sm mt-2 font-semibold"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // REMPLACER CETTE CLÉ PAR LA PROPRE CLÉ PUBLIQUE STRIPE TEST (pk_test_...)
+        const stripe = Stripe('pk_test_51TBX0dEWZ4iSroOBQM6eY1ctOZLa3ZtatCktZ9KiCArPkIvWwB4hdDBAO8WMJrCDqKEdL3NLAeMP2oQBmMaTjqXy00gSotvi8w');
+        
+        let elements;
+        let currentPaymentIntentId = null;
+
+        // ==========================================
+        //  FONCTIONS : SOLDE STRIPE
+        // ==========================================
+        async function chargerSolde() {
+            try {
+                const response = await fetch('/api/paiements/solde');
+                const data = await response.json();
+                document.getElementById('soldeAffichage').innerText = `${(data.disponible / 100).toFixed(2)} ${data.devise.toUpperCase()}`;
+            } catch (err) {
+                console.error("Erreur solde:", err);
+            }
+        }
+
+        // ==========================================
+        //  FONCTIONS : CLIENTS (CRUD)
+        // ==========================================
+        async function creerClient() {
+            const nom = document.getElementById('clientNom').value;
+            const email = document.getElementById('clientEmail').value;
+            
+            const response = await fetch('/api/clients', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nom, email })
+            });
+            const client = await response.json();
+            document.getElementById('clientId').value = client.id;
+            alert(`Client créé avec succès !\nID sauvegardé dans le champ : ${client.id}`);
+        }
+
+        async function modifierClient() {
+            const id = document.getElementById('clientId').value;
+            const nom = document.getElementById('clientNom').value;
+            const email = document.getElementById('clientEmail').value;
+            
+            if(!id) return alert("Veuillez renseigner l'ID du client à modifier.");
+
+            await fetch(`/api/clients/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nom, email })
+            });
+            alert('Client modifié avec succès (Stripe + local) !');
+        }
+
+        async function supprimerClient() {
+            const id = document.getElementById('clientId').value;
+            if(!id) return alert("Veuillez renseigner l'ID du client à supprimer.");
+
+            if(confirm("Supprimer définitivement ce client ?")) {
+                await fetch(`/api/clients/${id}`, { method: 'DELETE' });
+                document.getElementById('clientId').value = "";
+                document.getElementById('clientNom').value = "";
+                document.getElementById('clientEmail').value = "";
+                alert('Client supprimé avec succès !');
+            }
+        }
+
+        // ==========================================
+        //  FONCTIONS : PRODUITS & TARIFS (CRUD)
+        // ==========================================
+        async function creerProduitEtTarif() {
+            const nom = document.getElementById('prodNom').value;
+            const prixEuro = document.getElementById('prodPrix').value;
+            const prixCentimes = Math.round(parseFloat(prixEuro) * 100);
+
+            const response = await fetch('/api/produits', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nom, prixCentimes })
+            });
+            const produit = await response.json();
+            document.getElementById('prodId').value = produit.id;
+            alert(`Produit et tarif générés chez Stripe !\nID Produit local : ${produit.id}`);
+        }
+
+        async function modifierProduit() {
+            const id = document.getElementById('prodId').value;
+            const nom = document.getElementById('prodNom').value;
+            const prixEuro = document.getElementById('prodPrix').value;
+            const prixCentimes = Math.round(parseFloat(prixEuro) * 100);
+
+            if(!id) return alert("ID du produit requis.");
+
+            await fetch(`/api/produits/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nom, prixCentimes })
+            });
+            alert('Produit/Tarif mis à jour !');
+        }
+
+        async function supprimerProduit() {
+            const id = document.getElementById('prodId').value;
+            if(!id) return alert("ID du produit requis.");
+
+            await fetch(`/api/produits/${id}`, { method: 'DELETE' });
+            document.getElementById('prodId').value = "";
+            alert('Produit archivé avec succès.');
+        }
+
+        // ==========================================
+        //  FONCTIONS : STRIPE PAIEMENTS & ELEMENTS
+        // ==========================================
+        async function initialiserFormulairePaiement() {
+            const clientId = document.getElementById('clientId').value;
+            const montantEuro = document.getElementById('paiementMontant').value;
+
+            if(!clientId || !montantEuro) {
+                return alert("Veuillez indiquer un ID Client valide et un montant pour lancer la commande.");
+            }
+
+            const montantCentimes = Math.round(parseFloat(montantEuro) * 100);
+
+            // 1. Demande d'un PaymentIntent au backend Java
+            const response = await fetch('/api/paiements/intent', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ clientId, montantCentimes })
+            });
+            
+            const data = await response.json();
+            const clientSecret = data.clientSecret;
+            currentPaymentIntentId = data.paymentIntentId;
+
+            // 2. Montage du composant graphique sécurisé Stripe Elements
+            elements = stripe.elements({ clientSecret });
+
+            const paymentElementOptions = { layout: "tabs" };
+            const paymentElement = elements.create("payment", paymentElementOptions);
+            paymentElement.mount("#payment-element");
+
+            // Activer le bouton de validation
+            const btnPayer = document.getElementById('submit-paiement');
+            btnPayer.disabled = false;
+            btnPayer.className = "bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded w-full font-bold cursor-pointer opacity-100 text-center";
+            
+            // Écouteur pour déclencher le paiement final
+            btnPayer.onclick = executerPaiementFinal;
+        }
+
+        async function modifierMontantPaiementEnCours() {
+            if(!currentPaymentIntentId) return alert("Aucun paiement n'est en cours d'édition.");
+            const montantEuro = document.getElementById('paiementMontant').value;
+            const nouveauMontantCentimes = Math.round(parseFloat(montantEuro) * 100);
+
+            await fetch(`/api/paiements/intent/${currentPaymentIntentId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nouveauMontantCentimes })
+            });
+            alert("Montant de la transaction modifié avec succès chez Stripe !");
+        }
+
+        async function annulerPaiementEnCours() {
+            if(!currentPaymentIntentId) return alert("Aucune transaction active à annuler.");
+            
+            await fetch(`/api/paiements/intent/${currentPaymentIntentId}`, { method: 'DELETE' });
+            
+            document.getElementById('payment-element').innerHTML = "";
+            const btnPayer = document.getElementById('submit-paiement');
+            btnPayer.disabled = true;
+            btnPayer.className = "bg-gray-400 text-white px-4 py-2 rounded w-full font-bold cursor-not-allowed opacity-50";
+            currentPaymentIntentId = null;
+            
+            alert("Paiement annulé.");
+        }
+
+        async function executerPaiementFinal(e) {
+            e.preventDefault();
+            const messageContainer = document.getElementById('error-message');
+            messageContainer.innerText = "";
+
+            // Demande la confirmation finale à l'infrastructure Stripe
+            const { error } = await stripe.confirmPayment({
+                elements,
+                confirmParams: {
+                    // Page de redirection après succès (ici on revient sur notre index)
+                    return_url: window.location.origin + "/index.html",
+                },
+            });
+
+            if (error) {
+                messageContainer.innerText = error.message;
+            }
+        }
+
+        // Chargement initial du solde
+        chargerSolde();
+    </script>
+</body>
+</html>

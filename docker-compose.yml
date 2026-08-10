@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  java-backend-api:
+    build: ./java-backend
+    container_name: java-backend-api
+    ports:
+      - "8080:8080"
+    environment:
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      # Mots de passe initiaux pour le premier lancement (création unique)
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:adminPass01}
+      - MANAGER1_PASSWORD=${MANAGER1_PASSWORD:managerPass01}
+      - EMPLOYE1_PASSWORD=${EMPLOYE1_PASSWORD:employePass01}
+    external_links:
+      - supabase_db_projet-paiement-hexagonal:database-supabase-pg
+    networks:
+      - supabase_network
+
+  web-front-php:
+    build: ./php-frontend
+    container_name: web-front-php
+    ports:
+      - "80:80"
+    environment:
+      - STRIPE_PUBLIC_KEY=${STRIPE_PUBLIC_KEY}
+    networks:
+      - supabase_network
+
+  stripe-cli:
+    image: stripe/stripe-cli
+    container_name: stripe-cli
+    # Le conteneur écoute Stripe et renvoie le webhook au backend Java
+    command: "listen --forward-to java-backend-api:8080/api/webhooks/stripe --api-key ${STRIPE_SECRET_KEY}"
+    networks:
+      - supabase_network
+    depends_on:
+      - java-backend-api
+
+networks:
+  # On se connecte au réseau existant créé par la Supabase CLI
+  supabase_network:
+    external: true
+    name: supabase_network_java-backend-api
