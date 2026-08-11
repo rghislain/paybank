@@ -170,9 +170,11 @@ public class SecuriteAspectTest {
 		hacker.setName("<script>window.location='http://attaque.com'</script>");
 		hacker.setEmail("hacker@paybank.com");
 		hacker.setRole(Role.EMPLOYE);
+		
+		Utilisateur operateurTest = new Utilisateur("op", "test@paybank.com", "pass", Role.ADMIN, true); // ou Role.EMPLOYE selon le test
 
 		assertThrows(IllegalArgumentException.class, () -> {
-			serviceMultiUtilisateurs.createUser(hacker);
+			serviceMultiUtilisateurs.createUser(operateurTest, hacker);
 		});
 	}
 
@@ -188,8 +190,9 @@ public class SecuriteAspectTest {
 		hacker.setEmail("test@bank.fr'; UNION SELECT null, null --");
 		hacker.setRole(Role.EMPLOYE);
 
+		Utilisateur operateurTest = new Utilisateur("op", "test@paybank.com", "pass", Role.ADMIN, true); // ou Role.EMPLOYE selon le test
 		assertThrows(IllegalArgumentException.class, () -> {
-			serviceMultiUtilisateurs.createUser(hacker);
+			serviceMultiUtilisateurs.createUser(operateurTest, hacker);
 		});
 	}
 
@@ -204,9 +207,11 @@ public class SecuriteAspectTest {
 		utilisateurSain.setName("Alice Martin");
 		utilisateurSain.setEmail("alice.martin@paybank.com");
 		utilisateurSain.setRole(Role.EMPLOYE);
+		
+		Utilisateur operateurTest = new Utilisateur("op", "test@paybank.com", "pass", Role.ADMIN, true); // ou Role.EMPLOYE selon le test
 
 		assertDoesNotThrow(() -> {
-			serviceMultiUtilisateurs.createUser(utilisateurSain);
+			serviceMultiUtilisateurs.createUser(operateurTest, utilisateurSain);
 		});
 	}
 

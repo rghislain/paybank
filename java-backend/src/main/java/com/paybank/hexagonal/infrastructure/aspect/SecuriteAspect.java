@@ -48,8 +48,8 @@ public class SecuriteAspect {
         System.out.println(">>> L'aspect SecuriteAspect a été chargé par Spring !");
     }
     
-    @Before("execution(* com.paybank.hexagonal.domaine.ServiceMultiUtilisateursPaiement.createUser(..)) && args(utilisateur)")
-    public void verifierInjection(Utilisateur utilisateur) {
+    @Before("execution(* com.paybank.hexagonal.domaine.ServiceMultiUtilisateursPaiement.createUser(..)) && args(operator, utilisateur)")
+    public void verifierInjection(Utilisateur operator, Utilisateur utilisateur) {
         if (utilisateur.getNom().contains("<script>") || utilisateur.getEmail().contains("';")) {
             throw new IllegalArgumentException("Données suspectes détectées !");
         }

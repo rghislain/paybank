@@ -104,4 +104,12 @@ public class SupabaseUtilisateursAdaptateur implements UtilisateurSPI {
 		 return utilisateurRepository.findByEmail(email)
 	                .map(UtilisateurEntity::toDomain);
 	}
+
+	@Override
+	public Optional<Utilisateur> findByNom(String nom) {
+		UtilisateurEntity entity = (UtilisateurEntity) utilisateurRepository.findByNom(nom);
+	    return Optional.ofNullable(entity).map(UtilisateurEntity::toDomain);
+	    //return utilisateurRepository.findByNom(nom)
+	            //.map(entity -> entity.toDomain());
+	}
 }

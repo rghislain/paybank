@@ -85,12 +85,12 @@ public class ServiceMultiUtilisateursPaiement {
     
     @Securise
     @MasquerDonneesSensibles
-    public Utilisateur createUser(Utilisateur utilisateur) {
+    public Utilisateur createUser(Utilisateur operator, Utilisateur utilisateur) {
     	System.out.println(">>> Entrée dans createUser pour : " + utilisateur.getNom());
         
         // Ajoutez un log pour l'opérateur
-        Utilisateur operator = getOperateurConnecte();
-        System.out.println(">>> Opérateur identifié : " + operator.getEmail());
+        //Utilisateur operator = getOperateurConnecte();
+        //System.out.println(">>> Opérateur identifié : " + operator.getEmail());
 
         validatePermission(operator, Permission.USER_CREATE);
     	
@@ -166,11 +166,39 @@ public class ServiceMultiUtilisateursPaiement {
             throw new SecurityException("Utilisateur non authentifié");
         }
 
-        String email = authentication.getName();
+        //String email = authentication.getName();
 
+        /*
         return utilisateurSPI.findByEmail(email)
                 .orElseThrow(() ->
                         new SecurityException("Opérateur non authentifié ou compte inactif"));
+    	*/
+        /*
+        return utilisateurSPI.findByEmail(email)
+                .or(() -> utilisateurSPI.findByNom(email)) // (Assurez-vous d'avoir une méthode findByNom dans votre SPI/Repository si besoin)
+                .orElseThrow(() -> new SecurityException("Opérateur non authentifié ou compte inactif"));
+    	*/
+        //String principal = authentication.getName(); // Contient le nom ou l'email
+
+        // 1. On essaie de le trouver par email (si c'est bien un email)
+        /*
+        return utilisateurSPI.findByEmail(principal)
+                .orElseGet(() -> {
+                    // 2. Si ce n'est pas un email (ex: c'est le nom), on récupère tous les utilisateurs 
+                    // et on trouve celui dont le nom correspond
+                    return utilisateurSPI.findAll().stream()
+                            .filter(u -> u.getNom().equals(principal) || u.getEmail().equals(principal))
+                            .findFirst()
+                            .orElseThrow(() -> new SecurityException("Opérateur non authentifié ou compte inactif"));
+                });
+                */
+        String identifiant = authentication.getName(); // Contient le nom ou l'email
+
+        // 1. On cherche par email
+        return utilisateurSPI.findByEmail(identifiant)
+                // 2. Si non trouvé, on cherche par nom
+                .or(() -> utilisateurSPI.findByNom(identifiant))
+                .orElseThrow(() -> new SecurityException("Opérateur non authentifié ou compte inactif"));
     }
     
     /*

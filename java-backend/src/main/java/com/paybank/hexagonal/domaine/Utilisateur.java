@@ -53,5 +53,9 @@ public class Utilisateur {
 	public void setActif(boolean b) {
 		this.active=b;
 	}
+	
+	public void setPassword(String password) {
+        this.password=password;
+    }
 
 }

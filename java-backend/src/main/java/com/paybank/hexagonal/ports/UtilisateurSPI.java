@@ -8,4 +8,5 @@ public interface UtilisateurSPI {
     Optional<Utilisateur> findById(String id);
     void delete(String id);
     Optional<Utilisateur> findByEmail(String email);
+    Optional<Utilisateur> findByNom(String nom);
 }

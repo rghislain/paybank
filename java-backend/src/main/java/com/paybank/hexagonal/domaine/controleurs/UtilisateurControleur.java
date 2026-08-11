@@ -4,7 +4,8 @@ import com.paybank.hexagonal.domaine.ServiceMultiUtilisateursPaiement;
 import com.paybank.hexagonal.domaine.Utilisateur;
 import com.paybank.hexagonal.domaine.Role;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal; 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -61,14 +62,25 @@ public class UtilisateurControleur {
             @RequestBody CreateUserRequest req, 
             @RequestHeader(value = "X-Auth-Role", required = false) String roleHeader) {
         
+    	BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         try {
             String roleString = (roleHeader != null) ? roleHeader.toUpperCase() : "EMPLOYE";
             Role roleEnumOperateur = Role.valueOf(roleString);
             
             // CORRECTION : Utilisez roleEnumOperateur ici au lieu de Role.EMPLOYE
-            Utilisateur operator = new Utilisateur("ghislainr", "admin@paybank.com", "password", roleEnumOperateur, true);
+            Utilisateur operator = new Utilisateur("ghislainr", "ghislainrochette@paybank.com", "employePass1", roleEnumOperateur, true);
 
-            Utilisateur newUser = serviceMultiUtilisateursPaiement.createUser(operator);
+         // 1. Récupérer ou générer le mot de passe
+            String motDePasseClair = (req.getPassword() != null && !req.getPassword().isEmpty()) 
+                ? req.getPassword() 
+                : "employePass1"; 
+
+            // 2. Le HACHER avec BCrypt
+            String motDePasseHashe = passwordEncoder.encode(motDePasseClair);
+            // Le nouvel utilisateur à créer (récupéré depuis le JSON de la requête)
+            Utilisateur nouvelUtilisateur = new Utilisateur(req.getName(), req.getEmail(), motDePasseHashe, req.getRole(), true);
+            
+            Utilisateur newUser = serviceMultiUtilisateursPaiement.createUser(operator, nouvelUtilisateur);
             return ResponseEntity.ok(newUser);
                 
         } catch (SecurityException e) {
@@ -91,7 +103,7 @@ public class UtilisateurControleur {
             Role roleEnumOperateur = Role.valueOf(roleString);
 
             // On instancie l'opérateur à la volée avec son VRAI rôle sélectionné sur l'interface
-            Utilisateur operator = new Utilisateur("rg", "operateur@paybank.com", "password", roleEnumOperateur, true);
+            Utilisateur operator = new Utilisateur("rg", "employe@paybank.com", "employePass1", roleEnumOperateur, true);
 
             // Appel de votre service qui effectue les vérifications et sauvegarde en BDD via son SPI
             Role targetRole = Role.valueOf(nouveauRole.toUpperCase());
@@ -110,8 +122,9 @@ public class UtilisateurControleur {
 
     // Classe interne DTO nécessaire pour réceptionner le JSON de la requête HTTP
     public static class CreateUserRequest {
-        private String email;
-        private String name;
+    	private String name;
+    	private String email;
+    	private String password;
         private Role role;
 
         public String getEmail() { return email; }
@@ -120,5 +133,7 @@ public class UtilisateurControleur {
         public void setName(String name) { this.name = name; }
         public Role getRole() { return role; }
         public void setRole(Role role) { this.role = role; }
+        public String getPassword() { return password; } // <-- Ajoutez le getter
+        public void setPassword(String password) { this.password = password; } // <-- Ajoutez le setter
     }
 }

@@ -234,7 +234,8 @@ class MultiUtilisateursPaiementTest {
         if(debugUser.isPresent()) {
             System.out.println("DEBUG: User actif ? " + debugUser.get().isActive()); // ou getActif()
         }
-        Utilisateur created = service.createUser(nouvelUtilisateur);
+        Utilisateur admin = new Utilisateur("op1", "admin@paybank.com", "pass", Role.ADMIN, true);
+        Utilisateur created = service.createUser(admin, nouvelUtilisateur);
 
         // 5. Assertions
         assertNotNull(created);
