@@ -1,6 +1,7 @@
 package com.paybank.hexagonal.domaine;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public record Transaction(
     String id,

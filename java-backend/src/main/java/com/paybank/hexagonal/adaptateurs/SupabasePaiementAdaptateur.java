@@ -1,6 +1,7 @@
 package com.paybank.hexagonal.adaptateurs;
 
 import com.paybank.hexagonal.domaine.MontantCentimes;
+import com.paybank.hexagonal.domaine.Transaction;
 import com.paybank.hexagonal.domaine.TransactionPaiement;
 import com.paybank.hexagonal.ports.PersistancePaiementSPI;
 
@@ -9,6 +10,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;

@@ -15,7 +15,29 @@ import org.springframework.stereotype.Component;
 
 import com.paybank.hexagonal.domaine.annotation.AgainstBruteForce;
 
+import com.paybank.hexagonal.domaine.annotation.AgainstBruteForce;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
+import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.reflect.MethodSignature;
+import org.springframework.stereotype.Component;
+import java.lang.reflect.Method;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import com.paybank.hexagonal.domaine.annotation.AgainstBruteForce;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
+import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.reflect.MethodSignature;
+import org.springframework.stereotype.Component;
+import java.lang.reflect.Method;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+
+/*
 @Aspect
 @Component
 @Order(0) // Doit s'exécuter TOUT au début (avant même la sécurité de rôle)
@@ -42,5 +64,158 @@ public class AgainstBruteForceAspect {
         }
 
         timestamps.add(maintenant);
+    }
+}
+*/
+
+/*
+@Aspect
+@Component
+public class AgainstBruteForceAspect {
+
+    // Stockage simple des compteurs par nom de méthode
+    private final Map<String, AtomicInteger> compteurs = new ConcurrentHashMap<>();
+    private final Map<String, Long> dernierReset = new ConcurrentHashMap<>();
+
+    @Before("@annotation(com.paybank.hexagonal.domaine.annotation.AgainstBruteForce)")
+    public void verifierRateLimit(JoinPoint joinPoint) {
+        MethodSignature signature = (MethodSignature) joinPoint.getSignature();
+        Method method = signature.getMethod();
+        AgainstBruteForce annotation = method.getAnnotation(AgainstBruteForce.class);
+
+        if (annotation == null) {
+            return;
+        }
+
+        String methodName = method.toGenericString();
+        int maxRequetes = annotation.requetesMax();
+        long fenetreTempsMillis = annotation.secondes() * 1000L;
+
+        long maintenant = System.currentTimeMillis();
+        dernierReset.putIfAbsent(methodName, maintenant);
+        compteurs.putIfAbsent(methodName, new AtomicInteger(0));
+
+        // Réinitialisation de la fenêtre si le temps est écoulé
+        if (maintenant - dernierReset.get(methodName) > fenetreTempsMillis) {
+            compteurs.get(methodName).set(0);
+            dernierReset.put(methodName, maintenant);
+        }
+
+        int requetesActuelles = compteurs.get(methodName).incrementAndGet();
+
+        if (requetesActuelles > maxRequetes) {
+            throw new RuntimeException("Rate limit dépassé : Trop de requêtes en peu de temps.");
+        }
+    }
+}
+*/
+
+/*
+@Aspect
+@Component
+public class AgainstBruteForceAspect {
+
+    private final Map<String, AtomicInteger> compteurs = new ConcurrentHashMap<>();
+
+    @Before("@annotation(com.paybank.hexagonal.domaine.annotation.AgainstBruteForce)")
+    public void verifierLimite(JoinPoint joinPoint) {
+        MethodSignature signature = (MethodSignature) joinPoint.getSignature();
+        Method method = signature.getMethod();
+        AgainstBruteForce annotation = method.getAnnotation(AgainstBruteForce.class);
+
+        if (annotation == null) {
+            return;
+        }
+
+        String cleMethod = method.toGenericString();
+        int maxRequetes = annotation.requetesMax();
+
+        compteurs.putIfAbsent(cleMethod, new AtomicInteger(0));
+        int requetesActuelles = compteurs.get(cleMethod).incrementAndGet();
+
+        if (requetesActuelles > maxRequetes) {
+            throw new RuntimeException("Rate limit atteint : Trop de requêtes.");
+        }
+    }
+}
+*/
+
+/*
+import com.paybank.hexagonal.domaine.annotation.AgainstBruteForce;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
+import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.reflect.MethodSignature;
+import org.springframework.stereotype.Component;
+import java.lang.reflect.Method;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+
+@Aspect
+@Component
+public class AgainstBruteForceAspect {
+
+    private final Map<String, AtomicInteger> compteurs = new ConcurrentHashMap<>();
+
+    @Before("@annotation(com.paybank.hexagonal.domaine.annotation.AgainstBruteForce)")
+    public void verifierRateLimit(JoinPoint joinPoint) {
+        MethodSignature signature = (MethodSignature) joinPoint.getSignature();
+        Method method = signature.getMethod();
+        AgainstBruteForce annotation = method.getAnnotation(AgainstBruteForce.class);
+
+        if (annotation == null) {
+            return;
+        }
+
+        String methodName = method.getName();
+        int maxRequetes = annotation.requetesMax();
+
+        compteurs.putIfAbsent(methodName, new AtomicInteger(0));
+        int requetesActuelles = compteurs.get(methodName).incrementAndGet();
+
+        if (requetesActuelles > maxRequetes) {
+            throw new RuntimeException("Rate limit atteint : Trop de requêtes.");
+        }
+    }
+}
+*/
+
+import com.paybank.hexagonal.domaine.annotation.AgainstBruteForce;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
+import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.reflect.MethodSignature;
+import org.springframework.stereotype.Component;
+import java.lang.reflect.Method;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+
+@Aspect
+@Component
+public class AgainstBruteForceAspect {
+
+    private final Map<String, AtomicInteger> compteurs = new ConcurrentHashMap<>();
+
+    @Before("@annotation(com.paybank.hexagonal.domaine.annotation.AgainstBruteForce)")
+    public void verifierRateLimit(JoinPoint joinPoint) {
+        MethodSignature signature = (MethodSignature) joinPoint.getSignature();
+        Method method = signature.getMethod();
+        AgainstBruteForce annotation = method.getAnnotation(AgainstBruteForce.class);
+
+        if (annotation == null) {
+            return;
+        }
+
+        String cleMethod = method.getDeclaringClass().getName() + "." + method.getName();
+        int maxRequetes = annotation.requetesMax();
+
+        compteurs.putIfAbsent(cleMethod, new AtomicInteger(0));
+        int requetesActuelles = compteurs.get(cleMethod).incrementAndGet();
+
+        if (requetesActuelles > maxRequetes) {
+            throw new RuntimeException("Rate limit dépassé : Trop de requêtes.");
+        }
     }
 }

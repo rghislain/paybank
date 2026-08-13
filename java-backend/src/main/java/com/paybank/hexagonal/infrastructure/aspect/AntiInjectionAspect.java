@@ -8,6 +8,7 @@ import org.aspectj.lang.annotation.Before;
 import org.springframework.stereotype.Component;
 import org.springframework.core.annotation.Order;
 
+/*
 @Aspect
 @Component
 @Order(1) // Juste avant le traitement métier
@@ -28,6 +29,32 @@ public class AntiInjectionAspect {
                 }
             }
             // Optionnel : utiliser la réflexion pour inspecter les champs String des objets DTO complexes reçus.
+        }
+    }
+}
+*/
+
+
+import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
+import org.springframework.stereotype.Component;
+
+@Aspect
+@Component
+@Order(1) // Juste avant le traitement métier
+public class AntiInjectionAspect {
+
+    @Before("@annotation(com.paybank.hexagonal.domaine.annotation.AgainstInjection) || @annotation(com.paybank.hexagonal.domaine.annotation.Securise)")
+    public void verifierInjection(JoinPoint joinPoint) {
+        Object[] args = joinPoint.getArgs();
+        for (Object arg : args) {
+            if (arg instanceof String) {
+                String valeur = (String) arg;
+                if (valeur.contains("<script>") || valeur.toLowerCase().contains("drop table") || valeur.toLowerCase().contains("or 1=1")) {
+                    throw new IllegalArgumentException("Tentative d'injection détectée");
+                }
+            }
         }
     }
 }

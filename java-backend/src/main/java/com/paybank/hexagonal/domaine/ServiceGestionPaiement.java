@@ -6,6 +6,7 @@ import com.paybank.hexagonal.domaine.annotation.Securise;
 import com.paybank.hexagonal.domaine.controleurs.SecurityInterceptor;
 import com.paybank.hexagonal.ports.PasserelleBancaireSPI;
 import com.paybank.hexagonal.ports.PersistancePaiementSPI;
+import com.paybank.hexagonal.ports.TransactionRepositorySPI;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Balance;
 import com.stripe.model.PaymentIntent;
@@ -21,16 +22,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class ServiceGestionPaiement {
 
     private final PersistancePaiementSPI persistancePaiementSPI;
+    
+    private final TransactionRepositorySPI transactionRepositorySPI;
 
-    public ServiceGestionPaiement(PersistancePaiementSPI persistancePaiementSPI) {
+    public ServiceGestionPaiement(PersistancePaiementSPI persistancePaiementSPI, TransactionRepositorySPI transactionRepositorySPI) {
         this.persistancePaiementSPI = persistancePaiementSPI;
+		this.transactionRepositorySPI = transactionRepositorySPI;
     }
-
+    
     // C - CRÉER UN INTENT DE PAIEMENT
     @MasquerDonneesSensibles
     public Map<String, String> creerIntentionPaiement(UUID clientId, long montantCentimes) throws StripeException {
@@ -289,14 +294,112 @@ public class ServiceGestionPaiement {
     /**
      * Vérification finale de l'égalité des soldes (Objectif Principal)
      */
+    
     @MasquerDonneesSensibles
     public boolean verifierEgaliteSoldes(long soldeComptableCentimes, long soldeBancaireCentimes) {
         return soldeComptableCentimes == soldeBancaireCentimes;
     }
     
     //@Securise
-    @Securise(roles = {"ADMIN"})
+    //@Securise(roles = {"MANAGER"})
+    /*
+    @MasquerDonneesSensibles
     public List<MatchResult> executerRapprochementDepuisSources() throws com.stripe.exception.StripeException {
+    	// 1. Récupérer le rôle via le SecurityInterceptor comme vos autres méthodes
+        String role = SecurityInterceptor.getContextRole();
+    */    
+        /*
+        if ("ANONYMOUS".equals(role)) {
+            // Fallback de secours pour les tests unitaires via SecurityContextHolder
+            var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().contains("ADMIN"))) {
+                role = "ADMIN";
+            }
+        }
+        */
+        
+        // 2. Autoriser ADMIN ou MANAGER (ou selon vos règles)
+        /*
+        if (!"ADMIN".equals(role) && !"MANAGER".equals(role)) {
+            throw new SecurityException("Interdit : Accès réservé aux administrateurs ou managers.");
+        }
+        */
+        
+        // 2. Fallback de secours pour les tests si aucun header HTTP n'est présent
+       /*
+    	if ("ANONYMOUS".equals(role)) {
+            var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.isAuthenticated()) {
+                boolean isAdminOrManager = auth.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().contains("ADMIN") || a.getAuthority().contains("MANAGER"));
+                if (isAdminOrManager) {
+                    role = "ADMIN"; // Simule un rôle valide pour le domaine
+                }
+            }
+        }
+        */
+
+        // 3. Vérification des droits
+        /*
+    	if (!"ADMIN".equals(role) && !"MANAGER".equals(role)) {
+            throw new SecurityException("Interdit : Accès réservé aux administrateurs ou managers.");
+        }
+    	*/
+    	// 1. Récupération des transactions de la comptabilité interne (Supabase)
+        //List<Transaction> transactionsCompta = chargerTransactionsDepuisSupabase();
+
+        // 2. Récupération des transactions réelles du compte bancaire (Stripe)
+        //List<Transaction> transactionsStripe = chargerTransactionsDepuisStripe();
+
+        // 3. Exécution de l'algorithme de rapprochement hexagonal
+        //return executerRapprochementGlobal(transactionsCompta, transactionsStripe);
+    //}
+	
+	
+    
+    /*
+    @MasquerDonneesSensibles
+    //@Securise(roles = {"MANAGER"})
+    public List<MatchResult> executerRapprochementDepuisSources() throws com.stripe.exception.StripeException {
+        // 1. Récupérer le rôle via le SecurityInterceptor
+        String role = SecurityInterceptor.getContextRole();
+        
+        // 2. Fallback de secours indispensable pour les tests unitaires via Spring Security
+        
+    	if ("ANONYMOUS".equals(role)) {
+            var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.isAuthenticated()) {
+                boolean isAdminOrManager = auth.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().contains("ADMIN") || a.getAuthority().contains("MANAGER") || a.getAuthority().contains("ROLE_ADMIN"));
+                if (isAdminOrManager) {
+                    role = "ADMIN";
+                }
+            }
+        }
+        
+        // 3. Vérification des droits
+        if (!"ADMIN".equals(role) && !"MANAGER".equals(role)) {
+            throw new SecurityException("Interdit : Accès réservé aux administrateurs ou managers.");
+        }
+        
+        // 4. Récupération des transactions et exécution
+        List<Transaction> transactionsCompta = chargerTransactionsDepuisSupabase();
+        List<Transaction> transactionsStripe = chargerTransactionsDepuisStripe();
+
+        return executerRapprochementGlobal(transactionsCompta, transactionsStripe);
+    }
+    */
+    
+    
+    /*
+    @MasquerDonneesSensibles
+    @Securise(roles = {"MANAGER", "ADMIN"}) // Accepte les deux rôles selon vos tests
+    public List<MatchResult> executerRapprochementDepuisSources() throws com.stripe.exception.StripeException {
+        
+        // Si vous utilisez un Aspect de sécurité (SecuriteAspect), c'est lui qui intercepte 
+        // et bloque si l'utilisateur n'a pas le bon rôle dans le SecurityContextHolder.
+        // Inutile de rajouter une double vérification manuelle stricte ici qui entre en conflit avec l'Aspect.
+
         // 1. Récupération des transactions de la comptabilité interne (Supabase)
         List<Transaction> transactionsCompta = chargerTransactionsDepuisSupabase();
 
@@ -306,8 +409,10 @@ public class ServiceGestionPaiement {
         // 3. Exécution de l'algorithme de rapprochement hexagonal
         return executerRapprochementGlobal(transactionsCompta, transactionsStripe);
     }
+    */
     
     // --- COUPLAGE AUX LOGS ET SIMULATIONS DE DONNÉES ENTRANTES ---
+    /*
     @MasquerDonneesSensibles
     private List<Transaction> chargerTransactionsDepuisSupabase() {
         return List.of(
@@ -315,13 +420,104 @@ public class ServiceGestionPaiement {
             new Transaction("C2", 2000, LocalDate.now().minusDays(1), "REF-STRIPE-20", "FACTURE")
         );
     }
-
+    */
+    
+    /*
+     //pour test > ok
     @MasquerDonneesSensibles
     private List<Transaction> chargerTransactionsDepuisStripe() throws com.stripe.exception.StripeException {
         return List.of(
             new Transaction("ST-1", 4500, LocalDate.now(), "REF-STRIPE-45", "STRIPE"),
             new Transaction("ST-2", 8900, LocalDate.now(), "VIR-MYSTERE", "STRIPE")
         );
+    }
+    */
+    
+    @MasquerDonneesSensibles
+    @Securise(roles = {"MANAGER", "ADMIN"})
+    public List<MatchResult> executerRapprochementDepuisSources()
+            throws com.stripe.exception.StripeException {
+
+        List<Transaction> transactionsCompta =
+                chargerTransactionsDepuisSupabase();
+
+        List<Transaction> transactionsStripe =
+                chargerTransactionsDepuisStripe();
+
+        return executerRapprochementGlobal(
+                transactionsCompta,
+                transactionsStripe
+        );
+    }
+    
+    /*
+    public List<Transaction> chargerTransactionsDepuisSupabase() {
+        // 1. Récupération des entités depuis la base de données
+        List<TransactionEntity> entities = transactionRepository.findAll();
+        
+        // 2. Conversion des entités (Modèle Persistance) vers le modèle du Domaine (Hexagonal)
+        return entities.stream()
+                .map(entity -> new Transaction(
+                    entity.getId(),
+                    entity.getMontant(),
+                    entity.getDevise(),
+                    entity.getStatut(),
+                    entity.getDateCreation()
+                ))
+                .collect(Collectors.toList());
+    }
+    */
+    
+    /*
+    public List<Transaction> chargerTransactionsDepuisSupabase() {
+        String sql = "SELECT id, montant, devise, statut, date_creation FROM transactions";
+        
+        return jdbcTemplate.query(sql, (rs, rowNum) -> new Transaction(
+            rs.getString("id"),
+            rs.getLong("montant"),
+            rs.getString("devise"),
+            rs.getString("statut"),
+            rs.getTimestamp("date_creation").toLocalDateTime()
+        ));
+    }
+    */
+    
+    public List<Transaction> chargerTransactionsDepuisSupabase() {
+        // Le service appelle son port sans savoir comment c'est implémenté derrière
+        return transactionRepositorySPI.chargerTransactionsSupabase();
+    }
+    
+    @MasquerDonneesSensibles
+    private List<Transaction> chargerTransactionsDepuisStripe() throws com.stripe.exception.StripeException {
+        // 1. Paramètres pour lister les intentions de paiement (ex: les 20 derniers)
+        com.stripe.param.PaymentIntentListParams params = 
+            com.stripe.param.PaymentIntentListParams.builder()
+                .setLimit(20L)
+                .build();
+
+        // 2. Appel à l'API Stripe
+        com.stripe.model.PaymentIntentCollection paymentIntents = com.stripe.model.PaymentIntent.list(params);
+
+        List<Transaction> transactionsStripe = new ArrayList<>();
+
+        // 3. Conversion des PaymentIntents de Stripe en objets Transaction de votre domaine
+        for (com.stripe.model.PaymentIntent intent : paymentIntents.getData()) {
+            // On récupère la date de création (convertie de timestamp UNIX en LocalDate)
+            LocalDate date = java.time.Instant.ofEpochSecond(intent.getCreated())
+                .atZone(java.time.ZoneId.systemDefault())
+                .toLocalDate();
+
+            // On crée la transaction avec les vraies données Stripe
+            transactionsStripe.add(new Transaction(
+                intent.getId(),                          // Identifiant Stripe (ex: pi_...)
+                intent.getAmount(),                      // Montant en centimes
+                date,                                    // Date du paiement
+                intent.getDescription() != null ? intent.getDescription() : "STRIPE-" + intent.getId(), // Référence
+                "STRIPE"                                 // Type
+            ));
+        }
+
+        return transactionsStripe;
     }
     
     @AgainstBruteForce(requetesMax = 3, secondes = 10)

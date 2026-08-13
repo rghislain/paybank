@@ -1,9 +1,11 @@
 package com.paybank.hexagonal.ports;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.paybank.hexagonal.domaine.Transaction;
 import com.paybank.hexagonal.domaine.TransactionPaiement;
 
 public interface PersistancePaiementSPI {
@@ -24,4 +26,5 @@ public interface PersistancePaiementSPI {
     void supprimerRapprochement(UUID paiementId);
     Map<String, Object> chercherParId2(UUID id);
     boolean estRapprochementValide(String idIntentAttendu, String idIntentReel, long montantAttenduCentimes, long montantReelCentimes, String stripeStatus);
+    //List<Transaction> chargerTransactionsSupabase();
 }

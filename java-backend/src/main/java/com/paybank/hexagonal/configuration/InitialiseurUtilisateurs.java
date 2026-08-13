@@ -3,6 +3,9 @@ package com.paybank.hexagonal.configuration;
 import com.paybank.hexagonal.domaine.Role;
 import com.paybank.hexagonal.entity.UtilisateurEntity;
 import com.paybank.hexagonal.repository.UtilisateurRepository;
+
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -18,7 +21,7 @@ public class InitialiseurUtilisateurs {
     }
 
     @Value("${ADMIN_PASSWORD:adminPass1}")
-    private String adminPassword;
+    private String admin1Password;
 
     @Value("${MANAGER1_PASSWORD:managerPass1}")
     private String manager1Password;
@@ -29,7 +32,7 @@ public class InitialiseurUtilisateurs {
     @Bean
     CommandLineRunner initUsersOnce(UtilisateurRepository repository, BCryptPasswordEncoder passwordEncoder) {
         return args -> {
-            creerSiAbsent(repository, passwordEncoder, "ghislainrochette@paybank.com", "Ghislain Rochette", adminPassword, Role.ADMIN);
+            creerSiAbsent(repository, passwordEncoder, "ghislainrochette@paybank.com", "Ghislain Rochette", admin1Password, Role.ADMIN);
             creerSiAbsent(repository, passwordEncoder, "manager1@paybank.com", "Manager Un", manager1Password, Role.MANAGER);
             creerSiAbsent(repository, passwordEncoder, "employe1@paybank.com", "Employe Un", employe1Password, Role.EMPLOYE);
             
@@ -41,6 +44,7 @@ public class InitialiseurUtilisateurs {
         if (repo.findByEmail(email).isEmpty()) {
             UtilisateurEntity nouveau = new UtilisateurEntity();
             //nouveau.setId(email.split("@")[0]);
+            nouveau.setId(UUID.randomUUID().toString());
             nouveau.setEmail(email);
             nouveau.setNom(nom);
             nouveau.setPassword(encoder.encode(passwordClair));

@@ -344,7 +344,8 @@
 			async function declencherRapprochementBancaire() {
 			    const zoneResultats = document.getElementById('zone-resultats-rapprochement');
 			    const listeEcarts = document.getElementById('liste-ecarts');
-			    
+				const roleActif = document.getElementById("operateurRole").value;
+				
 			    listeEcarts.innerHTML = "";
 			    zoneResultats.classList.add('hidden');
 
@@ -353,7 +354,12 @@
 			        
 			        const response = await fetch(`${API_BASE_URL}/api/paiements/rapprochement`, {
 			            method: 'POST',
-			            headers: obtenirHeadersSecurises()
+			            //headers: obtenirHeadersSecurises()
+						headers: {
+						          'Content-Type': 'application/json',
+						          // 2. Transmettre le rôle dans le header attendu par le SecurityInterceptor
+						          'X-Auth-Role': roleActif 
+					    }
 			        });
 
 			        if (!response.ok) {

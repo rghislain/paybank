@@ -18,7 +18,7 @@ import jakarta.persistence.Table;
 public class UtilisateurEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    //@GeneratedValue(strategy = GenerationType.UUID)
     private String id;
     private String nom;
     private String email;
@@ -50,6 +50,7 @@ public class UtilisateurEntity {
     // Convertisseur : Base de données -> Domaine (⚠️ FIXÉ : On passe 'this.role' au lieu de 'null')
     public Utilisateur toDomain() {
         Utilisateur user = new Utilisateur(this.nom, this.email, this.password, this.role, this.actif);
+        user.setId(this.id);
         if (!this.actif) {
             user.deactivate();
         }
