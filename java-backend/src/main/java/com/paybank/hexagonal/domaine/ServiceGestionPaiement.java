@@ -41,7 +41,7 @@ public class ServiceGestionPaiement {
     public Map<String, String> creerIntentionPaiement(UUID clientId, long montantCentimes) throws StripeException {
     	String role = SecurityInterceptor.getContextRole();
     	if (!"EMPLOYE".equals(role)) {
-    	    throw new IllegalArgumentException("Interdit par le domaine : seuls les managers peuvent gérer les articles");
+    	    throw new IllegalArgumentException("Interdit par le domaine : seuls les employés peuvent gérer les paiements");
     	}
     	
     	// 1. On génère un identifiant unique (qui servira aussi de clé d'idempotence)
@@ -85,7 +85,7 @@ public class ServiceGestionPaiement {
     public void modifierMontantPaiement(String stripePaymentIntentId, long nouveauMontantCentimes) throws StripeException {
     	String role = SecurityInterceptor.getContextRole();
     	if (!"EMPLOYE".equals(role)) {
-    	    throw new IllegalArgumentException("Interdit par le domaine : seuls les managers peuvent gérer les articles");
+    	    throw new IllegalArgumentException("Interdit par le domaine : seuls les employés peuvent gérer les paiements");
     	}
     	// 1. Mise à jour chez Stripe
         PaymentIntent intent = PaymentIntent.retrieve(stripePaymentIntentId);
@@ -109,7 +109,7 @@ public class ServiceGestionPaiement {
     public void annulerPaiement(String stripePaymentIntentId) throws StripeException {
     	String role = SecurityInterceptor.getContextRole();
     	if (!"EMPLOYE".equals(role)) {
-    	    throw new IllegalArgumentException("Interdit par le domaine : seuls les managers peuvent gérer les articles");
+    	    throw new IllegalArgumentException("Interdit par le domaine : seuls les employés peuvent gérer les paiements");
     	}
     	// 1. Annulation chez Stripe
         PaymentIntent intent = PaymentIntent.retrieve(stripePaymentIntentId);

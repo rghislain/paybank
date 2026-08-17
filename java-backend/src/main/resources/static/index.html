@@ -361,9 +361,11 @@
 						          'X-Auth-Role': roleActif 
 					    }
 			        });
+					
+					//const responseText = await response.text();
 
 			        if (!response.ok) {
-			            alert(`🚫 Échec du traitement (Code ${response.status})`);
+			            alert(`🚫 Échec du traitement (Code ${response.status}) Droits insuffisants (employé)`);
 			            return;
 			        }
 
@@ -372,6 +374,9 @@
 
 			        // On affiche l'encart quoi qu'il arrive
 			        zoneResultats.classList.remove('hidden');
+					
+					//const matchResults = responseText ? JSON.parse(responseText) : [];
+					//zoneResultats.classList.remove('hidden');
 
 			        let matchesCompteur = 0;
 			        let manquantCompteur = 0;
@@ -496,7 +501,9 @@
 	        // ==========================================
 	        //  FONCTIONS : PRODUITS & TARIFS (CRUD)
 	        // ==========================================
-	        async function creerProduitEtTarif() {
+	        
+			/*
+			async function creerProduitEtTarif() {
 	            const nom = document.getElementById('prodNom').value;
 	            const prixEuro = document.getElementById('prodPrix').value;
 	            const prixCentimes = Math.round(parseFloat(prixEuro) * 100);
@@ -506,9 +513,51 @@
 	                headers: obtenirHeadersSecurises(),
 	                body: JSON.stringify({ nom, prixCentimes })
 	            });
-	            const produit = await verifierReponse(response, `Produit et tarif générés chez Stripe !`);
-	            if(produit) document.getElementById('prodId').value = produit.id;
+	            //const produit = await verifierReponse(response, `Produit et tarif générés chez Stripe !`);
+	            //if(produit) document.getElementById('prodId').value = produit.id;
+				if (response.ok) {
+					const produit = await response.json();
+					if(produit) document.getElementById('prodId').value = produit.id;
+					            alert(`Produit et tarif générés chez Stripe !`);
+				} else {
+					   const errorMsg = await response.text();
+					   alert(`❌ Erreur : ${errorMsg}`);
+				}
 	        }
+			*/
+			
+			async function creerProduitEtTarif() {
+			            const nom = document.getElementById('prodNom').value;
+			            const prixEuro = document.getElementById('prodPrix').value;
+			            
+			            if(!nom || !prixEuro) {
+			                alert("Veuillez remplir le nom et le prix du produit.");
+			                return;
+			            }
+
+			            const prixCentimes = Math.round(parseFloat(prixEuro) * 100);
+
+			            try {
+			                const response = await fetch(`${API_BASE_URL}/api/produits`, {
+			                    method: 'POST',
+			                    headers: obtenirHeadersSecurises(),
+			                    body: JSON.stringify({ nom, prixCentimes })
+			                });
+			                
+			                // Récupération universelle du texte de la réponse (succès ou erreur)
+			                const messageReponse = await response.text();
+
+			                if (response.ok) {
+			                    alert(`✅ Succès : ${messageReponse}`);
+			                } else {
+			                    // Affiche proprement le message du domaine (ex: "Interdit par le domaine...")
+			                    alert(`❌ Erreur : ${messageReponse}`);
+			                }
+			            } catch (error) {
+			                console.error("Erreur réseau :", error);
+			                alert("❌ Impossible de contacter le serveur.");
+			            }
+			}
 
 	        async function modifierProduit() {
 	            const id = document.getElementById('prodId').value;
@@ -523,7 +572,13 @@
 	                headers: obtenirHeadersSecurises(),
 	                body: JSON.stringify({ nom, prixCentimes })
 	            });
-	            await verifierReponse(response, 'Produit/Tarif mis à jour !');
+	            //await verifierReponse(response, 'Produit/Tarif mis à jour !');
+				if (response.ok) {
+					    alert('Produit/Tarif mis à jour !');
+				} else {
+					    const errorMsg = await response.text();
+					    alert(`❌ Erreur : ${errorMsg}`);
+				}
 	        }
 
 	        async function supprimerProduit() {
@@ -535,9 +590,13 @@
 	                headers: obtenirHeadersSecurises()
 	            });
 	            if(response.ok) {
-	                document.getElementById('prodId').value = "";
-	                alert('Produit archivé avec succès.');
+	                	document.getElementById('prodId').value = "";
+	                	alert('Produit supprimé avec succès.');
 	            }
+				else {
+					   const errorMsg = await response.text();
+					   alert(`❌ Erreur : ${errorMsg}`);
+				}
 	        }
 
 	        // ==========================================

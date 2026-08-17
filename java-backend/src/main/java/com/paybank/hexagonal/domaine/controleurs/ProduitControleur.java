@@ -3,6 +3,8 @@ package com.paybank.hexagonal.domaine.controleurs;
 import com.paybank.hexagonal.domaine.ServiceCatalogueProduit;
 import com.paybank.hexagonal.domaine.Produit;
 import com.stripe.exception.StripeException;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
@@ -23,26 +25,98 @@ public class ProduitControleur {
         this.serviceCatalogueProduit = serviceCatalogueProduit;
     }
 
+    /*
     @PostMapping
     public ResponseEntity<Produit> creer(@RequestBody ProduitDto dto) throws StripeException {
         return ResponseEntity.ok(serviceCatalogueProduit.creerProduit(dto.nom(), dto.prixCentimes()));
     }
+    */
+    
+    /*
+    @PostMapping
+    public ResponseEntity<String> creer(@RequestBody ProduitDto dto) {
+        try {
+            Produit produit = serviceCatalogueProduit.creerProduit(dto.nom(), dto.prixCentimes());
+            // On peut renover le JSON du produit créé ou un statut OK simple
+            return ResponseEntity.ok(produit.getId().toString()); // ou sérialiser en JSON si besoin
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+    */
 
     @GetMapping("/{id}")
     public ResponseEntity<Produit> obtenir(@PathVariable UUID id) {
         return ResponseEntity.ok(serviceCatalogueProduit.obtenirProduit(id));
     }
 
+    /*
     @PutMapping("/{id}")
     public ResponseEntity<Void> modifier(@PathVariable UUID id, @RequestBody ProduitDto dto) throws StripeException {
         serviceCatalogueProduit.modifierProduit(id, dto.nom(), dto.prixCentimes());
         return ResponseEntity.ok().build();
     }
+    */
+    
+    /*
+    @PutMapping("/{id}")
+    public ResponseEntity<String> modifier(@PathVariable UUID id, @RequestBody ProduitDto dto) {
+        try {
+            serviceCatalogueProduit.modifierProduit(id, dto.nom(), dto.prixCentimes());
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+    */
+    
+    @PostMapping
+    public ResponseEntity<String> creer(@RequestBody ProduitDto dto) {
+        try {
+            Produit produit = serviceCatalogueProduit.creerProduit(dto.nom(), dto.prixCentimes());
+            return ResponseEntity.ok("Produit créé avec succès (ID: " + produit.getId() + ")");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<String> modifier(@PathVariable UUID id, @RequestBody ProduitDto dto) {
+        try {
+            serviceCatalogueProduit.modifierProduit(id, dto.nom(), dto.prixCentimes());
+            return ResponseEntity.ok("Produit modifié avec succès.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    /*
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> supprimer(@PathVariable UUID id) throws StripeException {
         serviceCatalogueProduit.supprimerProduit(id);
         return ResponseEntity.ok().build();
+    }
+    */
+    
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> supprimer(@PathVariable UUID id) {
+        try {
+            serviceCatalogueProduit.supprimerProduit(id);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            // Renvoie le message d'erreur précis (ex: "Interdit par le domaine...") avec un code 403 ou 400
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
     }
 
     public record ProduitDto(String nom, long prixCentimes) {}

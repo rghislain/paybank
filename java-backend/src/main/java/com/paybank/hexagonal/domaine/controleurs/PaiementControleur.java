@@ -31,6 +31,28 @@ public class PaiementControleur {
         List<MatchResult> resultats = gestionPaiementService.executerRapprochementDepuisSources();
         return ResponseEntity.ok(resultats);
     }
+    
+    
+    /*
+    @PostMapping("/rapprochement")
+    public ResponseEntity<String> executerRapprochementBancaire() {
+        try {
+            List<MatchResult> resultats = gestionPaiementService.executerRapprochementDepuisSources();
+            
+            // Conversion propre des résultats en JSON string pour l'envoyer en texte/json
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            String jsonResultats = mapper.writeValueAsString(resultats);
+            
+            return ResponseEntity.ok(jsonResultats);
+        } catch (IllegalArgumentException | SecurityException e) {
+            // Renvoie un 403 Forbidden propre avec le message d'erreur du domaine
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (Exception e) {
+            // Renvoie un 500 géré si une autre erreur survient
+            return ResponseEntity.status(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+    */
 
     @PostMapping("/intent")
     public ResponseEntity<Map<String, String>> creerIntent(@RequestBody CreationIntentDto dto) throws StripeException {
