@@ -5,6 +5,7 @@ import com.paybank.hexagonal.ports.ProduitSPI;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -43,4 +44,16 @@ public class SupabaseProduitAdaptateur implements ProduitSPI {
         String sql = "DELETE FROM produits WHERE id = ?::uuid";
         jdbcTemplate.update(sql, id.toString());
     }
+
+	@Override
+	public List<Produit> listerTous() {
+		String sql = "SELECT id, nom, prix_centimes, stripe_product_id, stripe_price_id FROM produits";
+	    return jdbcTemplate.query(sql, (rs, rowNum) -> new Produit(
+	            UUID.fromString(rs.getString("id")),
+	            rs.getString("nom"),
+	            rs.getLong("prix_centimes"),
+	            rs.getString("stripe_product_id"),
+	            rs.getString("stripe_price_id")
+	    ));
+	}
 }

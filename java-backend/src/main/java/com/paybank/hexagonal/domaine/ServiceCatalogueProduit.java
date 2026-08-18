@@ -9,6 +9,8 @@ import com.stripe.param.PriceCreateParams;
 import com.stripe.param.ProductCreateParams;
 import com.stripe.param.ProductUpdateParams;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 import java.util.UUID;
 
 /*
@@ -107,6 +109,10 @@ public class ServiceCatalogueProduit {
 
         // Suppression locale
         produitSPI.supprimer(id);
+    }
+    
+    public List<Produit> listerTousLesProduits() {
+        return produitSPI.listerTous();
     }
 
 }

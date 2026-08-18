@@ -91,6 +91,13 @@
             <div class="bg-white p-6 rounded-lg shadow">
                 <h2 class="text-xl font-bold mb-4">📦 Catalogue Produits & Tarifs</h2>
                 
+				<div class="mb-4 pb-4 border-b border-gray-100">
+				    <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Sélectionner un produit existant</label>
+				    <select id="selectProduitsExistants" onchange="remplirChampsProduitDepuisSelection()" class="border p-2 w-full rounded bg-gray-50 text-sm font-medium">
+				        <option value="">-- Choisir un produit pour modifier/supprimer --</option>
+				    </select>
+				</div>
+				
                 <label class="block text-xs font-bold uppercase text-gray-500 mb-1">ID Produit (requis pour Modifier / Supprimer)</label>
                 <input id="prodId" type="text" placeholder="UUID du produit (pour Modifier/Supprimer)" class="border p-2 w-full mb-2 rounded font-mono text-sm bg-gray-50">
                 
@@ -284,6 +291,7 @@
 			        document.addEventListener("DOMContentLoaded", () => {
 			            chargerListeClients();
 						chargerListeSalaries();
+						chargerListeProduits();
 			        });
 
 			        // 1. Récupérer les clients depuis la BDD via l'API
@@ -636,6 +644,51 @@
 				}
 	        }
 			*/
+			
+			// Charger et remplir la liste déroulante des produits
+			async function chargerListeProduits() {
+			    const select = document.getElementById('selectProduitsExistants');
+			    try {
+			        const response = await fetch(`${API_BASE_URL}/api/produits`, {
+			            headers: obtenirHeadersSecurises()
+			        });
+			        
+			        if (!response.ok) return;
+			        
+			        const produits = await response.json();
+			        select.innerHTML = '<option value="">-- Choisir un produit pour modifier/supprimer --</option>';
+			        
+			        produits.forEach(p => {
+			            const prixEuros = (p.prixCentimes / 100).toFixed(2);
+			            const option = document.createElement('option');
+			            option.value = p.id;
+			            option.dataset.nom = p.nom;
+			            option.dataset.prix = prixEuros;
+			            option.textContent = `${p.nom} - ${prixEuros} €`;
+			            select.appendChild(option);
+			        });
+			    } catch (err) {
+			        console.error("Erreur chargement produits :", err);
+			    }
+			}
+
+			// Remplir automatiquement les inputs lors de la sélection
+			function remplirChampsProduitDepuisSelection() {
+			    const select = document.getElementById('selectProduitsExistants');
+			    const selectedOption = select.options[select.selectedIndex];
+			    
+			    if (select.value) {
+			        document.getElementById('prodId').value = select.value;
+			        document.getElementById('prodNom').value = selectedOption.dataset.nom;
+			        document.getElementById('prodPrix').value = selectedOption.dataset.prix;
+			    } else {
+			        document.getElementById('prodId').value = "";
+			        document.getElementById('prodNom').value = "";
+			        document.getElementById('prodPrix').value = "";
+			    }
+			}
+
+			
 			
 			async function creerProduitEtTarif() {
 			            const nom = document.getElementById('prodNom').value;

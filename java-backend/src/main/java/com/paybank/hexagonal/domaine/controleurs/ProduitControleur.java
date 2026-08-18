@@ -7,6 +7,8 @@ import com.stripe.exception.StripeException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -117,6 +119,12 @@ public class ProduitControleur {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
+    }
+    
+    @GetMapping
+    public ResponseEntity<List<Produit>> listerTous() {
+        List<Produit> produits = serviceCatalogueProduit.listerTousLesProduits();
+        return ResponseEntity.ok(produits);
     }
 
     public record ProduitDto(String nom, long prixCentimes) {}
