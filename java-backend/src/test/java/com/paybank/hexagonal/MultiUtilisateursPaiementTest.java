@@ -254,7 +254,7 @@ class MultiUtilisateursPaiementTest {
 
         // When & Then
         assertThrows(SecurityException.class, () -> {
-            service.updateUser(managerOperateur, userId, "Test User updated", Role.ADMIN);
+            service.updateUser(managerOperateur, userId, "Test User updated", Role.ADMIN, null);
         });
         
         // On vérifie qu'aucune sauvegarde n'a été tentée

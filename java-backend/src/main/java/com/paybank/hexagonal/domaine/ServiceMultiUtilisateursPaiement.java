@@ -25,6 +25,8 @@ public class ServiceMultiUtilisateursPaiement {
     
     @Autowired
     private UtilisateurRepository utilisateurRepository;
+    
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public ServiceMultiUtilisateursPaiement(UtilisateurSPI utilisateurSPI, ClientSPI clientSPI) {
         this.utilisateurSPI = utilisateurSPI;
@@ -52,7 +54,7 @@ public class ServiceMultiUtilisateursPaiement {
     }
     */
     
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    //private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     
     /*
     public Utilisateur authentifier(String email, String password) {
@@ -106,7 +108,7 @@ public class ServiceMultiUtilisateursPaiement {
     }
     
     @MasquerDonneesSensibles
-    public Utilisateur updateUser(Utilisateur operator, String userIdToUpdate, String newName, Role newRole) {
+    public Utilisateur updateUser(Utilisateur operator, String userIdToUpdate, String newName, Role newRole, String newPassword) {
         validatePermission(operator, Permission.USER_UPDATE);
 
         Utilisateur user = utilisateurSPI.findById(userIdToUpdate)
@@ -119,6 +121,12 @@ public class ServiceMultiUtilisateursPaiement {
 
         user.setName(newName);
         user.setRole(newRole);
+        
+        if (newPassword != null && !newPassword.isBlank()) {
+            String hashedPassword = passwordEncoder.encode(newPassword);
+            user.setPassword(hashedPassword);
+        }
+        
         return utilisateurSPI.save(user);
     }
 

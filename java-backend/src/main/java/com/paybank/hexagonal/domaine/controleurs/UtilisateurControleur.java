@@ -6,6 +6,8 @@ import com.paybank.hexagonal.entity.UtilisateurEntity;
 import com.paybank.hexagonal.domaine.Role;
 
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -96,12 +98,15 @@ public class UtilisateurControleur {
     
     @PutMapping("/{id}/modifier-droits")
     public ResponseEntity<?> modifierDroits(
-            @PathVariable String id, 
+            @PathVariable UUID id, 
             @RequestParam String nouveauNom,
             @RequestParam String nouveauRole,
-            @RequestHeader(value = "X-Auth-Role", required = false) String roleHeader) {
+            //@RequestHeader(value = "X-Auth-Role", required = false) String roleHeader) {
+            @RequestBody(required = false) Map<String, String> body, // Récupération du JSON optionnel
+            @RequestHeader("X-Auth-Role") String roleOperateur){
         
-        try {
+    	/*
+    	try {
             // Si le header est absent, on met EMPLOYE par sécurité pour éviter les crashs
             String roleString = (roleHeader != null) ? roleHeader.toUpperCase() : "EMPLOYE";
             Role roleEnumOperateur = Role.valueOf(roleString);
@@ -120,6 +125,32 @@ public class UtilisateurControleur {
             return ResponseEntity.status(403).body(e.getMessage());
         } catch (IllegalArgumentException e) {
             // Si l'UUID n'existe pas ou le rôle est invalide
+            return ResponseEntity.status(400).body(e.getMessage());
+        }
+        */
+    	//String nouveauPassword = (body != null) ? body.get("password") : null;
+        
+        // Appel à votre service en lui passant aussi le mot de passe
+        //Utilisateur utilisateurMaj = this.serviceMultiUtilisateursPaiement.updateUser(id, nouveauNom, nouveauRole, nouveauPassword, roleOperateur);
+        
+        //return ResponseEntity.ok(utilisateurMaj);
+    	try {
+            String roleString = (roleOperateur != null) ? roleOperateur.toUpperCase() : "EMPLOYE";
+            Role roleEnumOperateur = Role.valueOf(roleString);
+            Utilisateur operator = new Utilisateur("operateur", "operateur@paybank.com", "pass", roleEnumOperateur, true);
+
+            // Récupération du mot de passe s'il a été transmis dans le body JSON
+            String nouveauPassword = (body != null) ? body.get("password") : null;
+            Role targetRole = Role.valueOf(nouveauRole.toUpperCase());
+
+            // Appel de la méthode du service avec le mot de passe
+            Utilisateur userMisAJour = serviceMultiUtilisateursPaiement.updateUser(operator, id.toString(), nouveauNom, targetRole, nouveauPassword);
+
+            return ResponseEntity.ok(userMisAJour);
+            
+        } catch (SecurityException e) {
+            return ResponseEntity.status(403).body(e.getMessage());
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.status(400).body(e.getMessage());
         }
     }
