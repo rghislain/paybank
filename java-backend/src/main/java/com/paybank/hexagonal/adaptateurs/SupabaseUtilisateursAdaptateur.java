@@ -112,4 +112,16 @@ public class SupabaseUtilisateursAdaptateur implements UtilisateurSPI {
 	    //return utilisateurRepository.findByNom(nom)
 	            //.map(entity -> entity.toDomain());
 	}
+
+	@Override
+	public List<Utilisateur> listerTousLesSalaries() {
+		// 1. On récupère toutes les entités depuis Spring Data JPA
+        List<UtilisateurEntity> entities = utilisateurRepository.findAll();
+        System.out.println("nombre de salariés trouvés en BDD : " + entities.size());
+        // 2. On convertit chaque entité en objet du domaine via .toDomain() et on retourne la liste
+        return entities.stream()
+                .map(UtilisateurEntity::toDomain)
+                .toList();
+	}
+	
 }

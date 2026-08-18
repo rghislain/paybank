@@ -8,18 +8,18 @@ public class Utilisateur {
     
     private String id;
     private String email;
-    private String name;
+    private String nom;
     private Role role;
-    private boolean active;
+    private boolean actif;
     private String password;
 
     public Utilisateur(String nom, String email, String password, Role role, boolean actif) {
         this.id = UUID.randomUUID().toString();
         this.email = email;
-        this.name = nom;
+        this.nom = nom;
         this.role = role;
         this.password = password;
-        this.active = true;
+        this.actif = true;
     }
     
     public Utilisateur() {}
@@ -31,16 +31,16 @@ public class Utilisateur {
     // Getters & Setters purement Java
     public String getId() { return id; }
     public String getEmail() { return this.email; }
-    public String getNom() { return this.name; }
+    public String getNom() { return this.nom; }
     public Role getRole() { return role; }
-    public boolean isActive() { return active; }
+    public boolean isActive() { return actif; }
     public String getPassword() {
         return this.password;
     }
     
     public void setRole(Role role) { this.role = role; }
-    public void setName(String name) { this.name = name; }
-    public void deactivate() { this.active = false; }
+    public void setName(String name) { this.nom = name; }
+    public void deactivate() { this.actif = false; }
 
 	public void setEmail(String string) {
 		this.email=string;
@@ -51,7 +51,7 @@ public class Utilisateur {
 	}
 
 	public void setActif(boolean b) {
-		this.active=b;
+		this.actif=b;
 	}
 	
 	public void setPassword(String password) {

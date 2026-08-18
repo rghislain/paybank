@@ -6,6 +6,7 @@ import com.stripe.exception.StripeException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -88,6 +89,12 @@ public class ClientControleur {
             @RequestHeader(value = "X-Auth-Role", required = false) String role) throws StripeException {
         gestionClientService.supprimerClient(id, role);
         return ResponseEntity.ok().build();
+    }
+    
+    @GetMapping
+    public ResponseEntity<List<Client>> obtenirTousLesClients() {
+        List<Client> clients = gestionClientService.listerTousLesClients();
+        return ResponseEntity.ok(clients);
     }
 
     // Record DTO pour intercepter le JSON

@@ -11,6 +11,7 @@ import com.stripe.param.CustomerUpdateParams;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -104,4 +105,9 @@ public class ServiceGestionClient {
 
         clientSPI.supprimer(id);
     }
+    
+    public List<Client> listerTousLesClients() {
+        return clientSPI.listerTousLesClients();
+    }
+    
 }

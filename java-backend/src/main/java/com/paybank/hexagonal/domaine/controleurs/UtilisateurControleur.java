@@ -2,7 +2,11 @@ package com.paybank.hexagonal.domaine.controleurs;
 
 import com.paybank.hexagonal.domaine.ServiceMultiUtilisateursPaiement;
 import com.paybank.hexagonal.domaine.Utilisateur;
+import com.paybank.hexagonal.entity.UtilisateurEntity;
 import com.paybank.hexagonal.domaine.Role;
+
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -119,6 +123,13 @@ public class UtilisateurControleur {
             return ResponseEntity.status(400).body(e.getMessage());
         }
     }
+    
+    @GetMapping
+    public ResponseEntity<List<Utilisateur>> obtenirTousLesSalaries() {
+        List<Utilisateur> salaries = serviceMultiUtilisateursPaiement.listerTousLesSalaries();
+        return ResponseEntity.ok(salaries);
+    }
+    
 
     // Classe interne DTO nécessaire pour réceptionner le JSON de la requête HTTP
     public static class CreateUserRequest {

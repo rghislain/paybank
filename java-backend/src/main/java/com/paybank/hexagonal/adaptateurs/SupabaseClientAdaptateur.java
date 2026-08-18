@@ -5,6 +5,7 @@ import com.paybank.hexagonal.ports.ClientSPI;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -40,4 +41,16 @@ public class SupabaseClientAdaptateur implements ClientSPI {
         String sql = "DELETE FROM clients WHERE id = ?::uuid";
         jdbcTemplate.update(sql, id.toString());
     }
+
+    @Override
+	public List<Client> listerTousLesClients() {
+	    String sql = "SELECT id, nom, email, stripe_customer_id FROM clients";
+	    return jdbcTemplate.query(sql, (rs, rowNum) -> new Client(
+	            UUID.fromString(rs.getString("id")),
+	            rs.getString("nom"),
+	            rs.getString("email"),
+	            rs.getString("stripe_customer_id")
+	    ));
+	}
+	
 }

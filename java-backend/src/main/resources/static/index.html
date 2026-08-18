@@ -68,6 +68,13 @@
             <div class="bg-white p-6 rounded-lg shadow">
                 <h2 class="text-xl font-bold mb-4">👤 Gestion des Clients</h2>
                 
+				<div class="mb-3">
+				      <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Sélectionner un client existant</label>
+				      <select id="selectClientsExistants" onchange="remplirChampsClientDepuisSelection()" class="border p-2 w-full rounded bg-gray-50 text-sm font-medium">
+				           <option value="">-- Choisir un client dans la BDD --</option>
+				      </select>
+				</div>
+				
                 <label class="block text-xs font-bold uppercase text-gray-500 mb-1">ID Client (requis pour Modifier / Supprimer / Payer)</label>
                 <input id="clientId" type="text" placeholder="UUID du client (généré après création ou BDD)" class="border p-2 w-full mb-2 rounded font-mono text-sm bg-gray-50">
                 
@@ -120,7 +127,12 @@
 		        </form>
 		    </div>
 			
-			
+			<div class="mb-4 pb-4 border-b border-gray-100">
+					<label class="block text-xs font-bold uppercase text-gray-500 mb-1">Sélectionner un salarié existant</label>
+					<select id="selectSalariesExistants" onchange="remplirChampsSalarieDepuisSelection()" class="border p-2 w-full rounded bg-gray-50 text-sm font-medium">
+						    <option value="">-- Choisir un salarié pour modifier ses droits --</option>
+					</select>
+			</div>
 
 		    <div>
 		        <h3 class="text-sm font-bold text-gray-700 mb-2">🔄 2. Modifier les droits d'un salarié</h3>
@@ -262,6 +274,105 @@
 	            if (succesMessage) alert(succesMessage);
 	            return response.json();
 	        }
+			
+			
+			//===========================================
+			// FONCTION : CHARGER TOUS LES CLIENTS
+			//===========================================
+			
+			// 🚀 Chargement automatique des clients au démarrage de la page
+			        document.addEventListener("DOMContentLoaded", () => {
+			            chargerListeClients();
+						chargerListeSalaries();
+			        });
+
+			        // 1. Récupérer les clients depuis la BDD via l'API
+			        async function chargerListeClients() {
+			            const select = document.getElementById('selectClientsExistants');
+			            try {
+			                const response = await fetch(`${API_BASE_URL}/api/clients`, {
+			                    headers: obtenirHeadersSecurises()
+			                });
+			                
+			                if (!response.ok) return;
+			                
+			                const clients = await response.json();
+			                
+			                // Conserver l'option par défaut et vider le reste
+			                select.innerHTML = '<option value="">-- Choisir un client dans la BDD --</option>';
+			                
+			                clients.forEach(client => {
+			                    const option = document.createElement('option');
+			                    option.value = client.id;
+			                    // Stocker le nom et l'email dans l'élément pour un accès facile
+			                    option.dataset.nom = client.nom;
+			                    option.dataset.email = client.email;
+			                    option.textContent = `${client.nom} (${client.email})`;
+			                    select.appendChild(option);
+			                });
+			            } catch (err) {
+			                console.error("Erreur lors du chargement des clients :", err);
+			            }
+			        }
+
+			        // 2. Remplir les inputs automatiquement lors d'un changement dans la liste
+			        function remplirChampsClientDepuisSelection() {
+			            const select = document.getElementById('selectClientsExistants');
+			            const selectedOption = select.options[select.selectedIndex];
+			            
+			            if (select.value) {
+			                document.getElementById('clientId').value = select.value;
+			                document.getElementById('clientNom').value = selectedOption.dataset.nom;
+			                document.getElementById('clientEmail').value = selectedOption.dataset.email;
+			            } else {
+			                document.getElementById('clientId').value = "";
+			                document.getElementById('clientNom').value = "";
+			                document.getElementById('clientEmail').value = "";
+			            }
+			        }
+					
+			// ==========================================
+			//  FONCTIONS : METTRE TOUS LES SALARIÉS
+			// ==========================================	
+				
+					async function chargerListeSalaries() {
+			            const select = document.getElementById('selectSalariesExistants');
+			            try {
+			                const response = await fetch(`${API_BASE_URL}/api/utilisateurs`, {
+			                    headers: obtenirHeadersSecurises()
+			                });
+			                
+			                if (!response.ok) return;
+			                
+			                const salaries = await response.json();
+			                select.innerHTML = '<option value="">-- Choisir un salarié pour modifier ses droits --</option>';
+			                
+			                salaries.forEach(salarie => {
+			                    const option = document.createElement('option');
+			                    option.value = salarie.id;
+			                    option.dataset.nom = salarie.nom;
+			                    option.dataset.role = salarie.role;
+			                    option.textContent = `${salarie.nom} (${salarie.email}) - [${salarie.role}]`;
+			                    select.appendChild(option);
+			                });
+			            } catch (err) {
+			                console.error("Erreur chargement salariés :", err);
+			            }
+			        }
+
+			        function remplirChampsSalarieDepuisSelection() {
+			            const select = document.getElementById('selectSalariesExistants');
+			            const selectedOption = select.options[select.selectedIndex];
+			            
+			            if (select.value) {
+			                document.getElementById('input-id-cible').value = select.value;
+			                document.getElementById('input-nom-cible').value = selectedOption.dataset.nom;
+			                document.getElementById('select-nouveau-role').value = selectedOption.dataset.role;
+			            } else {
+			                document.getElementById('input-id-cible').value = "";
+			                document.getElementById('input-nom-cible').value = "";
+			            }
+			        }
 			
 			// ==========================================
 			//  FONCTIONS : RAPPROCHEMENT BANCAIRE
