@@ -5,6 +5,8 @@ import com.paybank.hexagonal.domaine.annotation.MasquerDonneesSensibles;
 import com.paybank.hexagonal.main.*;
 import com.paybank.hexagonal.ports.*;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -14,13 +16,24 @@ public class ServicePaiementImplementation implements ExecutionPaiementUseCase {
 
     private final PersistancePaiementSPI persistancePaiementSPI;
     private final PasserelleBancaireSPI passerelleBancaireSPI;
-
-    public ServicePaiementImplementation(PersistancePaiementSPI persistancePaiementSPI, PasserelleBancaireSPI passerelleBancaireSPI) {
+    private final TransactionRepositorySPI transactionRepositorySPI;
+    
+    public ServicePaiementImplementation(PersistancePaiementSPI persistancePaiementSPI, PasserelleBancaireSPI passerelleBancaireSPI, TransactionRepositorySPI transactionRepositorySPI) {
         this.persistancePaiementSPI = persistancePaiementSPI;
         this.passerelleBancaireSPI = passerelleBancaireSPI;
+        this.transactionRepositorySPI = transactionRepositorySPI;
     }
 
-    @MasquerDonneesSensibles
+    /*
+    public ServicePaiementImplementation(PersistancePaiementSPI persistancePaiementSPI2,
+			PasserelleBancaireSPI passerelleBancaireSPI2) {
+    	 this.persistancePaiementSPI = persistancePaiementSPI2;
+         this.passerelleBancaireSPI = passerelleBancaireSPI2;
+		 this.transactionRepositorySPI = null;
+	}
+	*/
+
+	@MasquerDonneesSensibles
     @Override
     public TransactionPaiement traiterPaiement(UUID compteClientId, int montantCentimes, String cleIdempotence, String tokenCarteMokbank) {
         // 1. Vérification stricte de l'idempotence au niveau du domaine
@@ -42,6 +55,19 @@ public class ServicePaiementImplementation implements ExecutionPaiementUseCase {
 	            nouvelleTransaction.valider();
 	            persistancePaiementSPI.enregistrer(nouvelleTransaction);
 	            persistancePaiementSPI.mettreAJourIDPaymentIntent(nouvelleTransaction.getId(), idInterneBanque);
+	        
+	         //Enregistrement dans la table des transactions pour le Bilan
+                BigDecimal montantDecimal = BigDecimal.valueOf(montantCentimes).movePointLeft(2);
+	            
+	            TransactionDetail nouvelleLigneBilan = new TransactionDetail(
+	                    UUID.randomUUID(),  
+	                    LocalDate.now(), 
+	                    "Achat - Paiement Stripe validé (" + idInterneBanque + ")",
+	                    montantDecimal,
+	                    false,
+	                    "En attente"
+	                );
+	                transactionRepositorySPI.enregistrer(compteClientId, nouvelleLigneBilan); // Nom de la méthode selon ton SPI
 	        } 
 	        else {
 	            nouvelleTransaction.echouer();

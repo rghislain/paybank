@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paybank - Bilan Financier & Dashboard Stats</title>
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-6 flex flex-col items-center justify-center">
+
+    <!-- SIMULATEUR D'OPÉRATEUR / CONTRÔLE D'ACCÈS -->
+    <div class="max-w-7xl w-full mb-6 bg-white p-4 rounded-lg shadow border-l-4 border-indigo-600 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div>
+            <h3 class="font-bold text-gray-800">🔐 Simulateur d'Opérateur (Bilan Financier)</h3>
+            <p class="text-xs text-gray-500">Modifiez le rôle pour tester la sécurité et l'accès au bilan.</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <label for="operateurRole" class="text-sm font-semibold text-gray-700">Opérateur actif :</label>
+            <select id="operateurRole" onchange="verifierAccesAdmin()" class="border p-2 rounded bg-gray-50 font-medium text-sm">
+                <option value="ADMIN">ADMIN (Tous les droits)</option>
+                <option value="MANAGER">MANAGER (Accès refusé au bilan)</option>
+                <option value="EMPLOYE">EMPLOYE (Accès refusé au bilan)</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- MESSAGE D'ACCÈS REFUSÉ (Si non admin) -->
+    <div id="access-denied-card" class="hidden max-w-7xl w-full bg-white p-8 rounded-lg shadow-xl text-center space-y-4">
+        <div class="text-5xl">🚫</div>
+        <h2 class="text-2xl font-bold text-gray-800">Accès Refusé</h2>
+        <p class="text-sm text-gray-600">Le bilan financier est strictement réservé aux opérateurs ayant le rôle <span class="font-bold text-red-600">ADMIN</span>.</p>
+        <p class="text-xs text-gray-500">Veuillez sélectionner le rôle <b>ADMIN</b> dans le menu déroulant ci-dessus ou retourner au tableau de bord.</p>
+        <div>
+            <a href="index.html" class="inline-block bg-blue-600 text-white px-4 py-2 rounded text-sm font-semibold hover:bg-blue-700">← Retour au Tableau de Bord</a>
+        </div>
+    </div>
+
+    <!-- CONTENU DU BILAN & MATRICE DES DROITS (Affiché si Admin OK) -->
+    <div id="bilan-content" class="hidden max-w-7xl w-full grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- 👈 COLONNE GAUCHE (1/3) : Matrice des Droits Granulaire -->
+        <div class="bg-white p-6 rounded-lg shadow-xl space-y-4 lg:col-span-1">
+            <h2 class="text-xl font-bold text-gray-800 border-b pb-2">🛡️ Matrice des Droits</h2>
+            <p class="text-xs text-gray-500">Gérez les permissions (<span class="font-semibold text-indigo-600">C</span>réer, <span class="font-semibold text-indigo-600">M</span>odifier, <span class="font-semibold text-indigo-600">Sup</span> Supprimer, <span class="font-semibold text-indigo-600">L</span>ire, <span class="font-semibold text-indigo-600">S</span>auvegarder, <span class="font-semibold text-indigo-600">I</span>mprimer) par rôle.</p>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-[11px] text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-100 text-gray-700 border-b">
+                            <th class="p-2">Ressource</th>
+                            <th class="p-2 text-center">Administrateur</th>
+                            <th class="p-2 text-center">Manager</th>
+                            <th class="p-2 text-center">Employé</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        <!-- 1. Comptes clients (ou clients) -->
+                        <tr>
+                            <td class="p-2 font-medium">Comptes clients</td>
+                            <td class="text-center p-2">
+                                <label class="inline-flex items-center gap-0.5 mr-1"><input type="checkbox" data-role="ADMIN" data-champ="creer" onchange="modifierDroit('ADMIN', null, 'CREER', this.checked)" class="w-3.5 h-3.5 text-indigo-600 rounded">C</label>
+                                <label class="inline-flex items-center gap-0.5 mr-1"><input type="checkbox" data-role="ADMIN" data-champ="modifier" onchange="modifierDroit('ADMIN', null, 'MODIFIER', this.checked)" class="w-3.5 h-3.5 text-indigo-600 rounded">M</label>
+                                <label class="inline-flex items-center gap-0.5 mr-1"><input type="checkbox" data-role="ADMIN" data-champ="supprimer" onchange="modifierDroit('ADMIN', null, 'SUPPRIMER', this.checked)" class="w-3.5 h-3.5 text-indigo-600 rounded">Sup</label>
+                                <label class="inline-flex items-center gap-0.5 mr-1"><input type="checkbox" data-role="ADMIN" data-champ="lire" onchange="modifierDroit('ADMIN', null, 'LIRE', this.checked)" class="w-3.5 h-3.5 text-indigo-600 rounded">L</label>
+                                <label class="inline-flex items-center gap-0.5 mr-1"><input type="checkbox" data-role="ADMIN" data-champ="sauvegarder" onchange="modifierDroit('ADMIN', null, 'SAUVEGARDER', this.checked)" class="w-3.5 h-3.5 text-indigo-600 rounded">S</label>
+                                <label class="inline-flex items-center gap-0.5"><input type="checkbox" data-role="ADMIN" data-champ="imprimer" onchange="modifierDroit('ADMIN', null, 'IMPRIMER', this.checked)" class="w-3.5 h-3.5 text-indigo-600 rounded">I</label>
+                                <div class="border-t my-1"></div>
+                                <label class="inline-flex items-center gap-0.5 mr-1"><input type="checkbox" data-role="ADMIN" data-ressource="clients" data-champ="clients" onchange="modifierDroit('ADMIN', 'clients', null, this.checked)" class="w-3.5 h-3.5 text-indigo-600 rounded">Clients</label>
+                            </td>
+                            <td class="text-center p-2">
+                                <label class="inline-flex items-center gap-0.5 mr-1"><input type="checkbox" data-role="MANAGER" data-champ="creer" onchange="modifierDroit('MANAGER', null, 'CREER', this.checked)" class="w-3.5 h-3.5 text-indigo-600 rounded">C</label>
+                                <label class="inline-flex items-center gap-0.5 mr-1"><input type="checkbox" data-role="MANAGER" data-champ="modifier" onchange="modifierDroit('MANAGER', null, 'MODIFIER', this.checked)" class="w-3.5 h-3.5 text-indigo-600 rounded">M</label>
+                                <label class="inline-flex items-center gap-0.5 mr-1"><input type="checkbox" data-role="MANAGER" data-champ="supprimer" onchange="modifierDroit('MANAGER', null, 'SUPPRIMER', this.checked)" class="w-3.5 h-3.5 text-indigo-600 rounded">Sup</label>
+                                <label class="inline-flex items-center gap-0.5 mr-1"><input type="checkbox" data-role="MANAGER" data-champ="lire" onchange="modifierDroit('MANAGER', null, 'LIRE', this.checked)" class="w-3.5 h-3.5 text-indigo-600 rounded">L</label>
+                                <label class="inline-flex items-center gap-0.5 mr-1"><input type="checkbox" data-role="MANAGER" data-champ="sauvegarder" onchange="modifierDroit('MANAGER', null, 'SAUVEGARDER', this.checked)" class="w-3.5 h-3.5 text-indigo-600 rounded">S</label>
+                                <label class="inline-flex items-center gap-0.5"><input type="checkbox" data-role="MANAGER" data-champ="imprimer" onchange="modifierDroit('MANAGER', null, 'IMPRIMER', this.checked)" class="w-3.5 h-3.5 text-indigo-600 rounded">I</label>
+                                <div class="border-t my-1"></div>
+                                <label class="inline-flex items-center gap-0.5 mr-1"><input type="checkbox" data-role="MANAGER" data-ressource="clients" data-champ="clients" onchange="modifierDroit('MANAGER', 'clients', null, this.checked)" class="w-3.5 h-3.5 text-indigo-600 rounded">Clients</label>
+                            </td>
+                            <td class="text-center p-2">
+                                <label class="inline-flex items-center gap-0.5 mr-1"><input type="checkbox" data-role="EMPLOYE" data-champ="creer" onchange="modifierDroit('EMPLOYE', null, 'CREER', this.checked)" class="w-3.5 h-3.5 text-indigo-600 rounded">C</label>
+                                <label class="inline-flex items-center gap-0.5 mr-1"><input type="checkbox" data-role="EMPLOYE" data-champ="modifier" onchange="modifierDroit('EMPLOYE', null, 'MODIFIER', this.checked)" class="w-3.5 h-3.5 text-indigo-600 rounded">M</label>
+                                <label class="inline-flex items-center gap-0.5 mr-1"><input type="checkbox" data-role="EMPLOYE" data-champ="supprimer" onchange="modifierDroit('EMPLOYE', null, 'SUPPRIMER', this.checked)" class="w-3.5 h-3.5 text-indigo-600 rounded">Sup</label>
+                                <label class="inline-flex items-center gap-0.5 mr-1"><input type="checkbox" data-role="EMPLOYE" data-champ="lire" onchange="modifierDroit('EMPLOYE', null, 'LIRE', this.checked)" class="w-3.5 h-3.5 text-indigo-600 rounded">L</label>
+                                <label class="inline-flex items-center gap-0.5 mr-1"><input type="checkbox" data-role="EMPLOYE" data-champ="sauvegarder" onchange="modifierDroit('EMPLOYE', null, 'SAUVEGARDER', this.checked)" class="w-3.5 h-3.5 text-indigo-600 rounded">S</label>
+                                <label class="inline-flex items-center gap-0.5"><input type="checkbox" data-role="EMPLOYE" data-champ="imprimer" onchange="modifierDroit('EMPLOYE', null, 'IMPRIMER', this.checked)" class="w-3.5 h-3.5 text-indigo-600 rounded">I</label>
+                                <div class="border-t my-1"></div>
+                                <label class="inline-flex items-center gap-0.5 mr-1"><input type="checkbox" data-role="EMPLOYE" data-ressource="clients" data-champ="clients" onchange="modifierDroit('EMPLOYE', 'clients', null, this.checked)" class="w-3.5 h-3.5 text-indigo-600 rounded">Clients</label>
+                            </td>
+                        </tr>
+                        <!-- 2. Paiements -->
+                        <tr>
+                            <td class="p-2 font-medium">Paiements</td>
+                            <td class="text-center p-2"><input type="checkbox" data-role="ADMIN" data-ressource="paiements" data-champ="paiements" onchange="modifierDroit('ADMIN', 'paiements', null, this.checked)" class="w-3.5 h-3.5 text-indigo-600 rounded"></td>
+                            <td class="text-center p-2"><input type="checkbox" data-role="MANAGER" data-ressource="paiements" data-champ="paiements" onchange="modifierDroit('MANAGER', 'paiements', null, this.checked)" class="w-3.5 h-3.5 text-indigo-600 rounded"></td>
+                            <td class="text-center p-2"><input type="checkbox" data-role="EMPLOYE" data-ressource="paiements" data-champ="paiements" onchange="modifierDroit('EMPLOYE', 'paiements', null, this.checked)" class="w-3.5 h-3.5 text-indigo-600 rounded"></td>
+                        </tr>
+                        <!-- 3. Produits -->
+                        <tr>
+                            <td class="p-2 font-medium">Produits</td>
+                            <td class="text-center p-2"><input type="checkbox" data-role="ADMIN" data-ressource="produits" data-champ="produits" onchange="modifierDroit('ADMIN', 'produits', null, this.checked)" class="w-3.5 h-3.5 text-indigo-600 rounded"></td>
+                            <td class="text-center p-2"><input type="checkbox" data-role="MANAGER" data-ressource="produits" data-champ="produits" onchange="modifierDroit('MANAGER', 'produits', null, this.checked)" class="w-3.5 h-3.5 text-indigo-600 rounded"></td>
+                            <td class="text-center p-2"><input type="checkbox" data-role="EMPLOYE" data-ressource="produits" data-champ="produits" onchange="modifierDroit('EMPLOYE', 'produits', null, this.checked)" class="w-3.5 h-3.5 text-indigo-600 rounded"></td>
+                        </tr>
+                        <!-- 4. Rapports financiers -->
+                        <tr>
+                            <td class="p-2 font-medium">Rapports financiers</td>
+                            <td class="text-center p-2"><input type="checkbox" data-role="ADMIN" data-ressource="rapports_financiers" data-champ="rapports_financiers" onchange="modifierDroit('ADMIN', 'rapports_financiers', null, this.checked)" class="w-3.5 h-3.5 text-indigo-600 rounded"></td>
+                            <td class="text-center p-2"><input type="checkbox" data-role="MANAGER" data-ressource="rapports_financiers" data-champ="rapports_financiers" onchange="modifierDroit('MANAGER', 'rapports_financiers', null, this.checked)" class="w-3.5 h-3.5 text-indigo-600 rounded"></td>
+                            <td class="text-center p-2"><input type="checkbox" data-role="EMPLOYE" data-ressource="rapports_financiers" data-champ="rapports_financiers" onchange="modifierDroit('EMPLOYE', 'rapports_financiers', null, this.checked)" class="w-3.5 h-3.5 text-indigo-600 rounded"></td>
+                        </tr>
+                        <!-- 5. Paramètres systèmes -->
+                        <tr>
+                            <td class="p-2 font-medium">Paramètres systèmes</td>
+                            <td class="text-center p-2"><input type="checkbox" data-role="ADMIN" data-ressource="parametres_systemes" data-champ="parametres_systemes" onchange="modifierDroit('ADMIN', 'parametres_systemes', null, this.checked)" class="w-3.5 h-3.5 text-indigo-600 rounded"></td>
+                            <td class="text-center p-2"><input type="checkbox" data-role="MANAGER" data-ressource="parametres_systemes" data-champ="parametres_systemes" onchange="modifierDroit('MANAGER', 'parametres_systemes', null, this.checked)" class="w-3.5 h-3.5 text-indigo-600 rounded"></td>
+                            <td class="text-center p-2"><input type="checkbox" data-role="EMPLOYE" data-ressource="parametres_systemes" data-champ="parametres_systemes" onchange="modifierDroit('EMPLOYE', 'parametres_systemes', null, this.checked)" class="w-3.5 h-3.5 text-indigo-600 rounded"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="toast-droit" class="text-xs text-center text-green-600 font-semibold h-4"></div>
+        </div>
+
+        <!-- 👉 COLONNE DROITE (2/3) : Bilan & Gestion des Mots de Passe Standards -->
+        <div class="lg:col-span-2 space-y-6">
+            
+            <!-- Entête et Statistiques -->
+            <div class="bg-white p-6 rounded-lg shadow-xl space-y-6">
+                <div class="flex justify-between items-center border-b pb-4">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-800">📊 Bilan Financier & Tableau de Bord</h1>
+                        <p class="text-xs text-gray-500">Données issues du domaine (`DashboardStats`)</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <a href="index.html" class="bg-gray-500 text-white px-3 py-1.5 rounded text-sm hover:bg-gray-600">Retour Dashboard</a>
+                    </div>
+                </div>
+
+                <!-- GRILLE DES 4 KPIS (DashboardStats) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-100 shadow-sm">
+                        <h3 class="text-xs font-semibold text-indigo-700 uppercase tracking-wider mb-1">Solde Actuel</h3>
+                        <p id="kpiCurrentBalance" class="text-xl font-bold text-indigo-900">Chargement...</p>
+                    </div>
+                    <div class="bg-amber-50 p-4 rounded-lg border border-amber-100 shadow-sm">
+                        <h3 class="text-xs font-semibold text-amber-700 uppercase tracking-wider mb-1">En attente</h3>
+                        <p id="kpiPendingCount" class="text-xl font-bold text-amber-900">Chargement...</p>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-lg border border-green-100 shadow-sm">
+                        <h3 class="text-xs font-semibold text-green-700 uppercase tracking-wider mb-1">Revenus Mois</h3>
+                        <p id="kpiMonthlyRevenue" class="text-xl font-bold text-green-900">Chargement...</p>
+                    </div>
+                    <div class="bg-blue-50 p-4 rounded-lg border border-blue-100 shadow-sm">
+                        <h3 class="text-xs font-semibold text-blue-700 uppercase tracking-wider mb-1">Croissance</h3>
+                        <p id="kpiActivityTrend" class="text-xl font-bold text-blue-900">Chargement...</p>
+                    </div>
+                </div>
+
+                <!-- TABLEAU RÉCAPITULATIF (recentActivities) -->
+                <div>
+                    <h3 class="text-lg font-bold text-gray-700 mb-2">Activités Récentes</h3>
+                    <div class="overflow-x-auto border rounded-lg">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-gray-100 border-b text-gray-700">
+                                <tr>
+                                    <th class="p-3">ID / Référence</th>
+                                    <th class="p-3">Description / Client</th>
+                                    <th class="p-3">Montant</th>
+                                    <th class="p-3">Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBilanBody" class="divide-y divide-gray-200">
+                                <tr><td colspan="4" class="p-4 text-center text-gray-500">Chargement des données...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SÉCURITÉ : Modification des Mots de Passe Standards (Admin uniquement) -->
+            <div class="bg-white p-6 rounded-lg shadow-xl border-l-4 border-red-600">
+                <h2 class="text-lg font-bold text-gray-800 mb-1">🔐 Administration : Mots de Passe Standards</h2>
+                <p class="text-xs text-gray-500 mb-4">Action strictement réservée à l'administrateur authentifié.</p>
+                
+                <div class="bg-gray-50 p-4 rounded border border-gray-200 space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">Sélectionner le rôle cible :</label>
+                        <select id="select-role-mdp" class="border p-2 w-full rounded bg-white text-sm">
+                            <option value="MANAGER">Manager</option>
+                            <option value="EMPLOYE">Employé</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">Nouveau mot de passe standard :</label>
+                        <input type="password" id="nouveau-mdp-standard" placeholder="Entrer le nouveau mot de passe..." class="border p-2 w-full rounded text-sm bg-white">
+                    </div>
+                    <button onclick="modifierMotDePasseStandardAdmin()" class="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded text-sm w-full cursor-pointer transition">
+                        Mettre à jour le mot de passe standard
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8080';
+
+        function obtenirHeadersSecurises() {
+            const token = localStorage.getItem('userToken');
+            const roleSelectionne = document.getElementById('operateurRole').value;
+            return {
+                'Content-Type': 'application/json',
+                'X-Auth-Role': roleSelectionne,
+                'Authorization': 'Bearer ' + (token || '')
+            };
+        }
+
+        function verifierAccesAdmin() {
+            const roleActif = document.getElementById('operateurRole').value;
+            const accessDeniedCard = document.getElementById('access-denied-card');
+            const bilanContent = document.getElementById('bilan-content');
+
+            if (roleActif === 'ADMIN') {
+                accessDeniedCard.classList.add('hidden');
+                bilanContent.classList.remove('hidden');
+                chargerDashboardStats();
+                chargerMatriceDroits(); // Chargement des cases en BDD
+            } else {
+                bilanContent.classList.add('hidden');
+                accessDeniedCard.classList.remove('hidden');
+            }
+        }
+
+        // Fonction pour charger et cocher automatiquement les cases depuis la BDD
+        async function chargerMatriceDroits() {
+            const token = localStorage.getItem('userToken');
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/droits`, {
+                    headers: {
+                        'Authorization': 'Bearer ' + (token || ''),
+                        'X-Auth-Role': 'ADMIN'
+                    }
+                });
+
+                if (response.ok) {
+                    const listeDroits = await response.json();
+                    // listeDroits est un tableau d'objets (ex: [{ role: 'EMPLOYE', creer: true, clients: false, ... }, ...])
+                    
+                    listeDroits.forEach(ligne => {
+                        const role = ligne.role || ligne.utilisateurs_id;
+                        if (!role) return;
+
+                        // Parcourir toutes les clés de l'objet (colonnes de la BDD)
+                        for (const [champ, valeur] of Object.entries(ligne)) {
+                            if (champ === 'role' || champ === 'utilisateurs_id') continue;
+
+                            // Rechercher la case correspondante via les attributs data-role et data-champ/data-ressource
+                            const checkbox = document.querySelector(`input[data-role="${role}"][data-champ="${champ}"], input[data-role="${role}"][data-ressource="${champ}"]`);
+                            if (checkbox) {
+                                checkbox.checked = Boolean(valeur);
+                            }
+                        }
+                    });
+                }
+            } catch (err) {
+                console.error("Impossible de charger la matrice des droits depuis le backend :", err);
+            }
+        }
+
+        // Modification d'un droit (envoie vers l'API /api/droits/modifier)
+        async function modifierDroit(roleCible, ressource, action, isGranted) {
+            const toast = document.getElementById('toast-droit');
+            const token = localStorage.getItem('userToken');
+
+            const payload = {
+                role: roleCible,
+                ressource: ressource,
+                action: action,
+                granted: isGranted
+            };
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/droits/modifier`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + (token || ''),
+                        'X-Auth-Role': 'ADMIN'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    toast.innerText = `✅ Droit mis à jour en BDD (${roleCible} -> ${ressource || action} : ${isGranted ? 'Accordé' : 'Révoqué'})`;
+                    setTimeout(() => { toast.innerText = ""; }, 4000);
+                } else {
+                    toast.innerText = `⚠️ Erreur serveur lors de la mise à jour des droits.`;
+                    setTimeout(() => { toast.innerText = ""; }, 4000);
+                }
+            } catch (err) {
+                console.warn("Erreur de communication réseau :", err);
+                toast.innerText = `❌ Impossible de joindre le serveur.`;
+                setTimeout(() => { toast.innerText = ""; }, 4000);
+            }
+        }
+
+        async function chargerDashboardStats() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/dashboard/stats`, { 
+                    headers: obtenirHeadersSecurises() 
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP: ${response.status}`);
+                }
+
+                const stats = await response.json();
+
+                // 1. currentBalance
+                const balance = stats.currentBalance !== undefined ? stats.currentBalance : 0;
+                document.getElementById('kpiCurrentBalance').innerText = `${parseFloat(balance).toFixed(2)} €`;
+
+                // 2. pendingTransactionsCount
+                const pendingCount = stats.pendingTransactionsCount !== undefined ? stats.pendingTransactionsCount : 0;
+                document.getElementById('kpiPendingCount').innerText = `${pendingCount} op.`;
+
+                // 3. monthlyRevenue
+                const monthlyRev = stats.monthlyRevenue !== undefined ? stats.monthlyRevenue : 0;
+                document.getElementById('kpiMonthlyRevenue').innerText = `${parseFloat(monthlyRev).toFixed(2)} €`;
+
+                // 4. activityTrendPercentage
+                const trend = stats.activityTrendPercentage !== undefined ? stats.activityTrendPercentage : 0;
+                const trendSign = trend >= 0 ? '+' : '';
+                const trendElement = document.getElementById('kpiActivityTrend');
+                trendElement.innerText = `${trendSign}${trend.toFixed(1)}%`;
+                trendElement.className = `text-xl font-bold ${trend >= 0 ? 'text-green-700' : 'text-red-700'}`;
+
+                // 5. recentActivities
+                const tbody = document.getElementById('tableBilanBody');
+                tbody.innerHTML = "";
+
+                const activities = stats.recentActivities;
+                if (activities && Array.isArray(activities) && activities.length > 0) {
+                    activities.forEach(act => {
+                        const tr = document.createElement('tr');
+                        tr.className = "hover:bg-gray-50 transition";
+                        
+                        const idRef = act.id || act.intentId || 'N/A';
+                        const desc = act.description || act.clientNom || act.nom || 'Transaction';
+                        const montant = act.montant !== undefined ? act.montant : (act.montantCentimes ? act.montantCentimes / 100 : 0);
+                        const statut = act.statut || act.status || 'Validé';
+
+                        tr.innerHTML = `
+                            <td class="p-3 font-mono text-xs text-gray-600">${idRef}</td>
+                            <td class="p-3 font-medium text-gray-800">${desc}</td>
+                            <td class="p-3 font-bold text-gray-800">${parseFloat(montant).toFixed(2)} €</td>
+                            <td class="p-3"><span class="bg-green-100 text-green-800 text-xs px-2.5 py-1 rounded-full font-semibold">${statut}</span></td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-500">Aucune activité récente trouvée.</td></tr>`;
+                }
+
+            } catch (e) {
+                console.error("Erreur lors du chargement des statistiques :", e);
+                document.getElementById('kpiCurrentBalance').innerText = "Erreur";
+                document.getElementById('kpiPendingCount').innerText = "Erreur";
+                document.getElementById('kpiMonthlyRevenue').innerText = "Erreur";
+                document.getElementById('kpiActivityTrend').innerText = "Erreur";
+                document.getElementById('tableBilanBody').innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-500">Erreur de communication avec l'API backend.</td></tr>`;
+            }
+        }
+
+        // Fonction pour modifier les mots de passe standards (Admin uniquement)
+        async function modifierMotDePasseStandardAdmin() {
+            const roleCible = document.getElementById('select-role-mdp').value;
+            const nouveauMdp = document.getElementById('nouveau-mdp-standard').value;
+            const token = localStorage.getItem('userToken');
+            const roleActif = document.getElementById('operateurRole').value;
+
+            if (roleActif !== 'ADMIN') {
+                alert("❌ Accès refusé : Seul l'administrateur peut modifier les mots de passe standards.");
+                return;
+            }
+
+            if (!nouveauMdp) {
+                alert("❌ Veuillez saisir un mot de passe valide.");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/auth/modifier-mdp-standard`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + (token || ''),
+                        'X-Auth-Role': 'ADMIN'
+                    },
+                    body: JSON.stringify({ roleCible, nouveauMdp })
+                });
+
+                if (response.ok) {
+                    alert(`✅ Le mot de passe standard pour le profil ${roleCible} a été mis à jour avec succès.`);
+                    document.getElementById('nouveau-mdp-standard').value = '';
+                } else {
+                    const errorText = await response.text();
+                    alert(`❌ Erreur lors de la modification : ${errorText}`);
+                }
+            } catch (err) {
+                console.error(err);
+                alert("❌ Erreur de communication avec le serveur backend.");
+            }
+        }
+
+        window.onload = function() {
+            verifierAccesAdmin();
+        };
+    </script>
+    
+</body>
+</html>

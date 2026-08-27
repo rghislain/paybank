@@ -27,4 +27,5 @@ public interface PersistancePaiementSPI {
     Map<String, Object> chercherParId2(UUID id);
     boolean estRapprochementValide(String idIntentAttendu, String idIntentReel, long montantAttenduCentimes, long montantReelCentimes, String stripeStatus);
     //List<Transaction> chargerTransactionsSupabase();
+    Map<String, Object> chercherParStripeId(String stripePaymentIntentId);
 }

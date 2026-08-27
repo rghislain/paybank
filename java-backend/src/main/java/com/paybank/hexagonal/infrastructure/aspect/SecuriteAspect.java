@@ -1,11 +1,16 @@
 package com.paybank.hexagonal.infrastructure.aspect;
 
+import com.paybank.hexagonal.adaptateurs.SupabaseUtilisateursAdaptateur;
+import com.paybank.hexagonal.configuration.ContexteSecurite;
 import com.paybank.hexagonal.domaine.Utilisateur;
 import com.paybank.hexagonal.domaine.annotation.Securise;
+import com.paybank.hexagonal.domaine.annotation.VerifierDroit;
+
 import jakarta.annotation.PostConstruct;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
@@ -15,6 +20,7 @@ import java.util.Arrays;
 
 import com.paybank.hexagonal.domaine.annotation.Securise;
 import com.paybank.hexagonal.domaine.controleurs.SecurityInterceptor;
+
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.JoinPoint;
@@ -186,6 +192,9 @@ public class SecuriteAspect {
 @Aspect
 @Component
 public class SecuriteAspect {
+	
+	@Autowired
+    private SupabaseUtilisateursAdaptateur utilisateursAdaptateur;
 
     @Before("@annotation(com.paybank.hexagonal.domaine.annotation.Securise)")
     public void verifierSecurite(JoinPoint joinPoint) {
@@ -212,7 +221,7 @@ public class SecuriteAspect {
             }
             throw new SecurityException("Accès refusé : utilisateur non authentifié.");
         }
-        
+         
         // 1. Récupération du rôle via le ThreadLocal (IHM)
         String roleActuel = SecurityInterceptor.getContextRole();
 
@@ -240,7 +249,29 @@ public class SecuriteAspect {
         }
     }
     
-    
+    @Before("@annotation(verifierDroit)")
+    public void verifierDroitAcces(JoinPoint joinPoint, VerifierDroit verifierDroit) {
+        // Récupérer l'ID de l'utilisateur connecté (via votre contexte de sécurité / session)
+        String utilisateurId = ContexteSecurite.getUtilisateurConnecteId();
+        
+        // Charger l'utilisateur pour obtenir ses droits frais en BDD
+        Utilisateur utilisateur = utilisateursAdaptateur.findById(utilisateurId)
+            .orElseThrow(() -> new SecurityException("Utilisateur non trouvé ou non authentifié"));
+
+        // Vérification dynamique selon l'action demandée
+        boolean estAutorise = switch (verifierDroit.action().toUpperCase()) {
+            case "CREER" -> utilisateur.isCreer();
+            case "LIRE" -> utilisateur.isLire();
+            case "MODIFIER" -> utilisateur.isModifier();
+            case "SUPPRIMER" -> utilisateur.isSupprimer();
+            default -> false;
+        };
+
+        if (!estAutorise) {
+            throw new SecurityException("Accès refusé : vous ne possédez pas le droit " + verifierDroit.action());
+        }
+    }
+      
     @Before("execution(* com.paybank.hexagonal.domaine.ServiceMultiUtilisateursPaiement.createUser(..)) && args(operator, utilisateur)")
     public void verifierInjection(Utilisateur operator, Utilisateur utilisateur) {
         if (utilisateur.getNom().contains("<script>") || utilisateur.getEmail().contains("';")) {

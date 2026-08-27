@@ -10,6 +10,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -199,6 +200,21 @@ public class SupabasePaiementAdaptateur implements PersistancePaiementSPI {
 	    boolean montantsEgaux = montantAttenduCentimes == montantReelCentimes;
 	    boolean stripeValide = "succeeded".equals(stripeStatus);
 	    return montantsEgaux && stripeValide;
+	}
+
+	@Override
+	public Map<String, Object> chercherParStripeId(String stripePaymentIntentId) {
+	    String sql = "SELECT client_id, montant_centimes FROM paiements WHERE stripe_payment_intent_id = ?";
+	    try {
+	        return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
+	            Map<String, Object> map = new HashMap<>();
+	            map.put("client_id", (UUID) rs.getObject("client_id"));
+	            map.put("montant_centimes", rs.getLong("montant_centimes"));
+	            return map;
+	        }, stripePaymentIntentId);
+	    } catch (Exception e) {
+	        return null; // Retourne null si aucun paiement ne correspond
+	    }
 	}
     
 }

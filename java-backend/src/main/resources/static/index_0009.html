@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="fr">
+	
+<head>
+    <meta charset="UTF-8">
+    <title>Page de Vente & Admin Stripe</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        /* Animation fluide de descente du haut vers le bas */
+        @keyframes slideDown {
+            0% {
+                transform: translateY(-120%);
+                opacity: 0;
+            }
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .animate-slide-down {
+            animation: slideDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 overflow-x-hidden">
+	
+	<!-- 1. Encart de Connexion qui descend par-dessus (Visible par défaut si non connecté) -->
+	<div id="login-section" class="fixed inset-0 z-50 flex items-start justify-center pt-24 bg-black/50 backdrop-blur-sm transition-opacity duration-500">
+	    <div id="login-card" class="bg-white p-8 rounded-lg shadow-2xl w-full max-w-sm animate-slide-down border-t-4 border-indigo-600">
+	        <h2 class="text-xl font-bold mb-2 text-gray-800">Connexion requise</h2>
+            <p class="text-xs text-gray-500 mb-4">Veuillez vous identifier pour débloquer l'interface.</p>
+	        <input type="email" id="login-email" placeholder="Email" class="border p-2 w-full mb-2 rounded bg-white">
+	        <input type="password" id="login-pass" placeholder="Mot de passe" class="border p-2 w-full mb-4 rounded bg-white">
+	        <button id="login-btn" onclick="tenterConnexion()" class="bg-indigo-600 hover:bg-indigo-700 text-white w-full py-2 rounded font-semibold cursor-pointer">
+	            Se connecter
+	        </button>
+	    </div>
+	</div>
+	
+	<!-- 2. La page principale (Visible en fond, mais bloquée tant que le login est actif) -->
+	<div id="main-content" class="bg-gray-100 p-8">
+	
+		<div class="max-w-6xl mx-auto mb-6 bg-white p-4 rounded-lg shadow border-l-4 border-indigo-600 flex flex-col sm:flex-row justify-between items-center gap-4">
+		    <div>
+		        <h3 class="font-bold text-gray-800">👤 Mon Profil & Rôle</h3>
+		        <p class="text-xs text-gray-500">Rôle actuel : <span id="role-actuel" class="font-bold text-indigo-600">Chargement...</span></p>
+		    </div>
+		    <div>
+		        <button onclick="deconnexion()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded text-sm font-semibold cursor-pointer">
+		            🚪 Se déconnecter
+		        </button>
+		    </div>
+		</div>
+	
+		
+    <div class="max-w-6xl mx-auto mb-6 bg-white p-4 rounded-lg shadow border-l-4 border-indigo-600 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div>
+            <h3 class="font-bold text-gray-800">🔐 Simulateur d'Opérateur (Sécurité Domaine)</h3>
+            <p class="text-xs text-gray-500">Modifiez le rôle pour tester les levées d'exceptions <code class="bg-gray-100 px-1 rounded">SecurityException</code> de votre domaine.</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <label for="operateurRole" class="text-sm font-semibold text-gray-700">Opérateur actif :</label>
+            <select id="operateurRole" class="border p-2 rounded bg-gray-50 font-medium text-sm">
+                <option value="ADMIN">ADMIN (Tous les droits)</option>
+                <option value="MANAGER">MANAGER (Pas de promotion ADMIN)</option>
+                <option value="EMPLOYE">EMPLOYE (Lecture seule / Droits restreints)</option>
+            </select>
+        </div>
+    </div>
+	
+    <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">	
+		<div class="bg-white p-6 rounded-lg shadow">
+				                <h2 class="text-xl font-bold mb-4">💳 Passer une commande</h2>				                
+				                <div class="mb-4">
+				                    <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Montant de la commande (en EUR)</label>
+				                    <input id="paiementMontant" type="number" step="0.01" placeholder="Ex: 45.00" class="border p-2 w-full rounded">
+				                </div>
+				                <div class="grid grid-cols-2 gap-2 mb-4">
+				                    <button onclick="initialiserFormulairePaiement()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded text-sm font-semibold cursor-pointer text-center">1. Charger le formulaire</button>
+				                    <button onclick="modifierMontantPaiementEnCours()" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-2 rounded text-sm font-semibold cursor-pointer text-center">Modifier Montant</button>
+				                </div>
+				                <div id="link-authentication-element" class="mb-2"></div>
+				                <div id="payment-element" class="mb-4"></div>				                
+				                <div class="flex gap-2">
+				                    <button id="submit-paiement" disabled class="bg-gray-400 text-white px-4 py-2 rounded w-full font-bold cursor-not-allowed opacity-50">2. Payer maintenant</button>
+				                    <button onclick="annulerPaiementEnCours()" class="bg-red-100 text-red-700 hover:bg-red-200 px-4 py-2 rounded font-semibold text-sm cursor-pointer">Annuler l'achat</button>
+				                </div>				                
+				                <div id="error-message" class="text-red-600 text-sm mt-2 font-semibold"></div>
+				            </div>							
+							
+										<div class="mb-8 rounded-lg overflow-hidden shadow-lg bg-white">
+										    <div class="relative h-48 sm:h-64 w-full">
+										        <img src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1200&auto=format&fit=crop" 
+										             alt="Intérieur d'un magasin de sport" 
+										             class="w-full h-full object-cover">
+										        <div class="absolute inset-0 bg-gradient-to-r from-black/70 to-transparent flex items-center p-6">
+										            <div class="text-white">
+										                <h1 class="text-2xl sm:text-3xl font-bold">Paybank & Paiements</h1>
+														<h1 class="text-2xl sm:text-3xl font-bold">Client: Magasin de sports</h1>
+														<p class="text-sm text-gray-200 mt-1">Gestion centralisée du catalogue et des transactions en temps réel.</p>
+										            </div>
+										        </div>
+										    </div>
+										</div>       
+        <div class="space-y-6">		
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-bold mb-4">👤 Gestion des Clients</h2>               
+				<div class="mb-3">
+				      <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Sélectionner un client existant</label>
+				      <select id="selectClientsExistants" onchange="remplirChampsClientDepuisSelection()" class="border p-2 w-full rounded bg-gray-50 text-sm font-medium">
+				           <option value="">-- Choisir un client dans la BDD --</option>
+				      </select>
+				</div>				
+                <label class="block text-xs font-bold uppercase text-gray-500 mb-1">ID Client (requis pour Modifier / Supprimer / Payer)</label>
+                <input id="clientId" type="text" placeholder="UUID du client" class="border p-2 w-full mb-2 rounded font-mono text-sm bg-gray-50">               
+                <input id="clientNom" type="text" placeholder="Nom complet" class="border p-2 w-full mb-2 rounded">
+                <input id="clientEmail" type="email" placeholder="Adresse Email" class="border p-2 w-full mb-4 rounded">              
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="creerClient()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold cursor-pointer text-center">Créer</button>
+                    <button onclick="modifierClient()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded font-semibold cursor-pointer text-center">Modifier</button>
+                    <button onclick="supprimerClient()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-semibold cursor-pointer text-center">Supprimer</button>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-bold mb-4">📦 Catalogue Produits & Tarifs</h2>               
+				<div class="mb-4 pb-4 border-b border-gray-100">
+				    <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Sélectionner un produit existant</label>
+				    <select id="selectProduitsExistants" onchange="remplirChampsProduitDepuisSelection()" class="border p-2 w-full rounded bg-gray-50 text-sm font-medium">
+				        <option value="">-- Choisir un produit pour modifier/supprimer --</option>
+				    </select>
+				</div>				
+                <label class="block text-xs font-bold uppercase text-gray-500 mb-1">ID Produit</label>
+                <input id="prodId" type="text" placeholder="UUID du produit" class="border p-2 w-full mb-2 rounded font-mono text-sm bg-gray-50">               
+                <input id="prodNom" type="text" placeholder="Nom du produit" class="border p-2 w-full mb-2 rounded">
+                <input id="prodPrix" type="number" step="0.01" placeholder="Prix en EUR" class="border p-2 w-full mb-4 rounded">               
+                <div class="flex flex-col gap-2">
+                    <button onclick="creerProduitEtTarif()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-bold cursor-pointer text-center">Créer Produit + Tarif</button>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="modifierProduit()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded font-semibold cursor-pointer text-center">Modifier</button>
+                        <button onclick="supprimerProduit()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-semibold cursor-pointer text-center">Supprimer</button>
+                    </div>
+                </div>
+            </div>
+        </div>		
+		<div class="bg-white p-6 rounded-lg shadow border-t-4 border-red-500">
+		    <h2 class="text-xl font-bold mb-1 text-gray-800">🛡️ Gestion des Salariés & Rôles</h2>
+		    <p class="text-xs text-gray-500 mb-4">Actions réservées à la gouvernance de la plateforme.</p>		    
+		    <div class="mb-6 pb-6 border-b border-gray-100">
+		        <h3 class="text-sm font-bold text-gray-700 mb-2">➕ 1. Créer un nouveau salarié</h3>
+		        <form id="form-creer-salarie" onsubmit="executerCreationSalarie(event)">
+		            <input type="text" id="creer-nom" placeholder="Nom complet" required class="border p-2 w-full mb-2 rounded text-sm">
+		            <input type="email" id="creer-email" placeholder="Adresse Email unique" required class="border p-2 w-full mb-2 rounded text-sm">
+		            <select id="creer-role" required class="border p-2 w-full mb-3 rounded bg-white text-sm">
+		                <option value="EMPLOYE">EMPLOYE</option>
+		                <option value="MANAGER">MANAGER</option>
+		                <option value="ADMIN">ADMIN</option>
+		            </select>
+		            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2 rounded w-full text-sm cursor-pointer transition-colors">
+		                Enregistrer le salarié en BDD
+		            </button>
+		        </form>
+		    </div>			
+			<div class="mb-4 pb-4 border-b border-gray-100">
+					<label class="block text-xs font-bold uppercase text-gray-500 mb-1">Sélectionner un salarié existant</label>
+					<select id="selectSalariesExistants" onchange="remplirChampsSalarieDepuisSelection()" class="border p-2 w-full rounded bg-gray-50 text-sm font-medium">
+						    <option value="">-- Choisir un salarié --</option>
+					</select>
+			</div>
+		    <div>
+		        <h3 class="text-sm font-bold text-gray-700 mb-2">🔄 2. Modifier les droits d'un salarié</h3>
+		        <form id="form-modifier-droits" onsubmit="executerModificationDroits(event)">
+		            <div class="mb-2">
+		                <label class="block text-xs font-bold uppercase text-gray-500 mb-1">ID (UUID) du salarié cible</label>
+		                <input type="text" id="input-id-cible" placeholder="UUID" required class="border p-2 w-full rounded font-mono text-sm bg-gray-50">
+		            </div>
+		            <div class="mb-2">
+		                <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Confirmer/Modifier son Nom</label>
+		                <input type="text" id="input-nom-cible" placeholder="Nom" required class="border p-2 w-full rounded text-sm">
+		            </div>
+		            <div class="mb-3">
+		                <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Attribuer un nouveau Rôle</label>
+		                <select id="select-nouveau-role" required class="border p-2 w-full rounded bg-white text-sm">
+		                    <option value="EMPLOYE">EMPLOYE</option>
+		                    <option value="MANAGER">MANAGER</option>
+		                    <option value="ADMIN">ADMIN</option>
+		                </select>
+		            </div>
+					<div class="mb-3">
+					    <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Nouveau mot de passe (optionnel)</label>
+					    <input type="password" id="input-nouveau-pass" placeholder="Laisser vide" class="border p-2 w-full rounded text-sm">
+					</div>
+		            <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded w-full text-sm cursor-pointer transition-colors">
+		                Mettre à jour les droits
+		            </button>
+		        </form>
+		    </div>
+		</div>		
+		<div class="bg-white p-6 rounded-lg shadow border-t-4 border-indigo-600 mb-6">
+					    <h2 class="text-xl font-bold mb-1 text-gray-800">📊 Rapprochement Bancaire</h2>
+					    <p class="text-xs text-gray-500 mb-4">Compare l'état de la comptabilité interne avec les relevés bancaires réels.</p>					    
+					    <button onclick="declencherRapprochementBancaire()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2 rounded w-full text-sm cursor-pointer transition-colors flex items-center justify-center gap-2">
+					        ⚡ Lancer l'analyse du rapprochement
+					    </button>					    
+					    <div id="zone-resultats-rapprochement" class="mt-4 hidden space-y-2 max-h-60 overflow-y-auto">
+					        <h3 class="text-xs font-bold uppercase text-gray-400">Anomalies & Écarts détectés</h3>
+					        <div id="liste-ecarts" class="space-y-1 text-xs"></div>
+					    </div>
+					</div>		
+        <div class="space-y-6">            
+            <div class="bg-gradient-to-r from-purple-700 to-indigo-800 text-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-semibold opacity-90">💰 Mon Solde Stripe (Test)</h2>
+                <p id="soldeAffichage" class="text-3xl font-bold mt-2">--,-- €</p>
+                <button onclick="chargerSolde()" class="mt-4 text-sm underline opacity-80 hover:opacity-100 cursor-pointer">Rafraîchir</button>
+            </div>
+    </div>
+</div>
+
+	<script>
+	        const API_BASE_URL = 'http://localhost:8080';
+	        const stripe = Stripe('pk_test_51TBX0dEWZ4iSroOBQM6eY1ctOZLa3ZtatCktZ9KiCArPkIvWwB4hdDBAO8WMJrCDqKEdL3NLAeMP2oQBmMaTjqXy00gSotvi8w');	        
+	        let elements;
+	        let currentPaymentIntentId = null;
+
+			function obtenirHeadersSecurises() {
+			            const token = localStorage.getItem('userToken');
+			            const roleSelectionne = document.getElementById('operateurRole').value;
+			            return {
+			                'Content-Type': 'application/json',
+			                'X-Auth-Role': roleSelectionne,
+			                'Authorization': 'Bearer ' + (token || '')
+			            };
+			}
+
+	        async function verifierReponse(response, succesMessage) {
+	            if (!response.ok) {
+	                try {
+	                    const errorData = await response.json();
+	                    if (errorData.message) {
+	                        alert(`❌ Erreur : ${errorData.message}`);
+	                        return null;
+	                    }
+	                } catch (e) {
+	                    const errorText = await response.text();
+	                    if (errorText) {
+	                        alert(`❌ Erreur brute : ${errorText}`);
+	                        return null;
+	                    }
+	                }
+	                alert(`❌ Erreur inconnue (HTTP ${response.status})`);
+	                return null;
+	            }
+	            if (succesMessage) alert(succesMessage);
+	            return response.json();
+	        }		
+
+	        document.addEventListener("DOMContentLoaded", () => {
+	            if (localStorage.getItem('userToken')) {
+	                basculerInterface(true);
+	                chargerProfil();
+	            } else {
+	                basculerInterface(false);
+	            }
+	            chargerListeClients();
+				chargerListeSalaries();
+				chargerListeProduits();
+	        });
+
+			async function chargerListeClients() {
+			    const select = document.getElementById('selectClientsExistants');
+			    try {
+			        const response = await fetch(`${API_BASE_URL}/api/clients`, {
+			            headers: obtenirHeadersSecurises()
+			        });			                
+			        if (!response.ok) return;			                
+			        const clients = await response.json();			                
+			        select.innerHTML = '<option value="">-- Choisir un client dans la BDD --</option>';			                
+			        clients.forEach(client => {
+			            const option = document.createElement('option');
+			            option.value = client.id;
+			            option.dataset.nom = client.nom;
+			            option.dataset.email = client.email;
+			            option.textContent = `${client.nom} (${client.email})`;
+			            select.appendChild(option);
+			        });
+			    } catch (err) {
+			        console.error("Erreur lors du chargement des clients :", err);
+			    }
+			}
+
+			function remplirChampsClientDepuisSelection() {
+			    const select = document.getElementById('selectClientsExistants');
+			    const selectedOption = select.options[select.selectedIndex];
+			    if (select.value) {
+			        document.getElementById('clientId').value = select.value;
+			        document.getElementById('clientNom').value = selectedOption.dataset.nom;
+			        document.getElementById('clientEmail').value = selectedOption.dataset.email;
+			    } else {
+			        document.getElementById('clientId').value = "";
+			        document.getElementById('clientNom').value = "";
+			        document.getElementById('clientEmail').value = "";
+			    }
+			}					
+
+			async function chargerListeSalaries() {
+			    const select = document.getElementById('selectSalariesExistants');
+			    try {
+			        const response = await fetch(`${API_BASE_URL}/api/utilisateurs`, {
+			            headers: obtenirHeadersSecurises()
+			        });			                
+			        if (!response.ok) return;			                
+			        const salaries = await response.json();
+			        select.innerHTML = '<option value="">-- Choisir un salarié --</option>';			                
+			        salaries.forEach(salarie => {
+			            const option = document.createElement('option');
+			            option.value = salarie.id;
+			            option.dataset.nom = salarie.nom;
+			            option.dataset.role = salarie.role;
+			            option.textContent = `${salarie.nom} (${salarie.email}) - [${salarie.role}]`;
+			            select.appendChild(option);
+			        });
+			    } catch (err) {
+			        console.error("Erreur chargement salariés :", err);
+			    }
+			}
+
+			function remplirChampsSalarieDepuisSelection() {
+			    const select = document.getElementById('selectSalariesExistants');
+			    const selectedOption = select.options[select.selectedIndex];			    
+			    if (select.value) {
+			        document.getElementById('input-id-cible').value = select.value;
+			        document.getElementById('input-nom-cible').value = selectedOption.dataset.nom;
+			        document.getElementById('select-nouveau-role').value = selectedOption.dataset.role;
+			    } else {
+			        document.getElementById('input-id-cible').value = "";
+			        document.getElementById('input-nom-cible').value = "";
+			    }
+			}			
+
+			async function declencherRapprochementBancaire() {
+			    const zoneResultats = document.getElementById('zone-resultats-rapprochement');
+			    const listeEcarts = document.getElementById('liste-ecarts');
+				const roleActif = document.getElementById("operateurRole").value;				
+			    listeEcarts.innerHTML = "";
+			    zoneResultats.classList.add('hidden');
+			    try {
+			        const response = await fetch(`${API_BASE_URL}/api/paiements/rapprochement`, {
+			            method: 'POST',
+						headers: {
+						          'Content-Type': 'application/json',
+						          'X-Auth-Role': roleActif 
+					    }
+			        });									
+			        if (!response.ok) {
+			            alert(`🚫 Échec du traitement (Code ${response.status}) Droits insuffisants`);
+			            return;
+			        }
+			        const matchResults = await response.json();
+			        zoneResultats.classList.remove('hidden');					
+					matchResults.forEach(res => {
+					    const item = document.createElement('div');
+					    item.className = "p-2 rounded border flex justify-between items-center mb-1 text-xs font-medium ";
+					    if (res.statut === "MATCH") {
+					        item.className += "bg-green-50 border-green-200 text-green-800";
+					        const montant = res.tCompta ? (res.tCompta.montantCentimes / 100).toFixed(2) : "0.00";
+					        const ref = res.tCompta ? (res.tCompta.reference || "Sans Ref") : "Sans Ref";
+					        item.innerHTML = `<span>🟢 <b>MATCH :</b> Validation Ok (${ref})</span><span class="font-mono font-bold">${montant}€</span>`;
+					        listeEcarts.appendChild(item);
+					    } 
+					    else if (res.statut === "MANQUANT") {
+					        item.className += "bg-amber-50 border-amber-200 text-amber-800";
+					        const idCompta = res.tCompta ? res.tCompta.id : "Inconnu";
+					        const montant = res.tCompta ? (res.tCompta.montantCentimes / 100).toFixed(2) : "0.00";
+					        item.innerHTML = `<span>⚠️ <b>MANQUANT :</b> Absent du relevé (ID: ${idCompta})</span><span class="font-mono font-bold">${montant}€</span>`;
+					        listeEcarts.appendChild(item);
+					    } 
+					    else if (res.statut === "INCONNU") {
+					        item.className += "bg-red-50 border-red-200 text-red-800";
+					        const refBanque = res.tBanque ? (res.tBanque.reference || 'Sans Ref') : "Inconnue";
+					        const montant = res.tBanque ? (res.tBanque.montantCentimes / 100).toFixed(2) : "0.00";
+					        item.innerHTML = `<span>🚨 <b>INCONNU :</b> Écriture bancaire non identifiée (Ref: ${refBanque})</span><span class="font-mono font-bold">${montant}€</span>`;
+					        listeEcarts.appendChild(item);
+					    }
+					});
+			    } catch (error) {
+			        console.error("Erreur durant le rendu HTML :", error);
+			    }
+			}			
+
+	        async function chargerSolde() {
+	            try {
+	                const response = await fetch(`${API_BASE_URL}/api/paiements/solde`, {
+	                    headers: obtenirHeadersSecurises()
+	                });
+	                if (!response.ok) return;
+	                const data = await response.json();
+	                document.getElementById('soldeAffichage').innerText = `${(data.disponible / 100).toFixed(2)} ${data.devise.toUpperCase()}`;
+	            } catch (err) {
+	                document.getElementById('soldeAffichage').innerText = "Erreur Connexion API";
+	            }
+	        }
+
+	        async function creerClient() {
+	            const nom = document.getElementById('clientNom').value;
+	            const email = document.getElementById('clientEmail').value;	            
+	            try {
+	                const response = await fetch(`${API_BASE_URL}/api/clients`, {
+	                    method: 'POST',
+	                    headers: obtenirHeadersSecurises(),
+	                    body: JSON.stringify({ nom, email })
+	                });	                
+	                const client = await verifierReponse(response, "Client créé avec succès !");
+	                if (client && client.id) document.getElementById('clientId').value = client.id;
+					chargerListeClients();
+				} catch (err) {
+	                alert("Impossible de joindre le serveur backend.");
+	            }
+	        }
+
+	        async function modifierClient() {
+	            const id = document.getElementById('clientId').value;
+	            const nom = document.getElementById('clientNom').value;
+	            const email = document.getElementById('clientEmail').value;          
+	            if(!id) return alert("Veuillez renseigner l'ID du client à modifier.");
+	            const response = await fetch(`${API_BASE_URL}/api/clients/${id}`, {
+	                method: 'PUT',
+	                headers: obtenirHeadersSecurises(),
+	                body: JSON.stringify({ nom, email })
+	            });
+	            await verifierReponse(response, 'Client modifié avec succès !');
+				chargerListeClients();
+			}
+
+	        async function supprimerClient() {
+	            const id = document.getElementById('clientId').value;
+	            if(!id) return alert("Veuillez renseigner l'ID du client à supprimer.");
+	            if(confirm("Supprimer définitivement ce client ?")) {
+	                const response = await fetch(`${API_BASE_URL}/api/clients/${id}`, { 
+	                    method: 'DELETE',
+	                    headers: obtenirHeadersSecurises()
+	                });
+	                if(response.ok) {
+	                    document.getElementById('clientId').value = "";
+	                    document.getElementById('clientNom').value = "";
+	                    document.getElementById('clientEmail').value = "";
+	                    alert('Client supprimé avec succès !');
+	                } else {
+	                    await verifierReponse(response);
+	                }
+	            }
+				chargerListeClients();
+	        }
+
+			async function chargerListeProduits() {
+			    const select = document.getElementById('selectProduitsExistants');
+			    try {
+			        const response = await fetch(`${API_BASE_URL}/api/produits`, {
+			            headers: obtenirHeadersSecurises()
+			        });			        
+			        if (!response.ok) return;			        
+			        const produits = await response.json();
+			        select.innerHTML = '<option value="">-- Choisir un produit --</option>';			        
+			        produits.forEach(p => {
+			            const prixEuros = (p.prixCentimes / 100).toFixed(2);
+			            const option = document.createElement('option');
+			            option.value = p.id;
+			            option.dataset.nom = p.nom;
+			            option.dataset.prix = prixEuros;
+			            option.textContent = `${p.nom} - ${prixEuros} €`;
+			            select.appendChild(option);
+			        });
+			    } catch (err) {
+			        console.error("Erreur chargement produits :", err);
+			    }
+			}
+			
+			function remplirChampsProduitDepuisSelection() {
+			    const select = document.getElementById('selectProduitsExistants');
+			    const selectedOption = select.options[select.selectedIndex];			    
+			    if (select.value) {
+			        document.getElementById('prodId').value = select.value;
+			        document.getElementById('prodNom').value = selectedOption.dataset.nom;
+			        document.getElementById('prodPrix').value = selectedOption.dataset.prix;
+			    } else {
+			        document.getElementById('prodId').value = "";
+			        document.getElementById('prodNom').value = "";
+			        document.getElementById('prodPrix').value = "";
+			    }
+			}
+
+			async function creerProduitEtTarif() {
+			            const nom = document.getElementById('prodNom').value;
+			            const prixEuro = document.getElementById('prodPrix').value;			            
+			            if(!nom || !prixEuro) {
+			                alert("Veuillez remplir le nom et le prix du produit.");
+			                return;
+			            }
+			            const prixCentimes = Math.round(parseFloat(prixEuro) * 100);
+			            try {
+			                const response = await fetch(`${API_BASE_URL}/api/produits`, {
+			                    method: 'POST',
+			                    headers: obtenirHeadersSecurises(),
+			                    body: JSON.stringify({ nom, prixCentimes })
+			                });			                
+			                const messageReponse = await response.text();
+			                if (response.ok) {
+			                    alert(`✅ Succès : ${messageReponse}`);
+			                } else {
+			                    alert(`❌ Erreur : ${messageReponse}`);
+			                }
+			            } catch (error) {
+			                alert("❌ Impossible de contacter le serveur.");
+			            }
+						chargerListeProduits();
+			}
+
+	        async function modifierProduit() {
+	            const id = document.getElementById('prodId').value;
+	            const nom = document.getElementById('prodNom').value;
+	            const prixEuro = document.getElementById('prodPrix').value;
+	            const prixCentimes = Math.round(parseFloat(prixEuro) * 100);
+	            if(!id) return alert("ID du produit requis.");
+	            const response = await fetch(`${API_BASE_URL}/api/produits/${id}`, {
+	                method: 'PUT',
+	                headers: obtenirHeadersSecurises(),
+	                body: JSON.stringify({ nom, prixCentimes })
+	            });
+				if (response.ok) {
+					    alert('Produit/Tarif mis à jour !');
+				} else {
+					    const errorMsg = await response.text();
+					    alert(`❌ Erreur : ${errorMsg}`);
+				}
+				chargerListeProduits();
+	        }
+
+	        async function supprimerProduit() {
+	            const id = document.getElementById('prodId').value;
+	            if(!id) return alert("ID du produit requis.");
+	            const response = await fetch(`${API_BASE_URL}/api/produits/${id}`, { 
+	                method: 'DELETE',
+	                headers: obtenirHeadersSecurises()
+	            });
+	            if(response.ok) {
+	                	document.getElementById('prodId').value = "";
+	                	alert('Produit supprimé avec succès.');
+	            } else {
+					   const errorMsg = await response.text();
+					   alert(`❌ Erreur : ${errorMsg}`);
+				}
+				chargerListeProduits();
+	        }
+
+	        async function initialiserFormulairePaiement() {
+	            const clientId = document.getElementById('clientId').value;
+	            const montantEuro = document.getElementById('paiementMontant').value;
+	            if(!clientId || !montantEuro) {
+	                return alert("Veuillez indiquer un ID Client valide et un montant.");
+	            }
+	            const montantCentimes = Math.round(parseFloat(montantEuro) * 100);
+	            const response = await fetch(`${API_BASE_URL}/api/paiements/intent`, {
+	                method: 'POST',
+	                headers: obtenirHeadersSecurises(),
+	                body: JSON.stringify({ clientId, montantCentimes })
+	            });	            
+	            const data = await verifierReponse(response);
+	            if(!data) return;
+	            const clientSecret = data.clientSecret;
+	            currentPaymentIntentId = data.paymentIntentId;
+	            elements = stripe.elements({ clientSecret });
+	            const paymentElement = elements.create("payment", { layout: "tabs" });
+	            paymentElement.mount("#payment-element");
+	            const btnPayer = document.getElementById('submit-paiement');
+	            btnPayer.disabled = false;
+	            btnPayer.className = "bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded w-full font-bold cursor-pointer opacity-100 text-center";	            
+	            btnPayer.onclick = executerPaiementFinal;
+	        }
+
+	        async function modifierMontantPaiementEnCours() {
+	            if(!currentPaymentIntentId) return alert("Aucun paiement en cours.");
+	            const montantEuro = document.getElementById('paiementMontant').value;
+	            const nouveauMontantCentimes = Math.round(parseFloat(montantEuro) * 100);
+	            const response = await fetch(`${API_BASE_URL}/api/paiements/intent/${currentPaymentIntentId}`, {
+	                method: 'PUT',
+	                headers: obtenirHeadersSecurises(),
+	                body: JSON.stringify({ nouveauMontantCentimes })
+	            });
+	            await verifierReponse(response, "Montant modifié avec succès !");
+	        }
+
+	        async function annulerPaiementEnCours() {
+	            if(!currentPaymentIntentId) return alert("Aucune transaction active.");	            
+	            const response = await fetch(`${API_BASE_URL}/api/paiements/intent/${currentPaymentIntentId}`, { 
+	                method: 'DELETE',
+	                headers: obtenirHeadersSecurises()
+	            });	            
+	            if(response.ok) {
+	                document.getElementById('payment-element').innerHTML = "";
+	                const btnPayer = document.getElementById('submit-paiement');
+	                btnPayer.disabled = true;
+	                btnPayer.className = "bg-gray-400 text-white px-4 py-2 rounded w-full font-bold cursor-not-allowed opacity-50";
+	                currentPaymentIntentId = null;
+	                alert("Paiement annulé.");
+	            }
+	        }
+
+			async function executerPaiementFinal(e) {
+			    e.preventDefault();
+			    const messageContainer = document.getElementById('error-message');
+			    messageContainer.innerText = "";
+			    const { error, paymentIntent } = await stripe.confirmPayment({
+			        elements,
+			        confirmParams: { return_url: window.location.origin + "/index.html" },
+			        redirect: "if_required"
+			    });
+			    if (error) {
+			        messageContainer.innerText = error.message;
+			        return;
+			    }
+			    if (paymentIntent && paymentIntent.status === "succeeded") {
+			        try {
+			            const response = await fetch(`${API_BASE_URL}/api/paiements/intent/${currentPaymentIntentId}/synchroniser`, {
+			                method: 'POST',
+			                headers: obtenirHeadersSecurises()
+			            });
+			            if (response.ok) {
+			                alert("💰 Paiement validé et enregistré en BDD !");
+			                document.getElementById('payment-element').innerHTML = "";
+			                document.getElementById('paiementMontant').value = "";
+			                const btnPayer = document.getElementById('submit-paiement');
+			                btnPayer.disabled = true;
+			                btnPayer.className = "bg-gray-400 text-white px-4 py-2 rounded w-full font-bold cursor-not-allowed opacity-50";
+			                currentPaymentIntentId = null;
+			                chargerSolde();
+			            }
+			        } catch (err) {
+			            console.error(err);
+			        }
+			    }
+			}	
+
+			async function chargerProfil() {
+			    const email = localStorage.getItem('userEmail');
+			    if (!email) return;
+
+			    try {
+			        const response = await fetch(`${API_BASE_URL}/api/utilisateurs/profile?email=${encodeURIComponent(email)}`, {
+			            headers: obtenirHeadersSecurises()
+			        });
+
+			        if (response.ok) {
+			            const data = await response.json();
+			            const roleRecupere = data.role || "EMPLOYE";
+			            document.getElementById("role-actuel").innerText = roleRecupere;
+			            const selectRole = document.getElementById('operateurRole');
+			            if (selectRole) selectRole.value = roleRecupere;
+			        } else {
+			            document.getElementById("role-actuel").innerText = "Inconnu";
+			        }
+			    } catch (err) {
+			        console.error("Erreur profil :", err);
+			    }
+			}
+
+			function deconnexion() {
+			    localStorage.clear();
+			    window.location.reload();
+			}
+			
+			/*				
+			function executerModificationDroits(event) {
+			    event.preventDefault();
+			    const idCible = document.getElementById('input-id-cible').value.trim();
+			    const nouveauNom = document.getElementById('input-nom-cible').value.trim();
+			    const nouveauRole = document.getElementById('select-nouveau-role').value;
+			    const roleActuelOperateur = document.getElementById('operateurRole').value; 
+				const password = document.getElementById('input-nouveau-pass').value;
+				
+				const url = `${API_BASE_URL}/api/utilisateurs/${idCible}`;		    
+				const payload = { nom: nouveauNom, role: nouveauRole };
+				if (password) payload.password = password;				
+				
+			    fetch(url, {
+			        method: 'PUT',
+			        headers: {
+			            'X-Auth-Role': roleActuelOperateur,
+			            'Content-Type': 'application/json',
+			            'Authorization': 'Bearer ' + (localStorage.getItem('userToken') || '')
+			        },
+					body: JSON.stringify(payload)
+			    })
+			    .then(async response => {
+					if (response.ok) {
+					    const user = await response.json().catch(() => ({}));
+					    alert(`🎉 Succès ! Droits mis à jour.`);
+					    document.getElementById('form-modifier-droits').reset();
+						chargerListeSalaries();
+					} else {
+			            const errorMessage = await response.text();
+			            alert(`🚫 Erreur :\n${errorMessage}`);
+			        }
+			    })
+			    .catch(error => {
+			        alert("❌ Impossible de joindre le serveur.");
+			    });				
+			}	
+			*/		
+			
+			/*
+			function executerModificationDroits(event) {
+			    event.preventDefault();
+			    const idCible = document.getElementById('input-id-cible').value.trim();
+			    const nouveauNom = document.getElementById('input-nom-cible').value.trim();
+			    const nouveauRole = document.getElementById('select-nouveau-role').value;
+			    const roleActuelOperateur = document.getElementById('operateurRole').value; 
+			    const password = document.getElementById('input-nouveau-pass').value.trim();
+			    
+			    if (!idCible) {
+			        alert("❌ Veuillez sélectionner ou renseigner l'ID du salarié à modifier.");
+			        return;
+			    }
+
+			    // URL pointant vers votre endpoint @PutMapping("/{id}")
+			    const url = `${API_BASE_URL}/api/utilisateurs/${idCible}`;        
+			    
+			    // Construction du payload adapté au backend
+			    const payload = { 
+			        nom: nouveauNom, 
+			        role: nouveauRole 
+			    };
+			    
+			    // N'ajoute le mot de passe que s'il a été saisi pour éviter d'écraser par du vide
+			    if (password) {
+			        payload.password = password;
+			    }                
+			    
+			    fetch(url, {
+			        method: 'PUT',
+			        headers: {
+			            'X-Auth-Role': roleActuelOperateur,
+			            'Content-Type': 'application/json',
+			            'Authorization': 'Bearer ' + (localStorage.getItem('userToken') || '')
+			        },
+			        body: JSON.stringify(payload)
+			    })
+			    .then(async response => {
+			        if (response.ok) {
+			            alert(`🎉 Succès ! Les droits du salarié ont été mis à jour.`);
+			            document.getElementById('form-modifier-droits').reset();
+			            document.getElementById('input-nouveau-pass').value = ""; // Nettoyer le champ mdp
+			            chargerListeSalaries(); // Rafraîchit le menu déroulant
+			        } else {
+			            const errorMessage = await response.text();
+			            alert(`🚫 Erreur serveur (${response.status}) :\n${errorMessage}`);
+			        }
+			    })
+			    .catch(error => {
+			        console.error("Erreur réseau :", error);
+			        alert("❌ Impossible de joindre le serveur.");
+			    });
+			}
+			*/
+			
+			// Fonction déclenchée lors de la soumission du formulaire HTML de modification des droits
+			/*			
+			function executerModificationDroits(event) {
+						    event.preventDefault();
+						    const idCible = document.getElementById('input-id-cible').value.trim();
+						    const nouveauNom = document.getElementById('input-nom-cible').value.trim();
+						    const nouveauRole = document.getElementById('select-nouveau-role').value;
+						    // CORRECTION : Extraction correcte via l'ID réel 'operateurRole' !
+						    const roleActuelOperateur = document.getElementById('operateurRole').value; 
+							const password = document.getElementById('input-nouveau-pass').value;
+							const url = `${API_BASE_URL}/api/utilisateurs/${idCible}/modifier-droits?nouveauNom=${encodeURIComponent(nouveauNom)}&nouveauRole=${nouveauRole}`;		    
+							const payload = {};
+							if (password) {
+							   payload.password = password; // Ajouté uniquement s'il a été saisi
+							}				
+							console.log("Envoi de la requête de modification de rôle...", url);
+						    fetch(url, {
+						        method: 'PUT',
+						        headers: {
+						            'X-Auth-Role': roleActuelOperateur,
+						            'Content-Type': 'application/json'
+						        },
+								body: JSON.stringify(payload)
+						    })
+						    .then(response => {
+								if (response.ok) {
+								    return response.json().then(user => {
+								        // Utilisation de user.nom au lieu de user.name
+								        alert(`🎉 Succès ! Les droits de l'utilisateur ont été mis à jour.\nNom : ${user.nom || nouveauNom}\nNouveau Rôle : ${user.role}\nStatut : ${user.active ? 'Actif 🟢' : 'Inactif 🔴'}`);
+								        document.getElementById('form-modifier-droits').reset();
+										chargerListeSalaries();
+								    });
+								} else {
+						            return response.text().then(errorMessage => {
+						                alert(`🚫 Erreur Sécurité / Métier :\n${errorMessage}`);
+						            });						
+						        }
+						    })
+						    .catch(error => {
+						        console.error("Erreur réseau :", error);
+						        alert("❌ Impossible de joindre le serveur backend sur le port 8080.");
+						    });				
+						}	
+						*/
+						
+						// Gestion Modification des Rôles (Exige la ré-authentification)
+						/*    
+						function executerModificationDroits(event) {
+						        event.preventDefault();
+						        pendingRoleUpdate = {
+						            id: document.getElementById('input-id-cible').value,
+						            nom: document.getElementById('input-nom-cible').value,
+						            role: document.getElementById('select-nouveau-role').value,
+						            password: document.getElementById('input-nouveau-pass').value
+						        };
+						        document.getElementById('relogin-banner').classList.remove('hidden');
+						 }
+						 */
+						
+						 
+						 function executerModificationDroits(event) {
+						     event.preventDefault();
+						     const idCible = document.getElementById('input-id-cible').value.trim();
+						     const nouveauNom = document.getElementById('input-nom-cible').value.trim();
+						     const nouveauRole = document.getElementById('select-nouveau-role').value;
+						     const roleActuelOperateur = document.getElementById('operateurRole').value; 
+						     const password = document.getElementById('input-nouveau-pass').value.trim();
+						     
+						     if (!idCible) {
+						         alert("❌ Veuillez sélectionner ou renseigner l'ID du salarié à modifier.");
+						         return;
+						     }
+
+						     const url = `${API_BASE_URL}/api/utilisateurs/${idCible}`;        
+						     
+						     const payload = { 
+						         nom: nouveauNom, 
+						         role: nouveauRole 
+						     };
+						     
+						     if (password) {
+						         payload.password = password;
+						     }                
+						     
+						     fetch(url, {
+						         method: 'PUT',
+						         headers: {
+						             'X-Auth-Role': roleActuelOperateur,
+						             'Content-Type': 'application/json',
+						             'Authorization': 'Bearer ' + (localStorage.getItem('userToken') || '')
+						         },
+						         body: JSON.stringify(payload)
+						     })
+						     .then(async response => {
+						         if (response.ok) {
+						             alert(`🎉 Succès ! Les droits du salarié ont été mis à jour.`);
+						             document.getElementById('form-modifier-droits').reset();
+						             document.getElementById('input-nouveau-pass').value = "";
+						             chargerListeSalaries();
+						         } else {
+						             const errorMessage = await response.text();
+						             alert(`🚫 Erreur serveur (${response.status}) :\n${errorMessage}`);
+						         }
+						     })
+						     .catch(error => {
+						         console.error("Erreur réseau :", error);
+						         alert("❌ Impossible de joindre le serveur.");
+						     });
+						 }
+						 
+
+						    async function validerReloginEtChangerRole() {
+						        const email = document.getElementById('confirm-email').value;
+						        const password = document.getElementById('confirm-pass').value;
+
+						        if (!email || !password) {
+						            return alert("Veuillez saisir votre email et votre mot de passe.");
+						        }
+
+						        try {
+						            const responseAuth = await fetch(`${API_BASE_URL}/api/auth/login`, {
+						                method: 'POST',
+						                headers: { 'Content-Type': 'application/json' },
+						                body: JSON.stringify({ email, password })
+						            });
+
+						            if (!responseAuth.ok) {
+						                return alert("Identifiants de confirmation incorrects.");
+						            }
+
+						            const responseUpdate = await fetch(`${API_BASE_URL}/api/utilisateurs/${pendingRoleUpdate.id}/droits`, {
+						                method: 'PUT',
+						                headers: obtenirHeadersSecurises(),
+						                body: JSON.stringify(pendingRoleUpdate)
+						            });
+
+						            if (responseUpdate.ok) {
+						                alert("✅ Rôle mis à jour avec succès. Veuillez vous reconnecter.");
+						                deconnexion();
+						            } else {
+						                const errText = await responseUpdate.text();
+						                alert(`❌ Échec de la mise à jour : ${errText}`);
+						            }
+						        } catch (err) {
+						            alert("❌ Erreur réseau.");
+						        }
+						    }		
+
+			function executerCreationSalarie(event) {
+			    event.preventDefault();
+			    const name = document.getElementById('creer-nom').value.trim();
+			    const email = document.getElementById('creer-email').value.trim();
+			    const role = document.getElementById('creer-role').value;
+			    const roleActuelOperateur = document.getElementById('operateurRole').value;
+			    
+			    fetch(`${API_BASE_URL}/api/utilisateurs`, {
+			        method: 'POST',
+			        headers: {
+			            'X-Auth-Role': roleActuelOperateur,
+			            'Content-Type': 'application/json',
+			            'Authorization': 'Bearer ' + (localStorage.getItem('userToken') || '')
+			        },
+			        body: JSON.stringify({ name, email, role })
+			    })
+			    .then(async response => {
+					if (response.ok) {
+					    const user = await response.json();
+					    alert(`🎉 Salarié créé avec succès !`);					    
+					    document.getElementById('input-id-cible').value = user.id;
+					    document.getElementById('input-nom-cible').value = user.nom || name;
+					    document.getElementById('select-nouveau-role').value = user.role || role;					    
+					    document.getElementById('form-creer-salarie').reset();
+					} else {
+			            const txt = await response.text();
+			            alert(`🚫 Échec :\n${txt}`);
+			        }
+					chargerListeSalaries();
+			    })
+			    .catch(error => {
+			        alert("❌ Impossible de joindre le serveur.");
+			    });
+			}			
+			
+			async function tenterConnexion() {
+			    const email = document.getElementById('login-email').value;
+			    const password = document.getElementById('login-pass').value;
+			    try {
+			        const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+			            method: 'POST',
+			            headers: { 'Content-Type': 'application/json' },
+			            body: JSON.stringify({ email, password })
+			        });
+			        if (response.ok) {
+			            const data = await response.json();
+			            localStorage.setItem('userToken', data.token);
+			            localStorage.setItem('userEmail', email);
+			            basculerInterface(true);
+			            chargerProfil();
+			        } else {
+			            alert("Identifiants incorrects ou compte inactif");
+			        }
+			    } catch (error) {
+			        alert("Erreur de connexion au serveur.");
+			    }
+            }
+            
+			function basculerInterface(estConnecte) {
+			    const loginSection = document.getElementById('login-section');
+			    if (estConnecte) {
+			        loginSection.classList.add('opacity-0', 'pointer-events-none');
+			        setTimeout(() => loginSection.classList.add('hidden'), 500);
+			    } else {
+			        loginSection.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+			    }
+			}
+	    </script>   
+</body>
+</html>

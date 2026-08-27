@@ -4,11 +4,13 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service; // Import ajouté
 
+import com.paybank.hexagonal.domaine.annotation.CheckDroit;
 import com.paybank.hexagonal.domaine.annotation.MasquerDonneesSensibles;
 import com.paybank.hexagonal.domaine.annotation.Securise;
 import com.paybank.hexagonal.entity.UtilisateurEntity;
@@ -28,6 +30,15 @@ public class ServiceMultiUtilisateursPaiement {
     
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
+    @Value("${app.passwords.admin:adminPass1}")
+    private String passwordAdminStandard;
+
+    @Value("${app.passwords.manager:managerPass1}")
+    private String passwordManagerStandard;
+
+    @Value("${app.passwords.employe:employePass1}")
+    private String passwordEmployeStandard;
+      
     public ServiceMultiUtilisateursPaiement(UtilisateurSPI utilisateurSPI, ClientSPI clientSPI) {
         this.utilisateurSPI = utilisateurSPI;
         this.clientSPI = clientSPI;
@@ -88,6 +99,7 @@ public class ServiceMultiUtilisateursPaiement {
     
     @Securise
     @MasquerDonneesSensibles
+    @CheckDroit(ressource = "utilisateurs")
     public Utilisateur createUser(Utilisateur operator, Utilisateur utilisateur) {
     	System.out.println(">>> Entrée dans createUser pour : " + utilisateur.getNom());
         
@@ -108,6 +120,7 @@ public class ServiceMultiUtilisateursPaiement {
     }
     
     @MasquerDonneesSensibles
+    @CheckDroit(ressource = "utilisateurs")
     public Utilisateur updateUser(Utilisateur operator, String userIdToUpdate, String newName, Role newRole, String newPassword) {
         validatePermission(operator, Permission.USER_UPDATE);
 
@@ -118,6 +131,11 @@ public class ServiceMultiUtilisateursPaiement {
         if (operator.getRole() == Role.MANAGER && newRole == Role.ADMIN) {
             throw new SecurityException("Droits insuffisants pour attribuer le rôle ADMIN");
         }
+        
+        // 🛡️ SÉCURITÉ : Vérification du mot de passe standard du rôle cible
+        if (!verifierMotDePasseStandard(newRole, newPassword)) {
+            throw new SecurityException("Mot de passe standard incorrect pour le rôle : " + newRole);
+        }
 
         user.setName(newName);
         user.setRole(newRole);
@@ -126,11 +144,15 @@ public class ServiceMultiUtilisateursPaiement {
             String hashedPassword = passwordEncoder.encode(newPassword);
             user.setPassword(hashedPassword);
         }
+        else {
+        	user.setPassword(passwordEncoder.encode(newPassword));
+        }
         
         return utilisateurSPI.save(user);
     }
 
     @MasquerDonneesSensibles
+    @CheckDroit(ressource = "utilisateurs")
     public void deactivateUser(Utilisateur operator, String userIdToDelete) {
         validatePermission(operator, Permission.USER_DELETE);
 
@@ -261,4 +283,45 @@ public class ServiceMultiUtilisateursPaiement {
         return utilisateurSPI.listerTousLesSalaries();
     }
     
+    // Méthode pour vérifier le mot de passe standard selon le rôle cible
+    /*
+    private boolean verifierMotDePasseStandard(Role role, String password) {
+        if (password == null) return false;
+        
+        switch (role) {
+            case ADMIN:
+                return password.equals("AdminPass123!"); // Mot de passe standard requis pour passer ADMIN
+            case MANAGER:
+                return password.equals("ManagerPass123!"); // Mot de passe standard requis pour passer MANAGER
+            case EMPLOYE:
+                return password.equals("employePass1");    // Mot de passe standard pour un employé
+            default:
+                return false;
+        }
+    }
+    */
+    
+    private boolean verifierMotDePasseStandard(Role role, String password) {
+        if (password == null) return false;
+        
+        switch (role) {
+            case ADMIN:
+                return password.equals(passwordAdminStandard);
+            case MANAGER:
+                return password.equals(passwordManagerStandard);
+            case EMPLOYE:
+                return password.equals(passwordEmployeStandard);
+            default:
+                return false;
+        }
+    }
+
+    public void basculerDroitPourRole(Role role, String nomDroit, boolean valeur) {
+        // Optionnel : Vous pouvez ajouter une vérification de sécurité ici si besoin 
+        // (ex: s'assurer que l'opérateur connecté a le droit de modifier les permissions)
+        
+        // On délègue l'action au port (SPI) qui va exécuter la mise à jour en base de données
+        utilisateurSPI.basculerDroitPourRole(role, nomDroit, valeur);
+    }
+	 
 }

@@ -1,8 +1,11 @@
 package com.paybank.hexagonal.domaine.controleurs;
 
+import com.paybank.hexagonal.DTO.SecuredPermission;
 import com.paybank.hexagonal.domaine.MatchResult;
 import com.paybank.hexagonal.domaine.ServiceGestionPaiement;
 import com.stripe.exception.StripeException;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -25,12 +28,25 @@ public class PaiementControleur {
     }
 
     // ➕ NOUVEL ENDPOINT DEMANDÉ PAR L'IHM POUR LE RAPPROCHEMENT BANCAIRE
+    
+    @SecuredPermission(ressource = "paiements", action = "CREER")
     @PostMapping("/rapprochement")
-    public ResponseEntity<List<MatchResult>> executerRapprochementBancaire() throws StripeException {
-        // Le contrôleur appelle la logique globale que nous avons implémentée et testée
-        List<MatchResult> resultats = gestionPaiementService.executerRapprochementDepuisSources();
-        return ResponseEntity.ok(resultats);
-    }
+    public ResponseEntity<?> executerRapprochementBancaire(@RequestHeader(value = "X-Auth-Role", required = false) String role) throws StripeException {
+    	// 1. Bloquer l'employé (ou si aucun rôle n'est fourni)
+        if (role == null || role.trim().isEmpty() || "EMPLOYE".equalsIgnoreCase(role)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body("Accès refusé : Un employé n'a pas les droits pour effectuer le rapprochement bancaire.");
+        }
+        try {
+	    	// Le contrôleur appelle la logique globale que nous avons implémentée et testée
+	        List<MatchResult> resultats = gestionPaiementService.executerRapprochementDepuisSources();
+	        return ResponseEntity.ok(resultats);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Erreur interne : " + e.getMessage());
+        }
+	}
+	
     
     
     /*
@@ -53,13 +69,15 @@ public class PaiementControleur {
         }
     }
     */
-
+    
+    @SecuredPermission(ressource = "paiements", action = "CREER")
     @PostMapping("/intent")
     public ResponseEntity<Map<String, String>> creerIntent(@RequestBody CreationIntentDto dto) throws StripeException {
         Map<String, String> res = gestionPaiementService.creerIntentionPaiement(dto.clientId(), dto.montantCentimes());
         return ResponseEntity.ok(res);
     }
 
+    @SecuredPermission(ressource = "paiements", action = "MODIFIER")
     @PutMapping("/intent/{id}")
     public ResponseEntity<Void> modifierIntent(@PathVariable String id, @RequestBody ModificationIntentDto dto) throws StripeException {
         gestionPaiementService.modifierMontantPaiement(id, dto.nouveauMontantCentimes());

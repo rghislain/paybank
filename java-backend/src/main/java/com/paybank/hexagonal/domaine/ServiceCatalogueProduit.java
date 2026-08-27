@@ -1,5 +1,6 @@
 package com.paybank.hexagonal.domaine;
 
+import com.paybank.hexagonal.domaine.annotation.CheckDroit;
 import com.paybank.hexagonal.domaine.controleurs.SecurityInterceptor;
 import com.paybank.hexagonal.ports.ProduitSPI;
 import com.stripe.exception.StripeException;
@@ -31,6 +32,7 @@ public class ServiceCatalogueProduit {
     }
 
     // C - CRÉER PRODUIT + TARIF
+    @CheckDroit(ressource = "produits")
     public Produit creerProduit(String nom, long prixCentimes) throws StripeException {
     	String role = SecurityInterceptor.getContextRole();
     	if (!"MANAGER".equals(role)) {
@@ -63,6 +65,7 @@ public class ServiceCatalogueProduit {
     }
 
     // U - MODIFIER (Nom et/ou Nouveau Prix)
+    @CheckDroit(ressource = "produits")
     public void modifierProduit(UUID id, String nouveauNom, long nouveauPrixCentimes) throws StripeException {
     	String role = SecurityInterceptor.getContextRole();
     	if (!"MANAGER".equals(role)) {
@@ -95,6 +98,7 @@ public class ServiceCatalogueProduit {
     }
 
     // D - SUPPRIMER
+    @CheckDroit(ressource = "produits")
     public void supprimerProduit(UUID id) throws StripeException {
     	String role = SecurityInterceptor.getContextRole();
     	if (!"MANAGER".equals(role)) {

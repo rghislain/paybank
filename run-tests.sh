@@ -36,7 +36,8 @@ run_test "PaiementIntegrationTest"
 run_test "MultiUtilisateursPaiementTest"
 run_test "RapprochementServiceGestionPaiementTest"
 run_test "JournalisationBDDAspectTest"
-run_test "SecuriteAspectTest" # 👈 Ajouté proprement ici !
+run_test "SecuriteAspectTest"
+run_test "FinancialReportControllerTest"
 
 # --- Résultat Global ---
 echo "========================================"

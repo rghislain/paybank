@@ -1,6 +1,7 @@
 package com.paybank.hexagonal.domaine;
 
 import com.paybank.hexagonal.domaine.annotation.AgainstBruteForce;
+import com.paybank.hexagonal.domaine.annotation.CheckDroit;
 import com.paybank.hexagonal.domaine.annotation.MasquerDonneesSensibles;
 import com.paybank.hexagonal.domaine.annotation.Securise;
 import com.paybank.hexagonal.domaine.controleurs.SecurityInterceptor;
@@ -15,6 +16,8 @@ import com.stripe.param.PaymentIntentUpdateParams;
 
 import org.aspectj.lang.annotation.Before;
 import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -38,6 +41,7 @@ public class ServiceGestionPaiement {
     
     // C - CRÉER UN INTENT DE PAIEMENT
     @MasquerDonneesSensibles
+    @CheckDroit(ressource = "paiements")
     public Map<String, String> creerIntentionPaiement(UUID clientId, long montantCentimes) throws StripeException {
     	String role = SecurityInterceptor.getContextRole();
     	if (!"EMPLOYE".equals(role)) {
@@ -82,6 +86,7 @@ public class ServiceGestionPaiement {
 
     // U - MODIFIER LE MONTANT D'UN PAIEMENT EN COURS
     @MasquerDonneesSensibles
+    @CheckDroit(ressource = "paiements")
     public void modifierMontantPaiement(String stripePaymentIntentId, long nouveauMontantCentimes) throws StripeException {
     	String role = SecurityInterceptor.getContextRole();
     	if (!"EMPLOYE".equals(role)) {
@@ -106,6 +111,7 @@ public class ServiceGestionPaiement {
 
     // D - SUPPRIMER / ANNULER UN PAIEMENT
     @MasquerDonneesSensibles
+    @CheckDroit(ressource = "paiements")
     public void annulerPaiement(String stripePaymentIntentId) throws StripeException {
     	String role = SecurityInterceptor.getContextRole();
     	if (!"EMPLOYE".equals(role)) {
@@ -143,10 +149,36 @@ public class ServiceGestionPaiement {
             // Note : Utilisez la méthode de mise à jour appropriée de votre persistancePaiementSPI 
             // Si vous n'avez pas de méthode specifique, vous pouvez appeler une méthode générique de statut :
             persistancePaiementSPI.mettreAJourStatutLocal(intent.getId(), intent.getStatus());
+        
+         // 3. 🚀 RÉCUPÉRATION DES INFOS POUR LE BILAN COMPTABLE
+            // On récupère le paiement local pour avoir le clientId et le montant
+            // Note : Il faut s'assurer que persistancePaiementSPI possède une méthode chercherParStripeId
+            Map<String, Object> paiementLocal = persistancePaiementSPI.chercherParStripeId(stripePaymentIntentId);
+            
+            if (paiementLocal != null) {
+                UUID clientId = (UUID) paiementLocal.get("client_id");
+                long montantCentimes = ((Number) paiementLocal.get("montant_centimes")).longValue();
+                
+                // Création de l'écriture comptable (Identique à ce qu'on fait dans ServicePaiementImplementation)
+                BigDecimal montantDecimal = BigDecimal.valueOf(montantCentimes).movePointLeft(2);
+                
+                TransactionDetail nouvelleLigneBilan = new TransactionDetail(
+                    UUID.randomUUID(),  
+                    LocalDate.now(), 
+                    "Achat - Paiement Stripe validé (" + intent.getId() + ")",
+                    montantDecimal,
+                    false,
+                    "En attente"
+                );
+                
+                // Enregistrement dans la table des transactions pour le Bilan
+                transactionRepositorySPI.enregistrer(clientId, nouvelleLigneBilan);
+            }
         }
     }
     
     @MasquerDonneesSensibles
+    @CheckDroit(ressource = "paiements")
     public void effectuerRapprochement(UUID paiementId, String stripePaymentIntentId) throws StripeException {
         // A. Récupérer le paiement local sous forme de Map
         Map<String, Object> paiementLocal = persistancePaiementSPI.chercherParId2(paiementId);

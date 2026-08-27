@@ -12,13 +12,14 @@ import com.paybank.hexagonal.ports.ExecutionPaiementUseCase;
 import com.paybank.hexagonal.ports.ModifierPaiementUseCase;
 import com.paybank.hexagonal.ports.PasserelleBancaireSPI;
 import com.paybank.hexagonal.ports.PersistancePaiementSPI;
+import com.paybank.hexagonal.ports.TransactionRepositorySPI;
 
 @Configuration
 public class PaiementConfiguration {
 	@Bean
-    public ExecutionPaiementUseCase executionPaiementUseCase(PersistancePaiementSPI persistancePaiementSPI, PasserelleBancaireSPI passerelleBancaireSPI) {
+    public ExecutionPaiementUseCase executionPaiementUseCase(PersistancePaiementSPI persistancePaiementSPI, PasserelleBancaireSPI passerelleBancaireSPI, TransactionRepositorySPI transactionRepositorySPI) {
         // Instanciation du code métier pur avec ses deux adaptateurs
-        return new ServicePaiementImplementation(persistancePaiementSPI, passerelleBancaireSPI);
+        return new ServicePaiementImplementation(persistancePaiementSPI, passerelleBancaireSPI, transactionRepositorySPI);
     }
 	
 	@Bean

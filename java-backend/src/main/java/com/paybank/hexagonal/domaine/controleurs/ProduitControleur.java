@@ -1,6 +1,7 @@
 package com.paybank.hexagonal.domaine.controleurs;
 
 import com.paybank.hexagonal.domaine.ServiceCatalogueProduit;
+import com.paybank.hexagonal.DTO.SecuredPermission;
 import com.paybank.hexagonal.domaine.Produit;
 import com.stripe.exception.StripeException;
 
@@ -76,6 +77,7 @@ public class ProduitControleur {
     }
     */
     
+    @SecuredPermission(ressource = "produits", action = "CREER")
     @PostMapping
     public ResponseEntity<String> creer(@RequestBody ProduitDto dto) {
         try {
@@ -88,6 +90,7 @@ public class ProduitControleur {
         }
     }
 
+    @SecuredPermission(ressource = "produits", action = "MODIFIER")
     @PutMapping("/{id}")
     public ResponseEntity<String> modifier(@PathVariable UUID id, @RequestBody ProduitDto dto) {
         try {
@@ -108,9 +111,12 @@ public class ProduitControleur {
     }
     */
     
+    @SecuredPermission(ressource = "produits", action = "SUPPRIMER")
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> supprimer(@PathVariable UUID id) {
-        try {
+    public ResponseEntity<String> supprimer(@PathVariable UUID id,
+    		@RequestHeader(value = "X-Auth-Role", required = false) String role) {
+        /*
+    	try {
             serviceCatalogueProduit.supprimerProduit(id);
             return ResponseEntity.ok().build();
         } catch (IllegalArgumentException e) {
@@ -118,6 +124,32 @@ public class ProduitControleur {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+        */
+    	try {
+            // 1. Vérification des rôles (Exemple : interdire si c'est un employé ou si aucun statut)
+            if (role == null || role.isEmpty() || "EMPLOYE".equals(role)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("Erreur : Vous n'avez pas les droits nécessaires pour supprimer un produit.");
+            }
+
+            // 2. Appel du service de suppression
+            serviceCatalogueProduit.supprimerProduit(id);
+            return ResponseEntity.ok("Produit supprimé avec succès.");
+            
+        } catch (IllegalArgumentException e) {
+            // Erreur métier (ex: produit introuvable)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+            
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            // Erreur critique : Le produit est lié à des paiements/transactions existants
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body("Impossible de supprimer ce produit : il est déjà associé à des paiements existants.");
+                
+        } catch (Exception e) {
+            // Erreur technique générale
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Erreur interne : " + e.getMessage());
         }
     }
     
