@@ -12,5 +12,5 @@ import java.util.UUID;
 public interface RessourcesRepository extends JpaRepository<RessourcesEntity, UUID> {
     
     // Permet de retrouver les ressources liées à un ID utilisateur (ex: "admin@paybank.com")
-    Optional<RessourcesEntity> findByUtilisateursId(String utilisateursId);
+    //Optional<RessourcesEntity> findByUtilisateursId(String utilisateursId);
 }

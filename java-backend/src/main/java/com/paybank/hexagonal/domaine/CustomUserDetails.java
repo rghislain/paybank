@@ -1,9 +1,13 @@
 package com.paybank.hexagonal.domaine;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import com.paybank.hexagonal.entity.UtilisateurEntity;
+import com.paybank.hexagonal.repository.UtilisateurRepository;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.UUID;
 
 public class CustomUserDetails implements UserDetails {

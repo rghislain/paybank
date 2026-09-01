@@ -71,17 +71,17 @@ public class Utilisateur {
 	public void setEmail(String string) {
 		this.email=string;
 	}
-	public void setId(String uuid) {
-		this.id=uuid;
-	}
-	public void setActif(boolean b) {
-		this.actif=b;
-	}	
-	public void setPassword(String password) {
-        this.password=password;
-    }
-	public boolean isLire() { return lire; }
-    public void setLire(boolean lire) { this.lire = lire; }
+	
+    public void setId(String id) { this.id = id; }
+
+    public void setNom(String nom) { this.nom = nom; }
+
+     public void setPassword(String password) { this.password = password; }
+
+    public boolean getActif() { return actif; }
+    public boolean isActif() { return actif; }
+   
+    public void setActif(boolean actif) { this.actif = actif; }
 
     public boolean isCreer() { return creer; }
     public void setCreer(boolean creer) { this.creer = creer; }
@@ -92,10 +92,13 @@ public class Utilisateur {
     public boolean isSupprimer() { return supprimer; }
     public void setSupprimer(boolean supprimer) { this.supprimer = supprimer; }
 
+    public boolean isLire() { return lire; }
+    public void setLire(boolean lire) { this.lire = lire; }
+
     public boolean isSauvegarder() { return sauvegarder; }
     public void setSauvegarder(boolean sauvegarder) { this.sauvegarder = sauvegarder; }
 
     public boolean isImprimer() { return imprimer; }
     public void setImprimer(boolean imprimer) { this.imprimer = imprimer; }
-
+    
 }

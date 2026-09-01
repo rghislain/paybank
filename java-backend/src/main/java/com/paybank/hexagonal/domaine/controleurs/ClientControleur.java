@@ -20,7 +20,7 @@ import java.util.UUID;
 	    //allowedHeaders = {"X-Auth-Role", "Content-Type", "Authorization"},
 	    //methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE}
 	//)
-@CrossOrigin(origins = "*", allowedHeaders = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE})
+//@CrossOrigin(origins = "*", allowedHeaders = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE})
 public class ClientControleur {
 
     private ServiceGestionClient gestionClientService = null;
@@ -37,11 +37,12 @@ public class ClientControleur {
     }
     */
     
-    @SecuredPermission(ressource = "clients", action = "CREER")
+    //@SecuredPermission(ressource = "clients", action = "creer")
     @PostMapping
     public ResponseEntity<Client> creer(
             @RequestBody ClientDto dto, 
-            @RequestHeader(value = "X-Auth-Role", required = false) String role) throws StripeException {
+            //@RequestHeader(value = "X-Auth-Role", required = false) 
+            String role) throws StripeException {
         // On passe maintenant le rôle reçu au service de domaine !
         Client client = gestionClientService.creerClient(dto.nom(), dto.email(), role);
         return ResponseEntity.ok(client);
@@ -69,12 +70,13 @@ public class ClientControleur {
     }
     */
     
-    @SecuredPermission(ressource = "clients", action = "MODIFIER")
+    //@SecuredPermission(ressource = "clients", action = "modifier")
     @PutMapping("/{id}")
     public ResponseEntity<?> modifier(
             @PathVariable UUID id, 
             @RequestBody ClientDto dto,
-            @RequestHeader(value = "X-Auth-Role", required = false) String role) throws StripeException {
+            //@RequestHeader(value = "X-Auth-Role", required = false) 
+            String role) throws StripeException {
         gestionClientService.modifierClient(id, dto.nom(), dto.email(), role);
         return ResponseEntity.ok("Client modifié avec succès");//.build();
     }
@@ -127,11 +129,12 @@ public class ClientControleur {
     }
     */
     
-    @SecuredPermission(ressource = "clients", action = "SUPPRIMER")
+    //@SecuredPermission(ressource = "clients", action = "supprimer")
     @DeleteMapping("/{id}")
     public ResponseEntity<MessageResponse> supprimerClient(
             @PathVariable UUID id, 
-            @RequestHeader(value = "X-Auth-Role", required = false) String role) {
+            //@RequestHeader(value = "X-Auth-Role", required = false) 
+            String role) {
         try {
             // Appel de votre service
             gestionClientService.supprimerClient(id, role);

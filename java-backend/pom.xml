@@ -17,6 +17,7 @@
 	<description>Projet de paiement bancaire en ligne avec architecture hexagonale</description>
 
 	<properties>
+    <dependency-groupId>io.jsonwebtoken:jjwt-api</dependency-groupId>
 		<java.version>17</java.version>
 	</properties>
 
@@ -76,6 +77,39 @@
     		<scope>runtime</scope>
     		<optional>true</optional>
 		</dependency>
+		
+		<!-- Apache PDFBox pour la génération et l'impression des PDF -->
+    	<dependency>
+        	<groupId>org.apache.pdfbox</groupId>
+        	<artifactId>pdfbox</artifactId>
+        	<version>3.0.1</version>
+    	</dependency>
+
+    	<!-- Spring Boot Starter Mail pour l'envoi des e-mails avec pièces jointes -->
+   	 	<dependency>
+        	<groupId>org.springframework.boot</groupId>
+        	<artifactId>spring-boot-starter-mail</artifactId>
+    	</dependency>
+    	
+    	<dependency>
+	        <groupId>io.jsonwebtoken</groupId>
+	        <artifactId>jjwt-api</artifactId>
+	        <version>0.12.5</version>
+    	</dependency>
+    	<dependency>
+	        <groupId>io.jsonwebtoken</groupId>
+	        <artifactId>jjwt-impl</artifactId>
+	        <version>0.12.5</version>
+	        <scope>runtime</scope>
+    	</dependency>
+    	<dependency>
+        	<groupId>io.jsonwebtoken</groupId>
+        	<artifactId>jjwt-jackson</artifactId>
+        	<version>0.12.5</version>
+        	<scope>runtime</scope>
+    	</dependency>
+    	
+		
 	</dependencies>
 
 	<build>

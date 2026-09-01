@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Page de Vente & Admin Paybank</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body class="bg-gray-100">
+
+    <!-- 1. ENCART MODAL DE CONNEXION INITIALE -->
+    <div id="login-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-lg shadow-2xl w-96 border border-gray-200">
+            <h2 class="text-2xl font-bold mb-2 text-gray-800">Connexion Paybank</h2>
+            <p class="text-sm text-gray-500 mb-6">Veuillez vous identifier pour accéder au système.</p>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Email</label>
+                    <input type="email" id="login-email" class="w-full mt-1 p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none" placeholder="employe@paybank.com">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Mot de passe</label>
+                    <input type="password" id="login-pass" class="w-full mt-1 p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none" placeholder="••••••••">
+                </div>
+                <button onclick="tenterConnexion()" class="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 font-semibold transition cursor-pointer">
+                    Se connecter
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE VALIDATION DE MOT DE PASSE (Bloquant pour changement de rôle) -->
+    <div id="modal-role-password" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-8 rounded-xl shadow-2xl w-96 border border-gray-200">
+            <h3 id="modal-role-title" class="text-xl font-bold mb-2 text-gray-800">🔒 Mot de passe requis</h3>
+            <p class="text-xs text-gray-500 mb-4">La modification du rôle opérateur nécessite une authentification par mot de passe.</p>
+            <input type="password" id="password-standard" placeholder="Entrez le mot de passe..." onkeydown="if(event.key === 'Enter') validerMotDePasseRole()" class="border p-2.5 w-full rounded mb-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50" />
+            <div class="flex gap-3">
+                <button type="button" onclick="annulerChangementRole()" class="w-1/2 bg-gray-200 hover:bg-gray-300 text-gray-800 p-2.5 rounded font-semibold text-sm cursor-pointer transition">Annuler</button>
+                <button type="button" onclick="validerMotDePasseRole()" class="w-1/2 bg-blue-600 hover:bg-blue-700 text-white p-2.5 rounded font-semibold text-sm cursor-pointer transition">Valider</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTENU PRINCIPAL (Masqué par défaut) -->
+    <div id="main-content" class="hidden bg-gray-100 p-8">
+        <header class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Tableau de Bord Paybank</h1>
+            <button id="logoutBtn" onclick="deconnexion()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 text-sm font-medium cursor-pointer">Déconnexion</button>
+        </header>
+                
+        <div class="bg-white p-6 rounded-lg shadow-md mb-6 border-l-4 border-blue-600">
+            <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Solde du Compte Stripe</h2>
+            <p id="soldeMontant" class="text-3xl font-extrabold text-gray-800">Chargement...</p>
+            
+            <div class="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between">
+                <span class="text-sm text-gray-600">Besoin de consulter les mouvements financiers ?</span>
+                <button onclick="accederAuBilan()" class="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-700 text-sm font-medium transition shadow cursor-pointer">
+                    Accéder au Bilan Financier 📊
+                </button>
+            </div>
+        </div>
+
+        <!-- Banderole du Simulateur d'Opérateur (Agrandie et optimisée) -->
+        <div class="max-w-6xl mx-auto mb-6 bg-white p-6 rounded-xl shadow-lg border-l-8 border-indigo-600 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div>
+                <h3 class="text-lg font-bold text-gray-800">🔐 Simulateur d'Opérateur (Sécurité Domaine)</h3>
+                <p class="text-sm text-gray-500 mt-1">Le rôle actif détermine vos droits. Tout changement nécessite la validation par mot de passe.</p>
+            </div>
+            
+            <div class="flex flex-col gap-3 w-full md:w-auto bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <div class="flex items-center justify-between gap-4">
+                    <span class="text-xs text-gray-600 font-medium">Statut de connexion initial :</span>
+                    <span id="badge-role-connecte" class="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">...</span>
+                </div>
+
+                <div class="flex items-center justify-between gap-4">
+                    <label for="operateurRole" class="text-sm font-bold text-gray-700">Opérateur actif :</label>
+                    <select id="operateurRole" onchange="verifierChangementRole(this)" class="border p-2 rounded bg-white font-bold text-sm shadow-sm">
+                        <option value="EMPLOYE">EMPLOYE</option>
+                        <option value="MANAGER">MANAGER</option>
+                        <option value="ADMIN">ADMIN</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    
+        <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">    
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-bold mb-4">💳 Passer une commande</h2>                
+                <div class="mb-4">
+                    <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Montant de la commande (en EUR)</label>
+                    <input id="paiementMontant" type="number" step="0.01" placeholder="Ex: 45.00" class="border p-2 w-full rounded">
+                </div>
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <button onclick="initialiserFormulairePaiement()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded text-sm font-semibold cursor-pointer text-center">1. Charger le formulaire</button>
+                    <button onclick="modifierMontantPaiementEnCours()" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-2 rounded text-sm font-semibold cursor-pointer text-center">Modifier Montant</button>
+                </div>
+                <div id="link-authentication-element" class="mb-2"></div>
+                <div id="payment-element" class="mb-4"></div>                
+                <div class="flex gap-2">
+                    <button id="submit-paiement" disabled class="bg-gray-400 text-white px-4 py-2 rounded w-full font-bold cursor-not-allowed opacity-50">2. Payer maintenant</button>
+                    <button onclick="annulerPaiementEnCours()" class="bg-red-100 text-red-700 hover:bg-red-200 px-4 py-2 rounded font-semibold text-sm cursor-pointer">Annuler l'achat</button>
+                </div>                
+                <div id="error-message" class="text-red-600 text-sm mt-2 font-semibold"></div>
+            </div>                            
+
+            <!-- Section Gestion des Clients -->
+            <div class="space-y-6">
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h2 class="text-xl font-bold mb-4">👤 Gestion des Clients</h2>               
+                    <div class="mb-3">
+                        <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Sélectionner un client existant</label>
+                        <select id="selectClientsExistants" onchange="remplirChampsClientDepuisSelection()" class="border p-2 w-full rounded bg-gray-50 text-sm font-medium">
+                            <option value="">-- Choisir un client dans la BDD --</option>
+                        </select>
+                    </div>                
+                    <label class="block text-xs font-bold uppercase text-gray-500 mb-1">ID Client</label>
+                    <input id="clientId" type="text" placeholder="UUID du client" class="border p-2 w-full mb-2 rounded font-mono text-sm bg-gray-50">               
+                    <input id="clientNom" type="text" placeholder="Nom complet" class="border p-2 w-full mb-2 rounded">
+                    <input id="clientEmail" type="email" placeholder="Adresse Email" class="border p-2 w-full mb-4 rounded">              
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="creerClient()" class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-2 rounded font-semibold cursor-pointer text-center text-sm">Créer</button>
+                        <button onclick="modifierClient()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-2 rounded font-semibold cursor-pointer text-center text-sm">Modifier</button>
+                        <button onclick="supprimerClient()" class="bg-red-600 hover:bg-red-700 text-white px-2 py-2 rounded font-semibold cursor-pointer text-center text-sm">Supprimer</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NOUVELLE SECTION : Gestion des Factures -->
+            <div class="bg-white p-6 rounded-lg shadow border-t-4 border-blue-500">
+                <h2 class="text-xl font-bold mb-4 text-gray-800">📄 Gestion des Factures</h2>
+                
+                <!-- Bouton Générer Facture -->
+                <div class="mb-4">
+                    <button onclick="genererFacture()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-bold w-full text-sm cursor-pointer transition">
+                        Générer la facture
+                    </button>
+                </div>
+
+                <!-- Envoyer facture par email (Trois emails à cocher) -->
+                <div class="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <label class="block text-xs font-bold uppercase text-gray-500 mb-2">Envoyer la facture par email</label>
+                    <div class="space-y-2 mb-3">
+                        <label class="flex items-center text-sm text-gray-700 cursor-pointer">
+                            <input type="checkbox" id="email-dest-1" value="client@paybank.com" class="mr-2 rounded text-blue-600 focus:ring-blue-500"> Client principal
+                        </label>
+                        <label class="flex items-center text-sm text-gray-700 cursor-pointer">
+                            <input type="checkbox" id="email-dest-2" value="comptabilite@paybank.com" class="mr-2 rounded text-blue-600 focus:ring-blue-500"> Service Comptabilité
+                        </label>
+                        <label class="flex items-center text-sm text-gray-700 cursor-pointer">
+                            <input type="checkbox" id="email-dest-3" value="direction@paybank.com" class="mr-2 rounded text-blue-600 focus:ring-blue-500"> Direction Générale
+                        </label>
+                    </div>
+                    <button onclick="envoyerFactureEmail()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded font-bold w-full text-sm cursor-pointer transition">
+                        Envoyer la facture par email
+                    </button>
+                </div>
+
+                <!-- Bouton Impression -->
+                <div>
+                    <button onclick="imprimerFacture()" class="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded font-bold w-full text-sm cursor-pointer transition flex items-center justify-center gap-2">
+                        🖨️ Imprimer la facture
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-bold mb-4">📦 Catalogue Produits & Tarifs</h2>               
+                <div class="mb-4 pb-4 border-b border-gray-100">
+                    <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Sélectionner un produit existant</label>
+                    <select id="selectProduitsExistants" onchange="remplirChampsProduitDepuisSelection()" class="border p-2 w-full rounded bg-gray-50 text-sm font-medium">
+                        <option value="">-- Choisir un produit --</option>
+                    </select>
+                </div>                
+                <label class="block text-xs font-bold uppercase text-gray-500 mb-1">ID Produit</label>
+                <input id="prodId" type="text" placeholder="UUID du produit" class="border p-2 w-full mb-2 rounded font-mono text-sm bg-gray-50">               
+                <input id="prodNom" type="text" placeholder="Nom du produit" class="border p-2 w-full mb-2 rounded">
+                <input id="prodPrix" type="number" step="0.01" placeholder="Prix en EUR (Ex: 19.99)" class="border p-2 w-full mb-4 rounded">               
+                <div class="flex flex-col gap-2">
+                    <button onclick="creerProduitEtTarif()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-bold cursor-pointer text-center">Créer Produit + Tarif</button>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="modifierProduit()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded font-semibold cursor-pointer text-center">Modifier</button>
+                        <button onclick="supprimerProduit()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-semibold cursor-pointer text-center">Supprimer</button>
+                    </div>
+                </div>
+            </div>
+		
+            <div class="bg-white p-6 rounded-lg shadow border-t-4 border-red-500 md:col-span-2">
+                <h2 class="text-xl font-bold mb-1 text-gray-800">🛡️ Gestion des Salariés & Rôles</h2>
+                <p class="text-xs text-gray-500 mb-4">Actions réservées à la gouvernance.</p>        
+                <div class="mb-6 pb-6 border-b border-gray-100">
+                    <h3 class="text-sm font-bold text-gray-700 mb-2">➕ 1. Créer un nouveau salarié</h3>
+                    <form id="form-creer-salarie" onsubmit="executerCreationSalarie(event)">
+                        <input type="text" id="creer-nom" placeholder="Nom complet" required class="border p-2 w-full mb-2 rounded text-sm">
+                        <input type="email" id="creer-email" placeholder="Adresse Email unique" required class="border p-2 w-full mb-2 rounded text-sm">
+                        <select id="creer-role" required class="border p-2 w-full mb-3 rounded bg-white text-sm">
+                            <option value="EMPLOYE">EMPLOYE</option>
+                            <option value="MANAGER">MANAGER</option>
+                            <option value="ADMIN">ADMIN</option>
+                        </select>
+                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2 rounded w-full text-sm cursor-pointer transition-colors">
+                            Enregistrer le salarié en BDD
+                        </button>
+                    </form>
+                </div>            
+                <div class="mb-4 pb-4 border-b border-gray-100">
+                    <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Sélectionner un salarié existant</label>
+                    <select id="selectSalariesExistants" onchange="remplirChampsSalarieDepuisSelection()" class="border p-2 w-full rounded bg-gray-50 text-sm font-medium">
+                        <option value="">-- Choisir un salarié --</option>
+                    </select>
+                </div>
+				
+			<div>
+			    <h3 class="text-sm font-bold text-gray-700 mb-2">🔄 2. Modifier les droits</h3>
+			    <form id="form-modifier-droits" onsubmit="executerModificationDroits(event)">
+			        <div class="mb-2">
+			            <input type="text" id="input-id-cible" placeholder="UUID du salarié cible" required class="border p-2 w-full rounded font-mono text-sm bg-gray-50" readonly>
+			        </div>
+			        <div class="mb-2">
+			            <input type="text" id="input-nom-cible" placeholder="Nom du salarié" required class="border p-2 w-full rounded text-sm">
+			        </div>
+			        <div class="mb-3">
+			            <select id="select-nouveau-role" onchange="gererChangementRoleCible()" required class="border p-2 w-full rounded bg-white text-sm">
+			                <option value="" disabled selected>Modifier le statut du salarié</option> 
+			                <option value="EMPLOYE">EMPLOYE</option>
+			                <option value="MANAGER">MANAGER</option>
+			                <option value="ADMIN">ADMIN</option>
+			            </select>
+			        </div>
+			        <!-- Champ automatique, verrouillé et non modifiable -->
+			        <div class="mb-3">
+			            <label class="block text-xs font-bold text-gray-500 mb-1">Mot de passe appliqué automatiquement :</label>
+			            <input type="text" id="input-type-mdp-auto" disabled class="border p-2 w-full rounded text-sm bg-gray-100 font-bold text-gray-700 cursor-not-allowed" value="-- En attente du choix du rôle --">
+			        </div>
+			        <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded w-full text-sm cursor-pointer transition-colors">
+			            Mettre à jour les droits en BDD
+			        </button>
+			    </form>
+			</div>
+        </div>
+		
+		<div class="bg-white p-6 rounded-lg shadow border-t-4 border-indigo-600 md:col-span-2">
+            <h2 class="text-xl font-bold mb-1 text-gray-800">📊 Rapprochement Bancaire</h2>
+            <p class="text-xs text-gray-500 mb-4">Compare l'état de la comptabilité interne avec les relevés bancaires.</p>                    
+            <button onclick="declencherRapprochementBancaire()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2 rounded w-full text-sm cursor-pointer transition-colors flex items-center justify-center gap-2">
+                           ⚡ Lancer l'analyse du rapprochement
+            </button>                    
+            <div id="zone-resultats-rapprochement" class="mt-4 hidden space-y-2 max-h-60 overflow-y-auto">
+                 <h3 class="text-xs font-bold uppercase text-gray-400">Anomalies & Écarts détectés</h3>
+                 <div id="liste-ecarts" class="space-y-1 text-xs"></div>
+            </div>
+		</div>
+		
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8080';
+        const stripe = Stripe('pk_test_51TBX0dEWZ4iSroOBQM6eY1ctOZLa3ZtatCktZ9KiCArPkIvWwB4hdDBAO8WMJrCDqKEdL3NLAeMP2oQBmMaTjqXy00gSotvi8w');       
+        let elements;
+        let currentPaymentIntentId = null;
+        let rolePrecedentValide = "EMPLOYE";
+        let roleEnAttente = "";
+		
+		let isInternalChange = false;
+		
+		function basculerInterface(estConnecte) {
+		    const loginModal = document.getElementById('login-modal');
+		    const mainContent = document.getElementById('main-content');
+		    if (estConnecte) {
+		        loginModal.classList.add('hidden');
+		        mainContent.classList.remove('hidden');
+		        
+		        // Forcer en majuscules pour correspondre aux balises <option>
+		        const roleConnecte = (localStorage.getItem('connectedUserRole') || 'EMPLOYE').toUpperCase();
+		        document.getElementById('badge-role-connecte').textContent = roleConnecte;
+		        document.getElementById('operateurRole').value = roleConnecte;
+		        rolePrecedentValide = roleConnecte;
+		    } else {
+		        loginModal.classList.remove('hidden');
+		        mainContent.classList.add('hidden');
+		    }
+		}
+
+        window.onload = function() {
+            const token = localStorage.getItem('userToken');
+            if (token) {
+                basculerInterface(true);
+                chargerSolde();
+                chargerListeClients();
+                chargerListeSalaries();
+                chargerListeProduits();
+            } else {
+                basculerInterface(false);
+            }
+        };
+
+		function obtenirHeadersSecurises() {
+		    const token = localStorage.getItem('userToken');
+		    const roleActif = localStorage.getItem('userRole') || 'ADMIN'; 
+		    
+		    return {
+		        'Content-Type': 'application/json',
+		        'Authorization': 'Bearer ' + (token || ''),
+		        'X-Auth-Role': roleActif 
+		    };
+		}
+
+		function fetchSecurise(url, options = {}) {
+		    return fetch(url, { ...options, credentials: 'include' });
+		}
+		
+        // --- LOGIQUE DE VALIDATION DU RÔLE PAR MODALE ---
+        function verifierChangementRole(selectElement) {
+			if (isInternalChange) return; 
+            const nouveauRole = selectElement.value;
+            if (nouveauRole === rolePrecedentValide) return;
+
+            roleEnAttente = nouveauRole;
+            const modal = document.getElementById('modal-role-password');
+            const title = document.getElementById('modal-role-title');
+            const input = document.getElementById('password-standard');
+            
+            modal.classList.remove('hidden');
+            input.value = "";
+            input.focus();
+
+            title.textContent = `🔒 Mot de passe ${nouveauRole} requis`;
+            selectElement.value = rolePrecedentValide;
+        }
+
+        async function validerMotDePasseRole() {
+            const passwordSaisi = document.getElementById('password-standard').value;
+            const emailConnecte = localStorage.getItem('userEmail');
+
+            if (!passwordSaisi) {
+                alert("Veuillez saisir un mot de passe.");
+                return;
+            }
+
+            try {
+                const response = await fetchSecurise(`${API_BASE_URL}/api/auth/verifier-role`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: emailConnecte,
+                        roleCible: roleEnAttente,
+                        password: passwordSaisi
+                    })
+                });
+
+                if (response.ok) {
+                    rolePrecedentValide = roleEnAttente;
+                    document.getElementById('operateurRole').value = roleEnAttente;
+                    document.getElementById('modal-role-password').classList.add('hidden');
+                    document.getElementById('password-standard').value = "";
+                    alert(`✅ Rôle opérateur mis à jour avec succès : ${roleEnAttente}`);
+                } else {
+                    const errorMsg = await response.text();
+                    alert(`❌ Accès refusé par le serveur : ${errorMsg || 'Mot de passe incorrect pour ce rôle.'}`);
+                    document.getElementById('password-standard').value = "";
+                    document.getElementById('password-standard').focus();
+                }
+            } catch (err) {
+                console.error(err);
+                alert("❌ Erreur de connexion au serveur backend (Port 8080).");
+            }
+        }
+
+        function annulerChangementRole() {
+            document.getElementById('modal-role-password').classList.add('hidden');
+            document.getElementById('password-standard').value = "";
+            document.getElementById('operateurRole').value = rolePrecedentValide;
+        }
+
+        // --- CONTRÔLE D'ACCÈS AU BILAN ---
+        function accederAuBilan() {
+            const roleActif = document.getElementById('operateurRole').value;
+            if (roleActif === 'ADMIN') {
+                window.location.href = 'bilan.html';
+            } else {
+                alert("❌ Accès refusé : Seul un opérateur avec le rôle ADMIN peut consulter le Bilan Financier.");
+            }
+        }
+
+        async function verifierReponse(response, succesMessage) {
+            if (!response.ok) {
+                try {
+                    const errorText = await response.text();
+                    alert(`❌ Erreur (${response.status}) : ${errorText}`);
+                } catch (e) {
+                    alert(`❌ Erreur inconnue (HTTP ${response.status})`);
+                }
+                return null;
+            }
+            if (succesMessage) alert(succesMessage);
+            try {
+                return await response.json();
+            } catch (e) {
+                return true;
+            }
+        }
+	
+		async function tenterConnexion() {
+		    const email = document.getElementById('login-email').value;
+		    const password = document.getElementById('login-pass').value;
+
+		    try {
+		        const response = await fetchSecurise(`${API_BASE_URL}/api/auth/login`, {
+		            method: 'POST',				
+		            headers: { 'Content-Type': 'application/json' },
+					credentials: 'include',
+		            body: JSON.stringify({ email, password })
+		        });
+
+		        if (response.ok) {
+		            const data = await response.json();
+		            console.log(">>> Réponse brute de /api/auth/login :", data);
+
+		            localStorage.setItem('userToken', data.token);
+		            
+		            const roleRecupere = (data.role || 'EMPLOYE').toUpperCase();
+		            localStorage.setItem('connectedUserRole', roleRecupere);
+
+		            const selectOperateur = document.getElementById('operateurRole');
+		            if (selectOperateur) {
+		                isInternalChange = true;  
+		                rolePrecedentValide = roleRecupere;
+		                selectOperateur.value = roleRecupere;
+		                isInternalChange = false; 
+		            }
+
+		            basculerInterface(true);
+		            chargerSolde();
+		            chargerListeClients();
+		            chargerListeSalaries();
+		            chargerListeProduits();
+		        } else {
+		            alert("Identifiants incorrects ou compte inactif");
+		        }
+		    } catch (error) {
+		        console.error(error);
+		        alert("Erreur de connexion au serveur backend (Port 8080).");
+		    }
+		}
+
+        function deconnexion() {
+            localStorage.removeItem('userToken');
+            localStorage.removeItem('connectedUserRole');
+            location.reload();
+            const logoutButton = document.getElementById('logoutBtn');
+            logoutButton.addEventListener('click', async () => {
+                try {
+                    const response = await fetchSecurise('/api/auth/logout', {
+                        method: 'POST',
+                        credentials: 'include'
+                    });
+
+                    if (response.ok) {
+                        window.location.href = '/login.html'; 
+                    } else {
+                        console.error('Erreur lors de la déconnexion');
+                    }
+                } catch (error) {
+                    console.error('Erreur réseau :', error);
+                }
+            });
+        }
+
+        // --- SOLDE STRIPE ---
+        async function chargerSolde() {
+            try {
+                const response = await fetchSecurise(`${API_BASE_URL}/api/paiements/solde`, {
+                    headers: obtenirHeadersSecurises()
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    const montantFinal = data.disponible !== undefined ? data.disponible : data.balance;
+                    document.getElementById('soldeMontant').innerText = `${(montantFinal / 100).toFixed(2)} ${(data.devise || 'eur').toUpperCase()}`;
+                } else {
+                    document.getElementById('soldeMontant').innerText = "Non disponible";
+                }
+            } catch (e) {
+                console.error("Erreur solde:", e);
+                document.getElementById('soldeMontant').innerText = "Erreur Connexion API";
+            }
+        }
+
+        // --- CLIENTS ---
+        async function chargerListeClients() {
+            const select = document.getElementById('selectClientsExistants');
+            try {
+                const response = await fetchSecurise(`${API_BASE_URL}/api/clients`, { headers: obtenirHeadersSecurises() });
+                if (!response.ok) return;
+                const clients = await response.json();
+                select.innerHTML = '<option value="">-- Choisir un client dans la BDD --</option>';
+                clients.forEach(client => {
+                    const option = document.createElement('option');
+                    option.value = client.id;
+                    option.dataset.nom = client.nom;
+                    option.dataset.email = client.email;
+                    option.textContent = `${client.nom} (${client.email})`;
+                    select.appendChild(option);
+                });
+            } catch (err) { console.error("Erreur clients:", err); }
+        }
+
+        function remplirChampsClientDepuisSelection() {
+            const select = document.getElementById('selectClientsExistants');
+            const opt = select.options[select.selectedIndex];
+            if (select.value) {
+                document.getElementById('clientId').value = select.value;
+                document.getElementById('clientNom').value = opt.dataset.nom;
+                document.getElementById('clientEmail').value = opt.dataset.email;
+            } else {
+                document.getElementById('clientId').value = "";
+                document.getElementById('clientNom').value = "";
+                document.getElementById('clientEmail').value = "";
+            }
+        }
+
+        async function creerClient() {
+            const nom = document.getElementById('clientNom').value;
+            const email = document.getElementById('clientEmail').value;
+            const response = await fetchSecurise(`${API_BASE_URL}/api/clients`, {
+                method: 'POST',
+                headers: obtenirHeadersSecurises(),
+                body: JSON.stringify({ nom, email })
+            });
+            const client = await verifierReponse(response, "Client créé avec succès !");
+            if (client && client.id) document.getElementById('clientId').value = client.id;
+            chargerListeClients();
+        }
+
+        async function modifierClient() {
+            const id = document.getElementById('clientId').value;
+            const nom = document.getElementById('clientNom').value;
+            const email = document.getElementById('clientEmail').value;
+            if (!id) return alert("ID client requis.");
+            const response = await fetchSecurise(`${API_BASE_URL}/api/clients/${id}`, {
+                method: 'PUT',
+                headers: obtenirHeadersSecurises(),
+                body: JSON.stringify({ nom, email })
+            });
+            await verifierReponse(response, 'Client modifié avec succès !');
+            chargerListeClients();
+        }
+
+        async function supprimerClient(idClient) {
+            const id = idClient || document.getElementById('clientId').value.trim();
+            if (!id) return alert("ID client requis.");
+            if (confirm("Supprimer ce client ?")) {
+                const response = await fetchSecurise(`${API_BASE_URL}/api/clients/${id}`, { 
+                    method: 'DELETE', 
+                    headers: obtenirHeadersSecurises() 
+                });
+                await verifierReponse(response, 'Client supprimé avec succès !');
+                chargerListeClients();
+            }
+        }
+
+        // --- FACTURES (Génération, Email, Impression) ---
+        async function genererFacture() {
+            const clientId = document.getElementById('clientId').value;
+            if (!clientId) {
+                alert("Veuillez sélectionner ou renseigner un ID Client avant de générer la facture.");
+                return;
+            }
+
+            const response = await fetchSecurise(`${API_BASE_URL}/api/factures/generer`, {
+                method: 'POST',
+                headers: obtenirHeadersSecurises(),
+                body: JSON.stringify({ clientId })
+            });
+            await verifierReponse(response, "📄 Facture générée et enregistrée avec succès !");
+        }
+
+        async function envoyerFactureEmail() {
+            const emailsCoches = [];
+            if (document.getElementById('email-dest-1').checked) emailsCoches.push(document.getElementById('email-dest-1').value);
+            if (document.getElementById('email-dest-2').checked) emailsCoches.push(document.getElementById('email-dest-2').value);
+            if (document.getElementById('email-dest-3').checked) emailsCoches.push(document.getElementById('email-dest-3').value);
+
+            if (emailsCoches.length === 0) {
+                alert("❌ Veuillez cocher au moins une adresse email pour l'envoi.");
+                return;
+            }
+
+            const response = await fetchSecurise(`${API_BASE_URL}/api/factures/envoyer`, {
+                method: 'POST',
+                headers: obtenirHeadersSecurises(),
+                body: JSON.stringify({
+                    emails: emailsCoches,
+                    factureDetails: "Détails de la facture Paybank générée."
+                })
+            });
+            await verifierReponse(response, "📧 E-mails de facture envoyés avec succès !");
+        }
+
+        function imprimerFacture() {
+            window.print();
+        }
+
+        // --- PRODUITS & CATALOGUE ---
+        async function chargerListeProduits() {
+            const select = document.getElementById('selectProduitsExistants');
+            try {
+                const response = await fetchSecurise(`${API_BASE_URL}/api/produits`, { headers: obtenirHeadersSecurises() });
+                if (!response.ok) return;
+                const produits = await response.json();
+                select.innerHTML = '<option value="">-- Choisir un produit --</option>';
+                produits.forEach(p => {
+                    const option = document.createElement('option');
+                    option.value = p.id;
+                    option.dataset.nom = p.nom;
+                    option.dataset.prix = p.prixCentimes;
+					const prixEuros = (p.prixCentimes / 100).toFixed(3);
+                    option.textContent = `${p.nom} (${prixEuros} EUR)`;
+                    select.appendChild(option);
+                });
+            } catch (err) { console.error("Erreur produits:", err); }
+        }
+
+        function remplirChampsProduitDepuisSelection() {
+            const select = document.getElementById('selectProduitsExistants');
+            const opt = select.options[select.selectedIndex];
+            if (select.value) {
+                document.getElementById('prodId').value = select.value;
+                document.getElementById('prodNom').value = opt.dataset.nom;
+                document.getElementById('prodPrix').value = opt.dataset.prix;
+            } else {
+                document.getElementById('prodId').value = "";
+                document.getElementById('prodNom').value = "";
+                document.getElementById('prodPrix').value = "";
+            }
+        }
+
+        async function creerProduitEtTarif() {
+            const nom = document.getElementById('prodNom').value;
+            const prix = parseFloat(document.getElementById('prodPrix').value);
+			const prixCentimes = Math.round(prix * 100);
+            const response = await fetchSecurise(`${API_BASE_URL}/api/produits`, {
+                method: 'POST',
+                headers: obtenirHeadersSecurises(),
+                body: JSON.stringify({ nom, prixCentimes })
+            });
+            const p = await verifierReponse(response, "Produit créé avec succès !");
+            if (p && p.id) document.getElementById('prodId').value = p.id;
+            chargerListeProduits();
+        }
+
+        async function modifierProduit() {
+            const id = document.getElementById('prodId').value;
+            const nom = document.getElementById('prodNom').value;
+            const prix = parseFloat(document.getElementById('prodPrix').value);
+			const prixCentimes = Math.round(prix * 100);
+            if (!id) return alert("ID produit requis.");
+            const response = await fetchSecurise(`${API_BASE_URL}/api/produits/${id}`, {
+                method: 'PUT',
+                headers: obtenirHeadersSecurises(),
+                body: JSON.stringify({ nom, prixCentimes })
+            });
+            await verifierReponse(response, 'Produit modifié avec succès !');
+            chargerListeProduits();
+        }
+
+        async function supprimerProduit() {
+            const id = document.getElementById('prodId').value;
+            if (!id) return alert("ID produit requis.");
+            if (confirm("Supprimer ce produit ?")) {
+                const response = await fetchSecurise(`${API_BASE_URL}/api/produits/${id}`, { method: 'DELETE', headers: obtenirHeadersSecurises() });
+                await verifierReponse(response, 'Produit supprimé avec succès !');
+                chargerListeProduits();
+            }
+        }
+
+        // --- SALARIÉS & RÔLES ---
+        async function chargerListeSalaries() {
+            const select = document.getElementById('selectSalariesExistants');
+            try {
+                const response = await fetchSecurise(`${API_BASE_URL}/api/utilisateurs`, { headers: obtenirHeadersSecurises() });
+                if (!response.ok) return;
+                const salaries = await response.json();
+                select.innerHTML = '<option value="">-- Choisir un salarié --</option>';
+                salaries.forEach(s => {
+                    const option = document.createElement('option');
+                    option.value = s.id;
+                    option.dataset.nom = s.nom;
+                    option.dataset.email = s.email;
+                    option.dataset.role = s.role;
+                    option.textContent = `${s.nom} (${s.role})`;
+                    select.appendChild(option);
+                });
+            } catch (err) { console.error("Erreur salariés:", err); }
+        }
+		
+        function gererChangementRoleCible() {
+            const roleSelect = document.getElementById('select-nouveau-role').value;
+            const inputAuto = document.getElementById('input-type-mdp-auto');
+            
+            if (roleSelect === 'ADMIN') {
+                inputAuto.value = "🔒 Mot de passe admin";
+            } else if (roleSelect === 'MANAGER') {
+                inputAuto.value = "🔒 Mot de passe manager";
+            } else if (roleSelect === 'EMPLOYE') {
+                inputAuto.value = "🔒 Mot de passe employé";
+            } else {
+                inputAuto.value = "-- En attente du choix du rôle --";
+            }
+        }
+
+        function remplirChampsSalarieDepuisSelection() {
+            const select = document.getElementById('selectSalariesExistants');
+            const selectedOption = select.options[select.selectedIndex];
+            
+            if (select.value) {
+                document.getElementById('input-id-cible').value = select.value;
+                document.getElementById('input-nom-cible').value = selectedOption.dataset.nom || '';
+                document.getElementById('select-nouveau-role').value = selectedOption.dataset.role || '';
+                gererChangementRoleCible();
+            } else {
+                document.getElementById('input-id-cible').value = '';
+                document.getElementById('input-nom-cible').value = '';
+                document.getElementById('select-nouveau-role').value = '';
+                document.getElementById('input-type-mdp-auto').value = "-- En attente du choix du rôle --";
+            }
+        }
+				
+        async function executerModificationDroits(event) {
+            event.preventDefault();
+            const idCible = document.getElementById('input-id-cible').value;
+            const nouveauNom = document.getElementById('input-nom-cible').value;
+            const nouveauRole = document.getElementById('select-nouveau-role').value;
+
+            if (!idCible) {
+                alert("Veuillez sélectionner un salarié dans la liste.");
+                return;
+            }
+
+            try {
+                const response = await fetchSecurise(`${API_BASE_URL}/api/utilisateurs/${idCible}/modifier-droits`, {
+                    method: 'PUT',
+                    headers: obtenirHeadersSecurises(),
+                    body: JSON.stringify({
+                        nouveauNom: nouveauNom,
+                        nouveauRole: nouveauRole,
+                        password: ""
+                    })
+                });
+
+                if (response.ok) {
+                    alert("✅ Droits et rôle mis à jour avec succès en BDD !");
+                    document.getElementById('form-modifier-droits').reset();
+                    document.getElementById('input-type-mdp-auto').value = "-- En attente du choix du rôle --";
+                    chargerListeSalaries();
+                } else {
+                    const err = await response.text();
+                    alert("❌ Échec de la mise à jour : " + err);
+                }
+            } catch (e) {
+                alert("❌ Erreur réseau : " + e.message);
+            }
+        }
+
+        async function executerCreationSalarie(event) {
+            event.preventDefault();
+            const nom = document.getElementById('creer-nom').value;
+            const email = document.getElementById('creer-email').value;
+            const role = document.getElementById('creer-role').value;
+            const response = await fetchSecurise(`${API_BASE_URL}/api/utilisateurs`, {
+                method: 'POST',
+                headers: obtenirHeadersSecurises(),
+                body: JSON.stringify({ nom, email, role })
+            });
+            await verifierReponse(response, "Salarié créé avec succès !");
+            document.getElementById('form-creer-salarie').reset();
+            chargerListeSalaries();
+        }
+		
+        // --- RAPPROCHEMENT BANCAIRE ---
+        async function declencherRapprochementBancaire() {
+            const zoneResultats = document.getElementById('zone-resultats-rapprochement');
+            const listeEcarts = document.getElementById('liste-ecarts');
+            listeEcarts.innerHTML = "";
+            zoneResultats.classList.add('hidden');
+            
+            try {
+                const response = await fetchSecurise(`${API_BASE_URL}/api/paiements/rapprochement`, {
+                    method: 'POST',
+                    headers: obtenirHeadersSecurises()
+                });                                    
+                if (!response.ok) {
+                    alert(`🚫 Échec du traitement (Code ${response.status}) : Droits insuffisants ou jeton invalide.`);
+                    return;
+                }
+                const matchResults = await response.json();
+                zoneResultats.classList.remove('hidden');
+                
+                if (!matchResults || matchResults.length === 0) {
+                    listeEcarts.innerHTML = `<div class="text-gray-500 p-2 bg-gray-50 rounded text-center border">Aucun écart détecté.</div>`;
+                    return;
+                }
+
+                matchResults.forEach(res => {
+                    const item = document.createElement('div');
+                    item.className = "p-2 rounded border flex justify-between items-center mb-1 text-xs font-medium ";
+                    if (res.statut === "MATCH") {
+                        item.className += "bg-green-50 border-green-200 text-green-800";
+                        const montant = res.tCompta ? (res.tCompta.montantCentimes / 100).toFixed(2) : "0.00";
+                        item.innerHTML = `<span>🟢 <b>MATCH :</b> Validation Ok</span><span class="font-mono font-bold">${montant}€</span>`;
+                    } else if (res.statut === "MANQUANT") {
+                        item.className += "bg-amber-50 border-amber-200 text-amber-800";
+                        const montant = res.tCompta ? (res.tCompta.montantCentimes / 100).toFixed(2) : "0.00";
+                        item.innerHTML = `<span>⚠️ <b>MANQUANT :</b> Absent du relevé</span><span class="font-mono font-bold">${montant}€</span>`;
+                    } else {
+                        item.className += "bg-red-50 border-red-200 text-red-800";
+                        const montant = res.tBanque ? (res.tBanque.montantCentimes / 100).toFixed(2) : "0.00";
+                        item.innerHTML = `<span>🚨 <b>INCONNU :</b> Écriture bancaire non identifiée</span><span class="font-mono font-bold">${montant}€</span>`;
+                    }
+                    listeEcarts.appendChild(item);
+                });
+            } catch (error) {
+                console.error("Erreur rapprochement:", error);
+                alert("❌ Erreur lors de l'analyse du rapprochement bancaire.");
+            }
+        }
+	
+        // --- PAIEMENTS STRIPE & RAPPROCHEMENT ---
+        async function initialiserFormulairePaiement() {
+            const clientId = document.getElementById('clientId').value;
+            const montantEuro = document.getElementById('paiementMontant').value;
+            if (!clientId || !montantEuro) return alert("Indiquez un ID Client et un montant.");
+            
+            const montantCentimes = Math.round(parseFloat(montantEuro) * 100);
+            const response = await fetchSecurise(`${API_BASE_URL}/api/paiements/intent`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: obtenirHeadersSecurises(),
+                body: JSON.stringify({ clientId, montantCentimes })
+            });
+            const data = await verifierReponse(response);
+            if (!data) return;
+            
+            currentPaymentIntentId = data.paymentIntentId;
+            elements = stripe.elements({ clientSecret: data.clientSecret });
+            const paymentElement = elements.create("payment", { layout: "tabs" });
+            paymentElement.mount("#payment-element");
+            
+            const btnPayer = document.getElementById('submit-paiement');
+            btnPayer.disabled = false;
+            btnPayer.className = "bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded w-full font-bold cursor-pointer opacity-100 text-center";
+            btnPayer.onclick = executerPaiementFinal;
+        }
+
+        async function modifierMontantPaiementEnCours() {
+            if (!currentPaymentIntentId) return alert("Aucun paiement en cours.");
+            const nouveauMontantCentimes = Math.round(parseFloat(document.getElementById('paiementMontant').value) * 100);
+            const response = await fetchSecurise(`${API_BASE_URL}/api/paiements/intent/${currentPaymentIntentId}`, {
+                method: 'PUT',
+                headers: obtenirHeadersSecurises(),
+                body: JSON.stringify({ nouveauMontantCentimes })
+            });
+            await verifierReponse(response, "Montant modifié chez Stripe !");
+        }
+
+        async function annulerPaiementEnCours() {
+            if (!currentPaymentIntentId) return alert("Aucune transaction active.");
+            const response = await fetchSecurise(`${API_BASE_URL}/api/paiements/intent/${currentPaymentIntentId}`, { 
+                method: 'DELETE',
+                headers: obtenirHeadersSecurises()
+            });
+            if (response.ok) {
+                document.getElementById('payment-element').innerHTML = "";
+                const btnPayer = document.getElementById('submit-paiement');
+                btnPayer.disabled = true;
+                btnPayer.className = "bg-gray-400 text-white px-4 py-2 rounded w-full font-bold cursor-not-allowed opacity-50";
+                currentPaymentIntentId = null;
+                alert("Paiement annulé.");
+            }
+        }
+
+        async function executerPaiementFinal(e) {
+            e.preventDefault();
+            const messageContainer = document.getElementById('error-message');
+            messageContainer.innerText = "";
+            
+            const { error, paymentIntent } = await stripe.confirmPayment({
+                elements,
+                confirmParams: { return_url: window.location.origin + "/index.html" },
+                redirect: "if_required"
+            });
+            if (error) { messageContainer.innerText = error.message; return; }
+
+            if (paymentIntent && paymentIntent.status === "succeeded") {
+                const response = await fetchSecurise(`${API_BASE_URL}/api/paiements/intent/${currentPaymentIntentId}/synchroniser`, {
+                    method: 'POST',
+                    headers: obtenirHeadersSecurises()
+                });
+                if (response.ok) {
+                    alert("💰 Paiement validé et synchronisé en BDD !");
+                    document.getElementById('payment-element').innerHTML = "";
+                    document.getElementById('paiementMontant').value = "";
+                    const btnPayer = document.getElementById('submit-paiement');
+                    btnPayer.disabled = true;
+                    btnPayer.className = "bg-gray-400 text-white px-4 py-2 rounded w-full font-bold cursor-not-allowed opacity-50";
+                    currentPaymentIntentId = null;
+                    chargerSolde();
+                }
+            }
+        }
+    </script>
+</body>
+</html>

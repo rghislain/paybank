@@ -1,5 +1,6 @@
 package com.paybank.hexagonal.domaine;
 
+import com.paybank.hexagonal.DTO.SecuredPermission;
 import com.paybank.hexagonal.domaine.annotation.CheckDroit;
 import com.paybank.hexagonal.domaine.controleurs.SecurityInterceptor;
 import com.paybank.hexagonal.ports.ProduitSPI;
@@ -32,12 +33,13 @@ public class ServiceCatalogueProduit {
     }
 
     // C - CRÉER PRODUIT + TARIF
-    @CheckDroit(ressource = "produits")
+    //@CheckDroit(ressource = "produits")
+    //@SecuredPermission(ressource = "produits", action = "creer")
     public Produit creerProduit(String nom, long prixCentimes) throws StripeException {
-    	String role = SecurityInterceptor.getContextRole();
-    	if (!"MANAGER".equals(role)) {
-    	    throw new IllegalArgumentException("Interdit par le domaine : seuls les managers peuvent gérer les articles");
-    	}
+    	//String role = SecurityInterceptor.getContextRole();
+    	//if (!"MANAGER".equals(role)) {
+    	    //throw new IllegalArgumentException("Interdit par le domaine : seuls les managers peuvent gérer les articles");
+    	//}
     	// 1. Créer le Produit sur Stripe
         ProductCreateParams productParams = ProductCreateParams.builder()
                 .setName(nom)
@@ -59,18 +61,20 @@ public class ServiceCatalogueProduit {
     }
 
     // R - LIRE
+    //@SecuredPermission(ressource = "produits", action = "lire")
     public Produit obtenirProduit(UUID id) {
         return produitSPI.trouverParId(id)
                 .orElseThrow(() -> new IllegalArgumentException("Produit introuvable"));
     }
 
     // U - MODIFIER (Nom et/ou Nouveau Prix)
-    @CheckDroit(ressource = "produits")
+    //@CheckDroit(ressource = "produits")
+    //@SecuredPermission(ressource = "produits", action = "modifier")
     public void modifierProduit(UUID id, String nouveauNom, long nouveauPrixCentimes) throws StripeException {
-    	String role = SecurityInterceptor.getContextRole();
-    	if (!"MANAGER".equals(role)) {
-    	    throw new IllegalArgumentException("Interdit par le domaine : seuls les managers peuvent gérer les articles");
-    	}
+    	//String role = SecurityInterceptor.getContextRole();
+    	//if (!"MANAGER".equals(role)) {
+    	    //throw new IllegalArgumentException("Interdit par le domaine : seuls les managers peuvent gérer les articles");
+    	//}
     	Produit produitExistant = obtenirProduit(id);
         String priceId = produitExistant.getStripePriceId();
 
@@ -97,13 +101,14 @@ public class ServiceCatalogueProduit {
         produitSPI.sauvegarder(produitModifie);
     }
 
-    // D - SUPPRIMER
-    @CheckDroit(ressource = "produits")
+    // D - SUPPRIMER  
+    //@CheckDroit(ressource = "produits")
+    //@SecuredPermission(ressource = "produits", action = "supprimer")
     public void supprimerProduit(UUID id) throws StripeException {
-    	String role = SecurityInterceptor.getContextRole();
-    	if (!"MANAGER".equals(role)) {
-    	    throw new IllegalArgumentException("Interdit par le domaine : seuls les managers peuvent gérer les articles");
-    	}
+    	//String role = SecurityInterceptor.getContextRole();
+    	//if (!"MANAGER".equals(role)) {
+    	    //throw new IllegalArgumentException("Interdit par le domaine : seuls les managers peuvent gérer les articles");
+    	//}
     	Produit produit = obtenirProduit(id);
 
         // Désactivation du produit sur Stripe (Stripe ne supprime pas définitivement les objets financiers)

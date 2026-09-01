@@ -22,7 +22,13 @@ public interface UtilisateurRepository extends JpaRepository<UtilisateurEntity, 
     Optional<UtilisateurEntity> findByEmail(String email);
 
     // Corrigé pour renvoyer une liste d'entités (ajustez selon votre propriété nom)
-    List<UtilisateurEntity> findByNom(String nom);
+    //List<UtilisateurEntity> findByNom(String nom);
+    
+    List<UtilisateurEntity> findByRole(Role role);
+    
+    //Optional<UtilisateurEntity> findByEmail2(String email);
+    
+    Optional<UtilisateurEntity> findByNom(String nom);
 
     @Modifying
     @Transactional
@@ -58,6 +64,5 @@ public interface UtilisateurRepository extends JpaRepository<UtilisateurEntity, 
     @Transactional
     @Query("UPDATE UtilisateurEntity u SET u.imprimer = :valeur WHERE u.role = :role")
     void mettreAJourDroitImprimerParRole(@Param("role") Role role, @Param("valeur") boolean valeur);
-
-    List<UtilisateurEntity> findByRole(Role role);
+ 
 }

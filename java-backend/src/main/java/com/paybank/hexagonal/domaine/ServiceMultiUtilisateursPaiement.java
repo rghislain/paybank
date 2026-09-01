@@ -10,6 +10,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service; // Import ajouté
 
+import com.paybank.hexagonal.DTO.SecuredPermission;
 import com.paybank.hexagonal.domaine.annotation.CheckDroit;
 import com.paybank.hexagonal.domaine.annotation.MasquerDonneesSensibles;
 import com.paybank.hexagonal.domaine.annotation.Securise;
@@ -99,7 +100,8 @@ public class ServiceMultiUtilisateursPaiement {
     
     @Securise
     @MasquerDonneesSensibles
-    @CheckDroit(ressource = "utilisateurs")
+    //@CheckDroit(ressource = "utilisateurs")
+    //@SecuredPermission(ressource = "utilisateurs", action = "creer")
     public Utilisateur createUser(Utilisateur operator, Utilisateur utilisateur) {
     	System.out.println(">>> Entrée dans createUser pour : " + utilisateur.getNom());
         
@@ -107,7 +109,7 @@ public class ServiceMultiUtilisateursPaiement {
         //Utilisateur operator = getOperateurConnecte();
         //System.out.println(">>> Opérateur identifié : " + operator.getEmail());
 
-        validatePermission(operator, Permission.USER_CREATE);
+        //validatePermission(operator, Permission.USER_CREATE);
     	
 
         //Utilisateur operator = getOperateurConnecte();
@@ -120,9 +122,10 @@ public class ServiceMultiUtilisateursPaiement {
     }
     
     @MasquerDonneesSensibles
-    @CheckDroit(ressource = "utilisateurs")
+    //@CheckDroit(ressource = "utilisateurs")
+    //@SecuredPermission(ressource = "utilisateurs", action = "modifier")
     public Utilisateur updateUser(Utilisateur operator, String userIdToUpdate, String newName, Role newRole, String newPassword) {
-        validatePermission(operator, Permission.USER_UPDATE);
+        //validatePermission(operator, Permission.USER_UPDATE);
 
         Utilisateur user = utilisateurSPI.findById(userIdToUpdate)
                 .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
@@ -152,9 +155,10 @@ public class ServiceMultiUtilisateursPaiement {
     }
 
     @MasquerDonneesSensibles
-    @CheckDroit(ressource = "utilisateurs")
+    //@CheckDroit(ressource = "utilisateurs")
+    //@SecuredPermission(ressource = "utilisateurs", action = "supprimer")
     public void deactivateUser(Utilisateur operator, String userIdToDelete) {
-        validatePermission(operator, Permission.USER_DELETE);
+        //validatePermission(operator, Permission.USER_DELETE);
 
         Utilisateur user = utilisateurSPI.findById(userIdToDelete)
                 .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
@@ -168,8 +172,9 @@ public class ServiceMultiUtilisateursPaiement {
     // ==========================================
 
     @MasquerDonneesSensibles
+    //@SecuredPermission(ressource = "clients", action = "creer")
     public Client createClient(Utilisateur operator, String nom, String email) {
-        validatePermission(operator, Permission.CLIENT_CREATE);
+        //validatePermission(operator, Permission.CLIENT_CREATE);
 
         Client newClient = new Client(UUID.randomUUID(), nom, email, operator.getId());
         clientSPI.sauvegarder(newClient);
@@ -275,8 +280,8 @@ public class ServiceMultiUtilisateursPaiement {
         if (!entity.isActif()) {
             throw new SecurityException("Compte inactif");
         }
-        
-        return entity.toDomain();
+        Utilisateur utilisateur=new Utilisateur(entity.getPassword(), entity.getEmail(), entity.getPassword(), entity.getRole(), entity.isActif()); 
+        return utilisateur; //.toDomain();
     }
     
     public List<Utilisateur> listerTousLesSalaries() {

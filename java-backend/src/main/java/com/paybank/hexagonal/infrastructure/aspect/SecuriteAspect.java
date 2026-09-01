@@ -256,14 +256,16 @@ public class SecuriteAspect {
         
         // Charger l'utilisateur pour obtenir ses droits frais en BDD
         Utilisateur utilisateur = utilisateursAdaptateur.findById(utilisateurId)
-            .orElseThrow(() -> new SecurityException("Utilisateur non trouvé ou non authentifié"));
+            .orElseThrow(() -> new SecurityException("Utilisateur non trouvé ou non authentifié ou n'ayant pas les droits"));
 
         // Vérification dynamique selon l'action demandée
         boolean estAutorise = switch (verifierDroit.action().toUpperCase()) {
-            case "CREER" -> utilisateur.isCreer();
-            case "LIRE" -> utilisateur.isLire();
-            case "MODIFIER" -> utilisateur.isModifier();
-            case "SUPPRIMER" -> utilisateur.isSupprimer();
+            case "creer" -> utilisateur.isCreer();
+            case "lire" -> utilisateur.isLire();
+            case "modifier" -> utilisateur.isModifier();
+            case "supprimer" -> utilisateur.isSupprimer();
+            case "imprimer" -> utilisateur.isImprimer();
+            case "sauvegarder" -> utilisateur.isSauvegarder();
             default -> false;
         };
 

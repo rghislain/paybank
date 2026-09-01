@@ -1,5 +1,6 @@
 package com.paybank.hexagonal.domaine;
 
+import com.paybank.hexagonal.DTO.SecuredPermission;
 import com.paybank.hexagonal.domaine.annotation.CheckDroit;
 import com.paybank.hexagonal.domaine.annotation.MasquerDonneesSensibles;
 import com.paybank.hexagonal.domaine.controleurs.SecurityInterceptor;
@@ -56,9 +57,9 @@ public class ServiceGestionClient {
 
     // C - CRÉER
     @MasquerDonneesSensibles
-    @CheckDroit(ressource = "clients")
+    //@CheckDroit(ressource = "clients")
     public Client creerClient(String nom, String email, String role) throws StripeException {
-        verifierPermission(Permission.CLIENT_CREATE);
+        //verifierPermission(Permission.CLIENT_CREATE);
 
         CustomerCreateParams params = CustomerCreateParams.builder()
                 .setName(nom)
@@ -73,6 +74,7 @@ public class ServiceGestionClient {
 
     // R - LIRE
     @MasquerDonneesSensibles
+    //@SecuredPermission(ressource = "clients", action = "lire")
     public Client obtenirClient(UUID id, String role) {
         return clientSPI.trouverParId(id)
                 .orElseThrow(() -> new IllegalArgumentException("Client introuvable pour l'id : " + id));
@@ -100,9 +102,10 @@ public class ServiceGestionClient {
     
     // U - MODIFIER
     @MasquerDonneesSensibles
-    @CheckDroit(ressource = "clients")
+    //@CheckDroit(ressource = "clients")
+    //@SecuredPermission(ressource = "clients", action = "modifier")
     public void modifierClient(UUID id, String nouveauNom, String nouvelEmail, String role) throws StripeException {
-        verifierPermission(Permission.CLIENT_UPDATE);
+        //verifierPermission(Permission.CLIENT_UPDATE);
         
         Client clientExistant = obtenirClient(id, role);
 
@@ -147,9 +150,10 @@ public class ServiceGestionClient {
     
     // D - SUPPRIMER
     @MasquerDonneesSensibles
-    @CheckDroit(ressource = "clients")
+    //@CheckDroit(ressource = "clients")
+    //@SecuredPermission(ressource = "utilisateurs", action = "supprimer")
     public void supprimerClient(UUID id, String role) throws StripeException {
-        verifierPermission(Permission.CLIENT_DELETE);
+        //verifierPermission(Permission.CLIENT_DELETE);
         
         Client clientExistant = obtenirClient(id, role);
         

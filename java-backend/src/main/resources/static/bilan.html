@@ -130,6 +130,7 @@
             { key: 'clients', label: 'Clients' },
             { key: 'paiements', label: 'Paiements' },
             { key: 'produits', label: 'Produits' },
+            { key: 'utilisateurs', label: 'Utilisateurs' },
             { key: 'rapports_financiers', label: 'Rapports' },
             { key: 'parametres_systemes', label: 'Paramètres' }
         ];
@@ -142,7 +143,8 @@
             { key: 'modifier', label: 'Modifier' },
             { key: 'supprimer', label: 'Suppr.' },
             { key: 'sauvegarder', label: 'Sauv.' },
-            { key: 'imprimer', label: 'Imprim.' }
+            { key: 'imprimer', label: 'Imprim.' },
+            { key: 'envoyer', label: 'Envoyer' }
         ];
 
         function initialiserMatriceUI() {
@@ -181,7 +183,8 @@
 
         function verifierAccesAdmin() {
             const roleActif = document.getElementById('operateurRole').value;
-            const accessDeniedCard = document.getElementById('access-denied-card');
+			localStorage.setItem('userRole', roleActif);
+			const accessDeniedCard = document.getElementById('access-denied-card');
             const bilanContent = document.getElementById('bilan-content');
 
             if (roleActif === 'ADMIN') {
@@ -194,125 +197,13 @@
                 accessDeniedCard.classList.remove('hidden');
             }
         }
-
-		/*
-        async function chargerMatriceDroits() {
-            const token = localStorage.getItem('userToken');
-            try {
-                const response = await fetch(`${API_BASE_URL}/api/droits`, {
-                    headers: { 'Authorization': 'Bearer ' + (token || ''), 'X-Auth-Role': 'ADMIN' }
-                });
-
-                if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}`);
-
-                const listeDroits = await response.json();
-                
-                listeDroits.forEach(ligne => {
-                    const role = ligne.role;
-                    if (!role) return;
-
-                    // Parcourir toutes les clés reçues (modules ressources et actions)
-                    for (const [champ, valeur] of Object.entries(ligne)) {
-                        if (champ === 'role') continue;
-
-                        // Cocher la case correspondante qu'il s'agisse d'une ressource ou d'une action
-                        const cb = document.querySelector(`input[data-role="${role.toUpperCase()}"][data-ressource="${champ.toLowerCase()}"]`) ||
-                                   document.querySelector(`input[data-role="${role.toUpperCase()}"][data-action="${champ.toLowerCase()}"]`);
-                        
-                        if (cb) {
-                            cb.checked = (valeur === true || valeur === 1 || valeur === "1" || valeur === "true" || valeur === "TRUE");
-                        }
-                    }
-                });
-            } catch (err) {
-                console.warn("⚠️ Impossible de charger les droits :", err);
-            }
-        }
-		*/
-		
-		/*
-		async function chargerMatriceDroits() {
-		    const token = localStorage.getItem('userToken');
-		    try {
-		        const response = await fetch(`${API_BASE_URL}/api/droits`, {
-		            headers: { 'Authorization': 'Bearer ' + (token || ''), 'X-Auth-Role': 'ADMIN' }
-		        });
-
-		        if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}`);
-
-		        const listeDroits = await response.json();
-		        
-		        listeDroits.forEach(ligne => {
-		            const role = ligne.role;
-		            if (!role) return;
-
-		            // Récupérer TOUTES les cases à cocher pour ce rôle spécifique
-		            const checkboxes = document.querySelectorAll(`input[data-role="${role.toUpperCase()}"]`);
-		            
-		            checkboxes.forEach(cb => {
-		                const ressource = cb.dataset.ressource;
-		                const action = cb.dataset.action;
-
-		                // Vérifier si le module et l'action sont activés en BDD
-		                const ressourceActive = ressource ? (ligne[ressource] === true || ligne[ressource] === 1 || ligne[ressource] === "1" || ligne[ressource] === "true" || ligne[ressource] === "TRUE") : false;
-		                const actionActive = action ? (ligne[action] === true || ligne[action] === 1 || ligne[action] === "1" || ligne[action] === "true" || ligne[action] === "TRUE") : false;
-
-		                // La case est cochée si les deux tables confirment les droits
-		                cb.checked = ressourceActive && actionActive;
-		            });
-		        });
-		    } catch (err) {
-		        console.warn("⚠️ Impossible de charger les droits :", err);
-		    }
-		}
-		*/
-		
-		/*
-		async function chargerMatriceDroits() {
-		    const token = localStorage.getItem('userToken');
-		    try {
-		        // Utilisation explicite de ${API_BASE_URL}/api/droits
-		        const response = await fetch(`${API_BASE_URL}/api/droits`, {
-		            method: 'GET',
-		            headers: { 
-		                'Content-Type': 'application/json',
-		                'Authorization': 'Bearer ' + (token || ''), 
-		                'X-Auth-Role': 'ADMIN' 
-		            }
-		        });
-
-		        if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}`);
-
-		        const listeDroits = await response.json();
-		        
-		        listeDroits.forEach(ligne => {
-		            const role = ligne.role;
-		            if (!role) return;
-
-		            const checkboxes = document.querySelectorAll(`input[data-role="${role.toUpperCase()}"]`);
-		            
-		            checkboxes.forEach(cb => {
-		                const ressource = cb.dataset.ressource;
-		                const action = cb.dataset.action;
-
-		                const ressourceActive = ressource ? Boolean(ligne[ressource]) : true;
-		                const actionActive = action ? Boolean(ligne[action]) : true;
-
-		                // Si les deux sont à true, on coche la case
-		                cb.checked = ressourceActive && actionActive;
-		            });
-		        });
-		    } caught (err) {
-		        console.warn("⚠️ Impossible de charger les droits :", err);
-		    }
-		}
-		*/
-		
+	
 		async function chargerMatriceDroits() {
 		    const token = localStorage.getItem('userToken');
 		    try {
 		        const response = await fetch(`${API_BASE_URL}/api/droits`, {
 		            method: 'GET',
+		            credentials: 'include',
 		            headers: { 
 		                'Content-Type': 'application/json',
 		                'Authorization': 'Bearer ' + (token || ''), 
@@ -356,6 +247,7 @@
             try {
                 const response = await fetch(`${API_BASE_URL}/api/droits/modifier`, {
                     method: 'POST',
+                    credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': 'Bearer ' + (token || ''),
@@ -386,6 +278,7 @@
             
             try {
                 const response = await fetch(`${API_BASE_URL}/api/dashboard/stats`, { 
+                    credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-Auth-Role': roleSelectionne,
@@ -433,6 +326,10 @@
         }
 
         window.onload = function() {
+			const savedRole = localStorage.getItem('userRole');
+			    if (savedRole) {
+			        document.getElementById('operateurRole').value = savedRole;
+			    }
             initialiserMatriceUI();
             verifierAccesAdmin();
         };

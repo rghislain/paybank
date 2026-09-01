@@ -51,6 +51,7 @@ public class ProduitControleur {
     */
 
     @GetMapping("/{id}")
+    //@SecuredPermission(ressource = "produits", action = "lire")
     public ResponseEntity<Produit> obtenir(@PathVariable UUID id) {
         return ResponseEntity.ok(serviceCatalogueProduit.obtenirProduit(id));
     }
@@ -77,7 +78,7 @@ public class ProduitControleur {
     }
     */
     
-    @SecuredPermission(ressource = "produits", action = "CREER")
+    //@SecuredPermission(ressource = "produits", action = "creer")
     @PostMapping
     public ResponseEntity<String> creer(@RequestBody ProduitDto dto) {
         try {
@@ -90,7 +91,7 @@ public class ProduitControleur {
         }
     }
 
-    @SecuredPermission(ressource = "produits", action = "MODIFIER")
+    //@SecuredPermission(ressource = "produits", action = "modifier")
     @PutMapping("/{id}")
     public ResponseEntity<String> modifier(@PathVariable UUID id, @RequestBody ProduitDto dto) {
         try {
@@ -111,7 +112,7 @@ public class ProduitControleur {
     }
     */
     
-    @SecuredPermission(ressource = "produits", action = "SUPPRIMER")
+    //@SecuredPermission(ressource = "produits", action = "supprimer")
     @DeleteMapping("/{id}")
     public ResponseEntity<String> supprimer(@PathVariable UUID id,
     		@RequestHeader(value = "X-Auth-Role", required = false) String role) {
@@ -128,10 +129,10 @@ public class ProduitControleur {
         */
     	try {
             // 1. Vérification des rôles (Exemple : interdire si c'est un employé ou si aucun statut)
-            if (role == null || role.isEmpty() || "EMPLOYE".equals(role)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body("Erreur : Vous n'avez pas les droits nécessaires pour supprimer un produit.");
-            }
+            //if (role == null || role.isEmpty() || "EMPLOYE".equals(role)) {
+                //return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    //.body("Erreur : Vous n'avez pas les droits nécessaires pour supprimer un produit.");
+            //}
 
             // 2. Appel du service de suppression
             serviceCatalogueProduit.supprimerProduit(id);

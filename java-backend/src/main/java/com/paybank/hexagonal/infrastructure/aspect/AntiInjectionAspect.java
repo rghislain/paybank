@@ -6,6 +6,9 @@ import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.springframework.stereotype.Component;
+
+import com.paybank.hexagonal.domaine.Utilisateur;
+
 import org.springframework.core.annotation.Order;
 
 /*
@@ -57,4 +60,12 @@ public class AntiInjectionAspect {
             }
         }
     }
+    
+    @Before("execution(* com.paybank.hexagonal.domaine.ServiceMultiUtilisateursPaiement.createUser(..)) && args(utilisateur)")
+    public void verifierInjection(Utilisateur utilisateur) {
+        if (utilisateur.getNom().contains("<script>") || utilisateur.getEmail().contains("';")) {
+            throw new IllegalArgumentException("Données suspectes détectées !");
+        }
+    }
+    
 }

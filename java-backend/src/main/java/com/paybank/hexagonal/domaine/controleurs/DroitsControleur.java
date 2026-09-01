@@ -2,6 +2,8 @@ package com.paybank.hexagonal.domaine.controleurs;
 
 import com.paybank.hexagonal.DTO.*;
 import com.paybank.hexagonal.domaine.GestionDroitsService;
+import com.paybank.hexagonal.domaine.OperateurCourantService;
+import com.paybank.hexagonal.domaine.Role;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,15 +17,18 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/droits")
-@CrossOrigin(origins = "*") // Permet d'éviter les blocages CORS
-public class DroitsController {
+//@CrossOrigin(origins = "*") // Permet d'éviter les blocages CORS
+public class DroitsControleur {
 
     @Autowired
     private GestionDroitsService gestionDroitsService;
+
+    @Autowired
+    private OperateurCourantService operateurCourantService;
     
     private final JdbcTemplate jdbcTemplate;
     
-    public DroitsController(JdbcTemplate jdbcTemplate) {
+    public DroitsControleur(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
     
@@ -50,7 +55,7 @@ public class DroitsController {
             // 1. Récupérer les actions depuis la table 'utilisateurs'
             try {
                 Map<String, Object> actions = jdbcTemplate.queryForMap(
-                    "SELECT creer, lire, modifier, supprimer, sauvegarder, imprimer FROM utilisateurs WHERE UPPER(role) = ? LIMIT 1",
+                    "SELECT creer, lire, modifier, supprimer, sauvegarder, imprimer, envoyer FROM utilisateurs WHERE UPPER(role) = ? LIMIT 1",
                     role
                 );
                 droitsRole.putAll(actions);
@@ -61,12 +66,13 @@ public class DroitsController {
                 droitsRole.put("supprimer", false);
                 droitsRole.put("sauvegarder", false);
                 droitsRole.put("imprimer", false);
+                droitsRole.put("envoyer", false);
             }
 
             // 2. Récupérer les ressources depuis la table 'ressources' via la liaison utilisateur
             try {
                 Map<String, Object> ressources = jdbcTemplate.queryForMap(
-                    "SELECT clients, paiements, produits, rapports_financiers, parametres_systemes FROM ressources r JOIN utilisateurs u ON r.utilisateurs_id = u.id WHERE UPPER(u.role) = ? LIMIT 1",
+                    "SELECT clients, paiements, produits, rapports_financiers, parametres_systemes, r.utilisateurs FROM ressources r JOIN utilisateurs u ON r.utilisateurs_id = u.id WHERE UPPER(u.role) = ? LIMIT 1",
                     role
                 );
                 droitsRole.putAll(ressources);
@@ -76,6 +82,7 @@ public class DroitsController {
                 droitsRole.put("produits", false);
                 droitsRole.put("rapports_financiers", false);
                 droitsRole.put("parametres_systemes", false);
+                droitsRole.put("utilisateurs", false);
             }
 
             resultat.add(droitsRole);
@@ -220,6 +227,20 @@ public class DroitsController {
     
     @PostMapping("/modifier")
     public ResponseEntity<?> modifierDroit(@RequestBody DroitRequest request) {
+        // ⚠️ Volontairement gaté sur le rôle ADMIN réel (hors matrice), et non via @RequireDroit :
+        //    si on gatait la modification de la matrice PAR la matrice elle-même, un mauvais
+        //    réglage pourrait rendre la matrice impossible à corriger par quiconque (verrou total).
+        try {
+            Role roleReel = operateurCourantService.getRoleConnecte();
+            if (roleReel != Role.ADMIN) {
+                return ResponseEntity.status(403).body(
+                    "Accès refusé : seul un ADMIN peut modifier la matrice de droits."
+                );
+            }
+        } catch (SecurityException e) {
+            return ResponseEntity.status(403).body(e.getMessage());
+        }
+
         if (request.getRole() == null) {
             return ResponseEntity.badRequest().body("Paramètre manquant : role");
         }
@@ -243,7 +264,7 @@ public class DroitsController {
         // 1. Premier IF : Traitement de la table 'ressources' (Modules)
         if (request.getRessource() != null && !request.getRessource().isBlank()) {
             String colLower = request.getRessource().toLowerCase();
-            List<String> modulesRessources = List.of("clients", "paiements", "produits", "rapports_financiers", "parametres_systemes");
+            List<String> modulesRessources = List.of("clients", "paiements", "produits", "rapports_financiers", "parametres_systemes", "utilisateurs");
             
             if (modulesRessources.contains(colLower) && utilisateurId != null) {
                 String sql = "INSERT INTO ressources (id, utilisateurs_id, " + colLower + ") " +
@@ -260,7 +281,7 @@ public class DroitsController {
         // 2. Deuxième IF : Traitement de la table 'utilisateurs' (Actions)
         if (request.getAction() != null && !request.getAction().isBlank()) {
             String colLower = request.getAction().toLowerCase();
-            List<String> actionsUtilisateurs = List.of("creer", "lire", "modifier", "supprimer", "sauvegarder", "imprimer");
+            List<String> actionsUtilisateurs = List.of("creer", "lire", "modifier", "supprimer", "sauvegarder", "imprimer", "envoyer");
             
             if (actionsUtilisateurs.contains(colLower)) {
                 String sql = "UPDATE utilisateurs SET " + colLower + " = ? WHERE UPPER(role) = ?";

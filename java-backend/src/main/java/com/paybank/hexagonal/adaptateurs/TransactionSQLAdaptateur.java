@@ -1,8 +1,11 @@
 package com.paybank.hexagonal.adaptateurs;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -47,5 +50,57 @@ public class TransactionSQLAdaptateur implements TransactionRepositorySPI {
             transaction.reconciliationStatus()
         );
     }
+
+	/*
+	@Override
+	public Optional<TransactionDetail> findById(UUID id) {
+	    String sql = "SELECT id, client_id, date, amount, is_debit FROM transactions WHERE id = ?::uuid";
+	    try {
+	        TransactionDetail detail = jdbcTemplate.queryForObject(sql, (rs, rowNum) -> new TransactionDetail(), id);	        
+	        return Optional.of(detail);
+	    } catch (EmptyResultDataAccessException e) {
+	        return Optional.empty();
+	    }
+	}
+
+	@Override
+	public List<TransactionDetail> findTransactionsByDateRange(UUID clientId, LocalDate start, LocalDate end) {
+	    String sql = "SELECT id, client_id, date, amount, is_debit FROM transactions WHERE client_id = ?::uuid AND date BETWEEN ? AND ?";
+	    return jdbcTemplate.query(sql, (rs, rowNum) -> new TransactionDetail(
+	    ), clientId, java.sql.Date.valueOf(start), java.sql.Date.valueOf(end));
+	}
+	*/
+	
+	@Override
+	public Optional<TransactionDetail> findById(UUID id) {
+	    String sql = "SELECT id, client_id, date, description, amount, is_debit, reconciliation_status FROM transactions WHERE id = ?::uuid";
+	    try {
+	        TransactionDetail detail = jdbcTemplate.queryForObject(sql, (rs, rowNum) -> new TransactionDetail(
+	            UUID.fromString(rs.getString("id")),
+	            rs.getDate("date").toLocalDate(),
+	            rs.getString("description"),
+	            rs.getBigDecimal("amount"),
+	            rs.getBoolean("is_debit"),
+	            rs.getString("reconciliation_status")
+	        ), id);
+	        return Optional.of(detail);
+	    } catch (EmptyResultDataAccessException e) {
+	        return Optional.empty();
+	    }
+	}
+
+	@Override
+	public List<TransactionDetail> findTransactionsByDateRange(UUID clientId, LocalDate start, LocalDate end) {
+	    String sql = "SELECT id, client_id, date, description, amount, is_debit, reconciliation_status FROM transactions WHERE client_id = ?::uuid AND date BETWEEN ? AND ?";
+	    return jdbcTemplate.query(sql, (rs, rowNum) -> new TransactionDetail(
+	        UUID.fromString(rs.getString("id")),
+	        rs.getDate("date").toLocalDate(),
+	        rs.getString("description"),
+	        rs.getBigDecimal("amount"),
+	        rs.getBoolean("is_debit"),
+	        rs.getString("reconciliation_status")
+	    ), clientId, java.sql.Date.valueOf(start), java.sql.Date.valueOf(end));
+	}
+	
 
 }

@@ -1,5 +1,6 @@
 package com.paybank.hexagonal.domaine;
 
+import com.paybank.hexagonal.DTO.SecuredPermission;
 import com.paybank.hexagonal.domaine.annotation.AgainstBruteForce;
 import com.paybank.hexagonal.domaine.annotation.CheckDroit;
 import com.paybank.hexagonal.domaine.annotation.MasquerDonneesSensibles;
@@ -41,12 +42,14 @@ public class ServiceGestionPaiement {
     
     // C - CRÉER UN INTENT DE PAIEMENT
     @MasquerDonneesSensibles
-    @CheckDroit(ressource = "paiements")
+    //@CheckDroit(ressource = "paiements")
+    //@SecuredPermission(ressource = "paiements", action = "creer")
+    //@CheckDroit(ressource = "paiements")
     public Map<String, String> creerIntentionPaiement(UUID clientId, long montantCentimes) throws StripeException {
-    	String role = SecurityInterceptor.getContextRole();
-    	if (!"EMPLOYE".equals(role)) {
-    	    throw new IllegalArgumentException("Interdit par le domaine : seuls les employés peuvent gérer les paiements");
-    	}
+    	//String role = SecurityInterceptor.getContextRole();
+    	//if (!"EMPLOYE".equals(role)) {
+    	    //throw new IllegalArgumentException("Interdit par le domaine : seuls les employés peuvent gérer les paiements");
+    	//}
     	
     	// 1. On génère un identifiant unique (qui servira aussi de clé d'idempotence)
         UUID paiementId = UUID.randomUUID();
@@ -86,12 +89,14 @@ public class ServiceGestionPaiement {
 
     // U - MODIFIER LE MONTANT D'UN PAIEMENT EN COURS
     @MasquerDonneesSensibles
-    @CheckDroit(ressource = "paiements")
+    //@CheckDroit(ressource = "paiements")
+    //@SecuredPermission(ressource = "paiements", action = "modifier")
+    //@CheckDroit(ressource = "paiements")
     public void modifierMontantPaiement(String stripePaymentIntentId, long nouveauMontantCentimes) throws StripeException {
-    	String role = SecurityInterceptor.getContextRole();
-    	if (!"EMPLOYE".equals(role)) {
-    	    throw new IllegalArgumentException("Interdit par le domaine : seuls les employés peuvent gérer les paiements");
-    	}
+    	//String role = SecurityInterceptor.getContextRole();
+    	//if (!"EMPLOYE".equals(role)) {
+    	    //throw new IllegalArgumentException("Interdit par le domaine : seuls les employés peuvent gérer les paiements");
+    	//}
     	// 1. Mise à jour chez Stripe
         PaymentIntent intent = PaymentIntent.retrieve(stripePaymentIntentId);
         
@@ -111,12 +116,12 @@ public class ServiceGestionPaiement {
 
     // D - SUPPRIMER / ANNULER UN PAIEMENT
     @MasquerDonneesSensibles
-    @CheckDroit(ressource = "paiements")
+    //@CheckDroit(ressource = "paiements")
     public void annulerPaiement(String stripePaymentIntentId) throws StripeException {
-    	String role = SecurityInterceptor.getContextRole();
-    	if (!"EMPLOYE".equals(role)) {
-    	    throw new IllegalArgumentException("Interdit par le domaine : seuls les employés peuvent gérer les paiements");
-    	}
+    	//String role = SecurityInterceptor.getContextRole();
+    	//if (!"EMPLOYE".equals(role)) {
+    	    //throw new IllegalArgumentException("Interdit par le domaine : seuls les employés peuvent gérer les paiements");
+    	//}
     	// 1. Annulation chez Stripe
         PaymentIntent intent = PaymentIntent.retrieve(stripePaymentIntentId);
         intent.cancel();
@@ -178,7 +183,7 @@ public class ServiceGestionPaiement {
     }
     
     @MasquerDonneesSensibles
-    @CheckDroit(ressource = "paiements")
+    //@CheckDroit(ressource = "paiements")
     public void effectuerRapprochement(UUID paiementId, String stripePaymentIntentId) throws StripeException {
         // A. Récupérer le paiement local sous forme de Map
         Map<String, Object> paiementLocal = persistancePaiementSPI.chercherParId2(paiementId);
@@ -466,7 +471,8 @@ public class ServiceGestionPaiement {
     */
     
     @MasquerDonneesSensibles
-    @Securise(roles = {"MANAGER", "ADMIN"})
+    //@Securise(roles = {"MANAGER", "ADMIN"})
+    //@CheckDroit(ressource = "rapports_financiers")
     public List<MatchResult> executerRapprochementDepuisSources()
             throws com.stripe.exception.StripeException {
 
@@ -557,12 +563,14 @@ public class ServiceGestionPaiement {
         return true;
     }
     
+    /*
     @Before("execution(* com.paybank.hexagonal.domaine.ServiceMultiUtilisateursPaiement.createUser(..)) && args(utilisateur)")
     public void verifierInjection(Utilisateur utilisateur) {
         if (utilisateur.getNom().contains("<script>") || utilisateur.getEmail().contains("';")) {
             throw new IllegalArgumentException("Données suspectes détectées !");
         }
     }
+    */
 
     // Uniquement pour la compilation si StripeMethod n'est pas encore totalement setup
     //public Map<String, String> creerIntentionPaiement(java.util.UUID c, long m) throws com.stripe.exception.StripeException { return Map.of(); }

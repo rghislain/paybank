@@ -1,15 +1,16 @@
 package com.paybank.hexagonal.domaine.controleurs;
 
+import com.paybank.hexagonal.domaine.OperateurCourantService;
 import com.paybank.hexagonal.domaine.ServiceMultiUtilisateursPaiement;
 import com.paybank.hexagonal.domaine.Utilisateur;
-import com.paybank.hexagonal.entity.UtilisateurEntity;
-import com.paybank.hexagonal.DTO.SecuredPermission;
+import com.paybank.hexagonal.domaine.annotation.RequireDroit;
 import com.paybank.hexagonal.domaine.Role;
 
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,14 +19,19 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/utilisateurs")
+/*
 @CrossOrigin(
     origins = "*", 
     allowedHeaders = "*",
     methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE}
 )
+*/
 public class UtilisateurControleur {
 
     private final ServiceMultiUtilisateursPaiement serviceMultiUtilisateursPaiement;
+
+    @Autowired
+    private OperateurCourantService operateurCourantService;
     
     // 🟢 Injection automatique depuis application.properties
     @Value("${app.passwords.admin}")
@@ -110,19 +116,14 @@ public class UtilisateurControleur {
     }
     */
     
-    @SecuredPermission(ressource = "utilisateurs", action = "CREER")
+    @RequireDroit(action = "creer", ressource = "utilisateurs")
     @PostMapping
-    public ResponseEntity<?> create(
-            @RequestBody CreateUserRequest req,  
-            @RequestHeader(value = "X-Auth-Role", required = false) String roleHeader) {
+    public ResponseEntity<?> create(@RequestBody CreateUserRequest req) {
         
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         try {
-            String roleString = (roleHeader != null) ? roleHeader.toUpperCase() : "EMPLOYE";
-            Role roleEnumOperateur = Role.valueOf(roleString);
-            
-            // Opérateur effectuant l'action
-            Utilisateur operator = new Utilisateur("ghislainr", "ghislainrochette@paybank.com", "employePass1", roleEnumOperateur, true);
+            // Le droit "creer" a déjà été vérifié par DroitAspect avant l'entrée dans cette méthode.
+            Utilisateur operator = operateurCourantService.getOperateurConnecte();
 
             // 1. Récupérer ou générer le mot de passe
             String motDePasseClair = (req.getPassword() != null && !req.getPassword().isEmpty()) 
@@ -132,9 +133,9 @@ public class UtilisateurControleur {
             // 2. Le HACHER avec BCrypt
             String motDePasseHashe = passwordEncoder.encode(motDePasseClair);
             
-            // 3. SOLUTION PROPRE : Utilisation du constructeur de base et des setters pour éviter les erreurs d'ordre
+            // 3. Construction du nouvel utilisateur
             Utilisateur nouvelUtilisateur = new Utilisateur();
-            nouvelUtilisateur.setName(req.getNom()); // <-- On force explicitement le nom
+            nouvelUtilisateur.setName(req.getNom());
             nouvelUtilisateur.setEmail(req.getEmail());
             nouvelUtilisateur.setPassword(motDePasseHashe);
             nouvelUtilisateur.setRole(req.getRole());
@@ -182,14 +183,16 @@ public class UtilisateurControleur {
     */
     
     
+    @RequireDroit(action = "modifier", ressource = "utilisateurs")
     @PutMapping("/{id}/modifier-droits")
     public ResponseEntity<?> modifierDroits(
             @PathVariable UUID id, 
-            @RequestBody UpdateUserRequest req, 
-            //@RequestHeader("X-Auth-Role") String roleOperateur) {
-            @RequestHeader(value = "X-Auth-Role", required = false) String roleOperateur) {
+            @RequestBody UpdateUserRequest req) {
         
     	try {
+            // Le droit "modifier" a déjà été vérifié par DroitAspect avant l'entrée dans cette méthode.
+            Utilisateur operator = operateurCourantService.getOperateurConnecte();
+
             // Détermination automatique du mot de passe en dur selon le rôle choisi
             String passwordToUse;
             if (req.getNouveauRole() == Role.ADMIN) {
@@ -200,11 +203,9 @@ public class UtilisateurControleur {
                 passwordToUse = employePass; // 👈 Récupéré de application.properties
             }
 
-            String roleString = (roleOperateur != null) ? roleOperateur.toUpperCase() : "EMPLOYE";
-            Role roleEnumOperateur = Role.valueOf(roleString);
-            Utilisateur operator = new Utilisateur("operateur", "operateur@paybank.com", "pass", roleEnumOperateur, true);
-            
             // Appel de votre service pour persister en BDD (avec hachage BCrypt si besoin)
+            //    ServiceMultiUtilisateursPaiement.updateUser() vérifie déjà en plus
+            //    qu'un MANAGER ne peut pas promouvoir quelqu'un ADMIN (défense en profondeur).
             Utilisateur userMisAJour = serviceMultiUtilisateursPaiement.updateUser(
                 operator,
             	id.toString(), 
@@ -215,11 +216,14 @@ public class UtilisateurControleur {
 
             return ResponseEntity.ok(userMisAJour);
             
+        } catch (SecurityException e) {
+            return ResponseEntity.status(403).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(400).body(e.getMessage());
         }
     }
     
+    @RequireDroit(action = "lire", ressource = "utilisateurs")
     @GetMapping
     public ResponseEntity<List<Utilisateur>> obtenirTousLesSalaries() {
         List<Utilisateur> salaries = serviceMultiUtilisateursPaiement.listerTousLesSalaries();
@@ -227,6 +231,7 @@ public class UtilisateurControleur {
     }
     
     // Endpoint pour basculer un droit globalement pour un rôle donné depuis l'interface
+    @RequireDroit(action = "modifier")
     @PostMapping("/droits/mettre-a-jour")
     public ResponseEntity<?> mettreAJourDroitParRole(
             @RequestParam Role role,

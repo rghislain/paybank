@@ -280,7 +280,7 @@ public class SupabaseUtilisateursAdaptateur implements UtilisateurSPI {
 
 	@Override
 	public Optional<Utilisateur> findByNom(String nom) {
-		UtilisateurEntity entity = (UtilisateurEntity) utilisateurRepository.findByNom(nom);
+		UtilisateurEntity entity = (UtilisateurEntity) utilisateurRepository.findByNom(nom).get();
 	    return Optional.ofNullable(entity).map(UtilisateurEntity::toDomain);
 	    //return utilisateurRepository.findByNom(nom)
 	            //.map(entity -> entity.toDomain());

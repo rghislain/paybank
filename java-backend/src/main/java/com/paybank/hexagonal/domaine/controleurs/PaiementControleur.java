@@ -1,6 +1,6 @@
 package com.paybank.hexagonal.domaine.controleurs;
 
-import com.paybank.hexagonal.DTO.SecuredPermission;
+import com.paybank.hexagonal.domaine.annotation.RequireDroit;
 import com.paybank.hexagonal.domaine.MatchResult;
 import com.paybank.hexagonal.domaine.ServiceGestionPaiement;
 import com.stripe.exception.StripeException;
@@ -14,11 +14,13 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/paiements")
+/*
 @CrossOrigin(
     origins = "*", 
     allowedHeaders = {"X-Auth-Role", "Content-Type", "Authorization"},
     methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE}
 )
+*/
 public class PaiementControleur {
 
     private final ServiceGestionPaiement gestionPaiementService;
@@ -29,14 +31,15 @@ public class PaiementControleur {
 
     // ➕ NOUVEL ENDPOINT DEMANDÉ PAR L'IHM POUR LE RAPPROCHEMENT BANCAIRE
     
-    @SecuredPermission(ressource = "paiements", action = "CREER")
+    
     @PostMapping("/rapprochement")
+    @RequireDroit(action = "creer", ressource = "rapports_financiers")
     public ResponseEntity<?> executerRapprochementBancaire(@RequestHeader(value = "X-Auth-Role", required = false) String role) throws StripeException {
     	// 1. Bloquer l'employé (ou si aucun rôle n'est fourni)
-        if (role == null || role.trim().isEmpty() || "EMPLOYE".equalsIgnoreCase(role)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body("Accès refusé : Un employé n'a pas les droits pour effectuer le rapprochement bancaire.");
-        }
+        //if (role == null || role.trim().isEmpty() || "EMPLOYE".equalsIgnoreCase(role)) {
+            //return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                //.body("Accès refusé : Un employé n'a pas les droits pour effectuer le rapprochement bancaire.");
+        //}
         try {
 	    	// Le contrôleur appelle la logique globale que nous avons implémentée et testée
 	        List<MatchResult> resultats = gestionPaiementService.executerRapprochementDepuisSources();
@@ -70,32 +73,37 @@ public class PaiementControleur {
     }
     */
     
-    @SecuredPermission(ressource = "paiements", action = "CREER")
+    
     @PostMapping("/intent")
+    @RequireDroit(action = "creer", ressource = "paiements")
     public ResponseEntity<Map<String, String>> creerIntent(@RequestBody CreationIntentDto dto) throws StripeException {
         Map<String, String> res = gestionPaiementService.creerIntentionPaiement(dto.clientId(), dto.montantCentimes());
         return ResponseEntity.ok(res);
     }
 
-    @SecuredPermission(ressource = "paiements", action = "MODIFIER")
     @PutMapping("/intent/{id}")
+    @RequireDroit(action = "modifier", ressource = "paiements")
     public ResponseEntity<Void> modifierIntent(@PathVariable String id, @RequestBody ModificationIntentDto dto) throws StripeException {
         gestionPaiementService.modifierMontantPaiement(id, dto.nouveauMontantCentimes());
         return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/intent/{id}")
+    @RequireDroit(action = "supprimer", ressource = "paiements")
     public ResponseEntity<Void> annulerIntent(@PathVariable String id) throws StripeException {
         gestionPaiementService.annulerPaiement(id);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/solde")
+    // 👇 Volontairement non gaté par la matrice de droits : le solde Stripe est une info de
+    //    tableau de bord, visible par tout utilisateur authentifié quel que soit son rôle.
     public ResponseEntity<Map<String, Object>> obtenirSolde() throws StripeException {
         return ResponseEntity.ok(gestionPaiementService.obtenirSoldeCompte());
     }
     
     @PostMapping("/intent/{id}/synchroniser")
+    @RequireDroit(action = "modifier", ressource = "paiements")
     public ResponseEntity<Void> synchroniserPaiement(@PathVariable String id) throws StripeException {
         gestionPaiementService.synchroniserStatutPaiement(id);
         return ResponseEntity.ok().build();

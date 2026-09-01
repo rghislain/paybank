@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/permissions")
-@CrossOrigin(origins = "*")
+//@CrossOrigin(origins = "*")
 public class PermissionControleur {
 
     @Autowired
