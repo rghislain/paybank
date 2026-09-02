@@ -1,7 +1,8 @@
 package com.paybank.hexagonal.infrastructure.aspect;
 
-import com.paybank.hexagonal.DTO.SecuredPermission;
-import com.paybank.hexagonal.domaine.ServicePermission;
+import com.paybank.hexagonal.domaine.annotation.SecuredPermission;
+import com.paybank.hexagonal.domaine.service.PermissionService;
+
 import jakarta.servlet.http.HttpServletRequest;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -21,7 +22,7 @@ import java.lang.reflect.Method;
 public class PermissionAspect {
 
     @Autowired
-    private ServicePermission permissionService;
+    private PermissionService permissionService;
 
     @Around("@annotation(SecuredPermission)")
     public Object verifierPermission(ProceedingJoinPoint joinPoint) throws Throwable {

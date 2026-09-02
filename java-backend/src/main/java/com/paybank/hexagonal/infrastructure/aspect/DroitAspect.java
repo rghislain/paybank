@@ -4,10 +4,11 @@ import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.springframework.stereotype.Component;
-import com.paybank.hexagonal.domaine.OperateurCourantService;
+
 import com.paybank.hexagonal.domaine.Role;
-import com.paybank.hexagonal.domaine.VerificationDroitsService;
 import com.paybank.hexagonal.domaine.annotation.RequireDroit;
+import com.paybank.hexagonal.domaine.service.OperateurCourantService;
+import com.paybank.hexagonal.domaine.service.VerificationDroitsService;
 
 /**
  * Applique automatiquement la vérification de droits à toute méthode annotée @RequireDroit,

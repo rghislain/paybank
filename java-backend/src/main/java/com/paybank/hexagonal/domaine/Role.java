@@ -29,4 +29,8 @@ public enum Role {
         return this.permissions.contains(permission);
     }
 
+	public String toUpperCase() {
+		return this.name().toUpperCase();
+	}
+
 }

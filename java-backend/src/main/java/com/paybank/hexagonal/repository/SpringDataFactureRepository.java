@@ -1,6 +1,6 @@
 package com.paybank.hexagonal.repository;
 
-import com.paybank.hexagonal.domaine.ServiceFacture;
+import com.paybank.hexagonal.domaine.service.FactureService;
 import com.paybank.hexagonal.entity.FactureEntity;
 
 import java.util.UUID;

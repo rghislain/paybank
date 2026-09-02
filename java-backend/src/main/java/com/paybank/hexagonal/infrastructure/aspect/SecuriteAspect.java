@@ -1,7 +1,8 @@
 package com.paybank.hexagonal.infrastructure.aspect;
 
-import com.paybank.hexagonal.adaptateurs.SupabaseUtilisateursAdaptateur;
+import com.paybank.hexagonal.adaptateur.SupabaseUtilisateursAdaptateur;
 import com.paybank.hexagonal.configuration.ContexteSecurite;
+import com.paybank.hexagonal.configuration.SecurityInterceptor;
 import com.paybank.hexagonal.domaine.Utilisateur;
 import com.paybank.hexagonal.domaine.annotation.Securise;
 import com.paybank.hexagonal.domaine.annotation.VerifierDroit;
@@ -19,7 +20,6 @@ import org.springframework.stereotype.Component;
 import java.util.Arrays;
 
 import com.paybank.hexagonal.domaine.annotation.Securise;
-import com.paybank.hexagonal.domaine.controleurs.SecurityInterceptor;
 
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
@@ -30,7 +30,7 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 
 import com.paybank.hexagonal.domaine.annotation.Securise;
-import com.paybank.hexagonal.domaine.controleurs.SecurityInterceptor;
+
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.JoinPoint;
@@ -41,7 +41,7 @@ import java.util.Arrays;
 
 
 import com.paybank.hexagonal.domaine.annotation.Securise;
-import com.paybank.hexagonal.domaine.controleurs.SecurityInterceptor;
+
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.JoinPoint;

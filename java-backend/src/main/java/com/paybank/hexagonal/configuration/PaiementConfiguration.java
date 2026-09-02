@@ -3,32 +3,32 @@ package com.paybank.hexagonal.configuration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.paybank.hexagonal.domaine.ServiceAnnulation;
-import com.paybank.hexagonal.domaine.ServiceModifierPaiement;
-import com.paybank.hexagonal.domaine.ServicePaiementImplementation;
 import com.paybank.hexagonal.domaine.TransactionPaiement;
-import com.paybank.hexagonal.ports.AnnulerPaiementUseCase;
-import com.paybank.hexagonal.ports.ExecutionPaiementUseCase;
-import com.paybank.hexagonal.ports.ModifierPaiementUseCase;
-import com.paybank.hexagonal.ports.PasserelleBancaireSPI;
-import com.paybank.hexagonal.ports.PersistancePaiementSPI;
-import com.paybank.hexagonal.ports.TransactionRepositorySPI;
+import com.paybank.hexagonal.domaine.service.AnnulationService;
+import com.paybank.hexagonal.domaine.service.ModifierPaiementService;
+import com.paybank.hexagonal.domaine.service.PaiementImplementationService;
+import com.paybank.hexagonal.port.AnnulerPaiementSPI;
+import com.paybank.hexagonal.port.ExecutionPaiementSPI;
+import com.paybank.hexagonal.port.ModifierPaiementSPI;
+import com.paybank.hexagonal.port.PasserelleBancaireSPI;
+import com.paybank.hexagonal.port.PersistancePaiementSPI;
+import com.paybank.hexagonal.port.TransactionRepositorySPI;
 
 @Configuration
 public class PaiementConfiguration {
 	@Bean
-    public ExecutionPaiementUseCase executionPaiementUseCase(PersistancePaiementSPI persistancePaiementSPI, PasserelleBancaireSPI passerelleBancaireSPI, TransactionRepositorySPI transactionRepositorySPI) {
+    public ExecutionPaiementSPI executionPaiementUseCase(PersistancePaiementSPI persistancePaiementSPI, PasserelleBancaireSPI passerelleBancaireSPI, TransactionRepositorySPI transactionRepositorySPI) {
         // Instanciation du code métier pur avec ses deux adaptateurs
-        return new ServicePaiementImplementation(persistancePaiementSPI, passerelleBancaireSPI, transactionRepositorySPI);
+        return new PaiementImplementationService(persistancePaiementSPI, passerelleBancaireSPI, transactionRepositorySPI);
     }
 	
 	@Bean
-    public AnnulerPaiementUseCase annulationService(PasserelleBancaireSPI passerelleBancaireSPI, PersistancePaiementSPI persistancePaiementSPI) {
-        return new ServiceAnnulation(passerelleBancaireSPI, persistancePaiementSPI);
+    public AnnulerPaiementSPI annulationService(PasserelleBancaireSPI passerelleBancaireSPI, PersistancePaiementSPI persistancePaiementSPI) {
+        return new AnnulationService(passerelleBancaireSPI, persistancePaiementSPI);
     }
 	
 	@Bean
-	public ModifierPaiementUseCase modifierPaiement(PersistancePaiementSPI persistancePaiementSPI) {
-		return new ServiceModifierPaiement(persistancePaiementSPI);
+	public ModifierPaiementSPI modifierPaiement(PersistancePaiementSPI persistancePaiementSPI) {
+		return new ModifierPaiementService(persistancePaiementSPI);
 	}
 }

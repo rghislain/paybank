@@ -1,7 +1,7 @@
 package com.paybank.hexagonal.infrastructure.aspect;
 
 import com.paybank.hexagonal.domaine.annotation.Auditable;
-import com.paybank.hexagonal.entity.UserAuditLog;
+import com.paybank.hexagonal.entity.UserAuditLogEntity;
 import com.paybank.hexagonal.repository.UserAuditLogRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -31,17 +31,17 @@ public class UserAuditAspect {
     @Around("@annotation(auditable)")
     public Object auditMethod(ProceedingJoinPoint joinPoint, Auditable auditable) throws Throwable {
         Object[] args = joinPoint.getArgs();
-        UUID targetUserId = extractTargetUserId(args);
-        UUID actorUserId = extractActorUserId(); // Récupéré depuis le contexte de sécurité (Spring Security)
+        String targetUserId = extractTargetUserId(args);
+        String actorUserId = extractActorUserId(); // Récupéré depuis le contexte de sécurité (Spring Security)
 
         // Exécution de la méthode métier
         Object result = joinPoint.proceed();
 
         // Enregistrement asynchrone ou synchrone dans l'audit log
         try {
-            UserAuditLog log = new UserAuditLog();
-            log.setTargetUserId(targetUserId != null ? targetUserId : UUID.randomUUID());
-            log.setActorUserId(actorUserId != null ? actorUserId : UUID.fromString("00000000-0000-0000-0000-000000000000"));
+            UserAuditLogEntity log = new UserAuditLogEntity();
+            log.setTargetUserId(targetUserId != null ? targetUserId : UUID.randomUUID().toString());
+            log.setAuthorUserId(actorUserId != null ? actorUserId : UUID.fromString("00000000-0000-0000-0000-000000000000").toString());
             log.setActionType(auditable.actionType());
             log.setNewValues(objectMapper.writeValueAsString(args));
             log.setCreatedAt(OffsetDateTime.now());
@@ -57,19 +57,19 @@ public class UserAuditAspect {
         return result;
     }
 
-    private UUID extractTargetUserId(Object[] args) {
+    private String extractTargetUserId(Object[] args) {
         // Logique pour trouver l'ID cible dans les arguments de la méthode
         for (Object arg : args) {
-            if (arg instanceof UUID) {
-                return (UUID) arg;
+            if (arg instanceof String) {
+                return (String) arg;
             }
             if (arg instanceof String && ((String) arg).length() == 36) {
                 try {
-                    return UUID.fromString((String) arg);
+                    return (String) arg;
                 } catch (IllegalArgumentException ignored) {}
             }
         }
-        return UUID.randomUUID(); // Fallback par défaut
+        return UUID.randomUUID().toString(); // Fallback par défaut
     }
 
     /**
@@ -107,16 +107,16 @@ public class UserAuditAspect {
     }
     */
     
-    private UUID extractActorUserId() {
+    private String extractActorUserId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.isAuthenticated() && !auth.getName().equals("anonymousUser")) {
             try {
-                return UUID.fromString(auth.getName());
+                return auth.getName().toString();
             } catch (Exception e) {
                 // Si le nom n'est pas un UUID, on génère un identifiant système ou de traçabilité
             }
         }
-        return UUID.fromString("00000000-0000-0000-0000-000000000000");
+        return UUID.fromString("00000000-0000-0000-0000-000000000000").toString();
     }
     
     

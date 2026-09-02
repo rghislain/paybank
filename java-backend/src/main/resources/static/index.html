@@ -303,6 +303,34 @@
 		            etatBoutonsDroits[id] = autorise;
 		            appliquerApparenceBouton(id, autorise);
 		        });
+				
+				if (ligneRole) {
+					// Vérification du droit de lecture pour les utilisateurs / salariés
+					        const droitUtilisateurs = ligneRole.utilisateurs !== undefined ? ligneRole.utilisateurs : ligneRole.salaries;
+							if (droitUtilisateurs) {
+					            chargerListeSalaries();
+					        } else {
+								const selectSalaries = document.getElementById('selectSalariesExistants');
+								if (selectSalaries) {
+								    selectSalaries.innerHTML = '<option value="">🚫 Droits de lecture insuffisants pour les utilisateurs</option>';
+								}
+					        }
+					
+				            // Clients (action 'lire' ou ressource globale 'clients')
+				            if (ligneRole.clients) {
+				                chargerListeClients();
+				            } else {
+				                document.getElementById('selectClientsExistants').innerHTML = '<option value="">🚫 Droits de lecture insuffisants</option>';
+				            }
+
+				            // Produits (action 'lire' ou ressource globale 'produits')
+				            if (ligneRole.produits) {
+				                chargerListeProduits();
+				            } else {
+				                document.getElementById('selectProduitsExistants').innerHTML = '<option value="">🚫 Droits de lecture insuffisants</option>';
+				            }
+				}
+				
 		    } catch (err) {
 		        console.warn("⚠️ Impossible de charger la matrice de droits, boutons désactivés par sécurité :", err);
 		        // Par sécurité, on considère tout comme refusé si la matrice n'a pas pu être récupérée
@@ -339,9 +367,9 @@
             if (token) {
                 basculerInterface(true);
                 chargerSolde();
-                chargerListeClients();
-                chargerListeSalaries();
-                chargerListeProduits();
+                //chargerListeClients();
+                //chargerListeSalaries();
+                //chargerListeProduits();
                 chargerEtAppliquerDroits();
             } else {
                 basculerInterface(false);
@@ -569,7 +597,8 @@
         }
 
         // --- CLIENTS ---
-        async function chargerListeClients() {
+        /*
+		async function chargerListeClients() {
             const select = document.getElementById('selectClientsExistants');
             try {
                 const response = await fetchSecurise(`${API_BASE_URL}/api/clients`, { headers: obtenirHeadersSecurises() });
@@ -586,6 +615,31 @@
                 });
             } catch (err) { console.error("Erreur clients:", err); }
         }
+		*/
+		
+		async function chargerListeClients() {
+		    const select = document.getElementById('selectClientsExistants');
+		    try {
+		        const response = await fetchSecurise(`${API_BASE_URL}/api/clients`, { headers: obtenirHeadersSecurises() });
+		        if (!response.ok) {
+		            if (response.status === 403) {
+		                select.innerHTML = '<option value="">🚫 Droits insuffisants pour voir les clients</option>';
+		            }
+		            return;
+		        }
+		        const clients = await response.json();
+		        select.innerHTML = '<option value="">-- Choisir un client dans la BDD --</option>';
+		        clients.forEach(client => {
+		            const option = document.createElement('option');
+		            option.value = client.id;
+		            option.dataset.nom = client.nom;
+		            option.dataset.email = client.email;
+		            option.textContent = `${client.nom} (${client.email})`;
+		            select.appendChild(option);
+		        });
+		    } catch (err) { console.error("Erreur clients:", err); }
+		}
+		
 
         function remplirChampsClientDepuisSelection() {
             const select = document.getElementById('selectClientsExistants');
@@ -645,6 +699,7 @@
         }
 
         // --- PRODUITS & CATALOGUE ---
+		/*
         async function chargerListeProduits() {
             const select = document.getElementById('selectProduitsExistants');
             try {
@@ -663,6 +718,31 @@
                 });
             } catch (err) { console.error("Erreur produits:", err); }
         }
+		*/
+		
+		async function chargerListeProduits() {
+		    const select = document.getElementById('selectProduitsExistants');
+		    try {
+		        const response = await fetchSecurise(`${API_BASE_URL}/api/produits`, { headers: obtenirHeadersSecurises() });
+		        if (!response.ok) {
+		            if (response.status === 403) {
+		                select.innerHTML = '<option value="">🚫 Droits insuffisants pour voir les produits</option>';
+		            }
+		            return;
+		        }
+		        const produits = await response.json();
+		        select.innerHTML = '<option value="">-- Choisir un produit --</option>';
+		        produits.forEach(p => {
+		            const option = document.createElement('option');
+		            option.value = p.id;
+		            option.dataset.nom = p.nom;
+		            option.dataset.prix = p.prixCentimes;
+		            const prixEuros = (p.prixCentimes / 100).toFixed(3);
+		            option.textContent = `${p.nom} (${prixEuros} EUR)`;
+		            select.appendChild(option);
+		        });
+		    } catch (err) { console.error("Erreur produits:", err); }
+		}
 
         function remplirChampsProduitDepuisSelection() {
             const select = document.getElementById('selectProduitsExistants');
@@ -722,27 +802,29 @@
 
         // --- SALARIÉS & RÔLES -->
 		async function chargerListeSalaries() {
-		            const select = document.getElementById('selectSalariesExistants');
-		            try {
-		                const response = await fetchSecurise(`${API_BASE_URL}/api/utilisateurs`, { headers: obtenirHeadersSecurises() });
-		                if (!response.ok) {
-		                    if (response.status === 403) {
-		                        select.innerHTML = '<option value="">🚫 Droits insuffisants pour voir les salariés</option>';
-		                    }
-		                    return;
+		      const select = document.getElementById('selectSalariesExistants');
+		      try {
+		           const response = await fetchSecurise(`${API_BASE_URL}/api/utilisateurs`, { headers: obtenirHeadersSecurises() });
+		           if (!response.ok) {
+		                if (response.status === 403) {
+		                    select.innerHTML = '<option value="">🚫 Droits insuffisants pour voir les salariés</option>';
 		                }
-		                const salaries = await response.json();
-		                select.innerHTML = '<option value="">-- Choisir un salarié --</option>';
-		                salaries.forEach(s => {
-		                    const option = document.createElement('option');
-		                    option.value = s.id;
-		                    option.dataset.nom = s.nom;
-		                    option.dataset.email = s.email;
-		                    option.dataset.role = s.role;
-		                    option.textContent = `${s.nom} (${s.role})`;
-		                    select.appendChild(option);
-		                });
-		            } catch (err) { console.error("Erreur salariés:", err); }
+		                return;
+		           }
+		           const salaries = await response.json();
+		           select.innerHTML = '<option value="">-- Choisir un salarié --</option>';
+		           salaries.forEach(s => {
+		               const option = document.createElement('option');
+		               option.value = s.id;
+		               option.dataset.nom = s.nom;
+		               option.dataset.email = s.email;
+		               option.dataset.role = s.role;
+		               option.textContent = `${s.nom} (${s.role})`;
+		               select.appendChild(option);
+		           });
+		      } catch (err) { 
+				console.error("Erreur salariés:", err); 
+			  }
 		}
 		
 		// --- GESTION AUTOMATIQUE DU TEXTE DE MOT DE PASSE SELON LE RÔLE ---
