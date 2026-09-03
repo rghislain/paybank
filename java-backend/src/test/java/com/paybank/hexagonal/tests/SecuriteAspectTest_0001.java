@@ -168,7 +168,7 @@ import com.paybank.hexagonal.domaine.Utilisateur;
                         	
                             Utilisateur hacker = new Utilisateur();
                             hacker.setId("hacker_xss");
-                            hacker.setName("<script>window.location='http://attaque.com'</script>");
+                            hacker.setNom("<script>window.location='http://attaque.com'</script>");
                             hacker.setEmail("hacker@paybank.com");
                             hacker.setRole(Role.EMPLOYE);
                             
@@ -196,7 +196,7 @@ import com.paybank.hexagonal.domaine.Utilisateur;
                         	
                             Utilisateur hacker = new Utilisateur();
                             hacker.setId("hacker_sql");
-                            hacker.setName("Rob");
+                            hacker.setNom("Rob");
                             hacker.setEmail("test@bank.fr'; UNION SELECT null, null --");
                             hacker.setRole(Role.EMPLOYE);
 
@@ -224,7 +224,7 @@ import com.paybank.hexagonal.domaine.Utilisateur;
                         	
                             Utilisateur utilisateurSain = new Utilisateur();
                             utilisateurSain.setId("sain_user");
-                            utilisateurSain.setName("Alice Martin");
+                            utilisateurSain.setNom("Alice Martin");
                             utilisateurSain.setEmail("alice.martin@paybank.com");
                             utilisateurSain.setRole(Role.EMPLOYE);
                             

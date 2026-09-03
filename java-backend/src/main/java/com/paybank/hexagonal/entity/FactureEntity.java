@@ -17,7 +17,8 @@ import jakarta.persistence.Table;
 public class FactureEntity {
 	
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@GeneratedValue(strategy = GenerationType.UUID)
+	@Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 	
     private UUID client_id;

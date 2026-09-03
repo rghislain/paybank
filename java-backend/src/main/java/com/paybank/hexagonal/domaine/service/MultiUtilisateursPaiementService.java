@@ -144,7 +144,7 @@ public class MultiUtilisateursPaiementService {
             throw new SecurityException("Mot de passe standard incorrect pour le rôle : " + newRole);
         }
 
-        user.setName(newName);
+        user.setNom(newName);
         user.setRole(newRole);
         
         if (newPassword != null && !newPassword.isBlank()) {

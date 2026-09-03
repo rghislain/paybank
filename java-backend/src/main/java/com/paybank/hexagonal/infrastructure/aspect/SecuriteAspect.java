@@ -6,6 +6,8 @@ import com.paybank.hexagonal.configuration.SecurityInterceptor;
 import com.paybank.hexagonal.domaine.Utilisateur;
 import com.paybank.hexagonal.domaine.annotation.Securise;
 import com.paybank.hexagonal.domaine.annotation.VerifierDroit;
+import com.paybank.hexagonal.entity.UtilisateurEntity;
+import com.paybank.hexagonal.repository.UtilisateurRepository;
 
 import jakarta.annotation.PostConstruct;
 import org.aspectj.lang.JoinPoint;
@@ -25,6 +27,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.stereotype.Component;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -196,6 +199,9 @@ public class SecuriteAspect {
 	@Autowired
     private SupabaseUtilisateursAdaptateur utilisateursAdaptateur;
 
+	@Autowired
+	private UtilisateurRepository utilisateurRepository; // Ajustez selon votre nom de repository
+	
     @Before("@annotation(com.paybank.hexagonal.domaine.annotation.Securise)")
     public void verifierSecurite(JoinPoint joinPoint) {
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
@@ -254,9 +260,31 @@ public class SecuriteAspect {
         // Récupérer l'ID de l'utilisateur connecté (via votre contexte de sécurité / session)
         String utilisateurId = ContexteSecurite.getUtilisateurConnecteId();
         
+        if (utilisateurId == null) {
+            var auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.isAuthenticated()) {
+                utilisateurId = auth.getName();
+            }
+        }
+        
+        if (utilisateurId == null) {
+            throw new SecurityException("Utilisateur non authentifié ou identifiant introuvable");
+        }
+        
+        // 2. Fallback pour les tests unitaires si le contexte est vide mais que Spring Security a une authentification
+        Utilisateur utilisateur;
+        if (utilisateurId.contains("@")) {
+            utilisateur = utilisateursAdaptateur.findByEmail(utilisateurId)
+                .orElseThrow(() -> new SecurityException("Utilisateur non trouvé par email"));
+        } 
+        else {
+            utilisateur = utilisateursAdaptateur.findById(utilisateurId)
+                .orElseThrow(() -> new SecurityException("Utilisateur non trouvé par id"));
+        }        
+       
         // Charger l'utilisateur pour obtenir ses droits frais en BDD
-        Utilisateur utilisateur = utilisateursAdaptateur.findById(utilisateurId)
-            .orElseThrow(() -> new SecurityException("Utilisateur non trouvé ou non authentifié ou n'ayant pas les droits"));
+        //utilisateur = utilisateursAdaptateur.findById(utilisateurId)
+            //.orElseThrow(() -> new SecurityException("Utilisateur non trouvé ou non authentifié ou n'ayant pas les droits"));
 
         // Vérification dynamique selon l'action demandée
         boolean estAutorise = switch (verifierDroit.action().toUpperCase()) {
@@ -274,11 +302,42 @@ public class SecuriteAspect {
         }
     }
       
+    /*
     @Before("execution(* com.paybank.hexagonal.domaine.ServiceMultiUtilisateursPaiement.createUser(..)) && args(operator, utilisateur)")
     public void verifierInjection(Utilisateur operator, Utilisateur utilisateur) {
         if (utilisateur.getNom().contains("<script>") || utilisateur.getEmail().contains("';")) {
             throw new IllegalArgumentException("Données suspectes détectées !");
         }
     }
+    */
+    /*
+    @Before("execution(* com.paybank.hexagonal.domaine.ServiceMultiUtilisateursPaiement.createUser(..)) && args(operator, utilisateur)")
+    public void verifierInjection(Utilisateur operator, Utilisateur utilisateur) {
+        if (utilisateur != null) {
+            boolean nomSuspect = utilisateur.getNom() != null && utilisateur.getNom().contains("<script>");
+            boolean emailSuspect = utilisateur.getEmail() != null && utilisateur.getEmail().contains("';");
+            
+            if (nomSuspect || emailSuspect) {
+                throw new IllegalArgumentException("Données suspectes détectées !");
+            }
+        }
+    }
+    */
+    
+    @Before("execution(* com.paybank.hexagonal.domaine.service.MultiUtilisateursPaiementService.createUser(..)) && args(operator, utilisateur)")
+    public void verifierInjection(Utilisateur operator, Utilisateur utilisateur) {
+        if (utilisateur != null) {
+            String nom = utilisateur.getNom();
+            String email = utilisateur.getEmail();
+
+            boolean nomSuspect = nom != null && nom.contains("<script>");
+            boolean emailSuspect = email != null && email.contains("';");
+
+            if (nomSuspect || emailSuspect) {
+                throw new IllegalArgumentException("Données suspectes détectées !");
+            }
+        }
+    }
+    
 }
 

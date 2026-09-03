@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.paybank.hexagonal.domaine.Role;
@@ -14,7 +15,7 @@ import com.paybank.hexagonal.domaine.Utilisateur;
 public class UtilisateurEntity {
 
     @Id
-    private String id;
+    private String id=UUID.randomUUID().toString();;
 
     private String nom;
     private String email;

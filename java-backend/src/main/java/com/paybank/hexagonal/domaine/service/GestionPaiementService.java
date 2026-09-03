@@ -9,6 +9,7 @@ import com.paybank.hexagonal.domaine.annotation.CheckDroit;
 import com.paybank.hexagonal.domaine.annotation.MasquerDonneesSensibles;
 import com.paybank.hexagonal.domaine.annotation.SecuredPermission;
 import com.paybank.hexagonal.domaine.annotation.Securise;
+import com.paybank.hexagonal.domaine.annotation.VerifierDroit;
 import com.paybank.hexagonal.port.PasserelleBancaireSPI;
 import com.paybank.hexagonal.port.PersistancePaiementSPI;
 import com.paybank.hexagonal.port.TransactionRepositorySPI;
@@ -45,7 +46,7 @@ public class GestionPaiementService {
     
     // C - CRÉER UN INTENT DE PAIEMENT
     @MasquerDonneesSensibles
-    //@CheckDroit(ressource = "paiements")
+    @CheckDroit(ressource = "paiements")
     //@SecuredPermission(ressource = "paiements", action = "creer")
     //@CheckDroit(ressource = "paiements")
     public Map<String, String> creerIntentionPaiement(UUID clientId, long montantCentimes) throws StripeException {
@@ -476,6 +477,7 @@ public class GestionPaiementService {
     @MasquerDonneesSensibles
     //@Securise(roles = {"MANAGER", "ADMIN"})
     //@CheckDroit(ressource = "rapports_financiers")
+    @VerifierDroit(action = "creer")
     public List<MatchResult> executerRapprochementDepuisSources()
             throws com.stripe.exception.StripeException {
 

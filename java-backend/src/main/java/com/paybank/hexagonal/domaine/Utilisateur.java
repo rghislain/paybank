@@ -66,7 +66,7 @@ public class Utilisateur {
         return this.password;
     }   
     public void setRole(Role role) { this.role = role; }
-    public void setName(String name) { this.nom = name; }
+    //public void setName(String name) { this.nom = name; }
     public void deactivate() { this.actif = false; }
 	public void setEmail(String string) {
 		this.email=string;
@@ -76,7 +76,7 @@ public class Utilisateur {
 
     public void setNom(String nom) { this.nom = nom; }
 
-     public void setPassword(String password) { this.password = password; }
+    public void setPassword(String password) { this.password = password; }
 
     public boolean getActif() { return actif; }
     public boolean isActif() { return actif; }
@@ -100,5 +100,5 @@ public class Utilisateur {
 
     public boolean isImprimer() { return imprimer; }
     public void setImprimer(boolean imprimer) { this.imprimer = imprimer; }
-    
+
 }

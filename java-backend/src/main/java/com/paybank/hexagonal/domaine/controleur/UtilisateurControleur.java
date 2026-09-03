@@ -5,11 +5,9 @@ import com.paybank.hexagonal.domaine.annotation.RequireDroit;
 import com.paybank.hexagonal.domaine.service.MultiUtilisateursPaiementService;
 import com.paybank.hexagonal.domaine.service.OperateurCourantService;
 import com.paybank.hexagonal.domaine.Role;
-
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -135,7 +133,7 @@ public class UtilisateurControleur {
             
             // 3. Construction du nouvel utilisateur
             Utilisateur nouvelUtilisateur = new Utilisateur();
-            nouvelUtilisateur.setName(req.getNom());
+            nouvelUtilisateur.setNom(req.getNom());
             nouvelUtilisateur.setEmail(req.getEmail());
             nouvelUtilisateur.setPassword(motDePasseHashe);
             nouvelUtilisateur.setRole(req.getRole());
