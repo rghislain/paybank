@@ -17,8 +17,8 @@
 	<description>Projet de paiement bancaire en ligne avec architecture hexagonale</description>
 
 	<properties>
-    <dependency-groupId>io.jsonwebtoken:jjwt-api</dependency-groupId>
 		<java.version>17</java.version>
+		<sonar.token>sqa_521dda619f886e33b5ec72b42e3784d8a28e8530</sonar.token>
 	</properties>
 
 	<dependencies>
@@ -32,84 +32,99 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-		    <groupId>org.springframework.boot</groupId>
-		    <artifactId>spring-boot-starter-web</artifactId>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 		<dependency>
-		    <groupId>org.postgresql</groupId>
-		    <artifactId>postgresql</artifactId>
-		    <scope>runtime</scope>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<scope>runtime</scope>
 		</dependency>
 		<dependency>
-		    <groupId>org.springframework.boot</groupId>
-		    <artifactId>spring-boot-starter-data-jdbc</artifactId>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jdbc</artifactId>
 		</dependency>
 		<dependency>
-  			<groupId>com.stripe</groupId>
-  			<artifactId>stripe-java</artifactId>
-  			<version>32.2.0</version>
+			<groupId>com.stripe</groupId>
+			<artifactId>stripe-java</artifactId>
+			<version>32.2.0</version>
 		</dependency>
 		<dependency>
-    		<groupId>org.springframework.boot</groupId>
-    		<artifactId>spring-boot-starter-data-jpa</artifactId>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
 		<dependency>
-    		<groupId>org.springframework.boot</groupId>
-    		<artifactId>spring-boot-starter-security</artifactId>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
 		<dependency>
-    		<groupId>org.springframework.boot</groupId>
-    		<artifactId>spring-boot-starter-aop</artifactId>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-aop</artifactId>
 		</dependency>
 		<dependency>
-    		<groupId>com.h2database</groupId>
-    		<artifactId>h2</artifactId>
-    		<scope>test</scope>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
-    		<groupId>org.springframework.security</groupId>
-    		<artifactId>spring-security-test</artifactId>
-    		<scope>test</scope>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-test</artifactId>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
-    		<groupId>org.springframework.boot</groupId>
-    		<artifactId>spring-boot-devtools</artifactId>
-    		<scope>runtime</scope>
-    		<optional>true</optional>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+			<scope>runtime</scope>
+			<optional>true</optional>
 		</dependency>
 		
 		<!-- Apache PDFBox pour la génération et l'impression des PDF -->
-    	<dependency>
-        	<groupId>org.apache.pdfbox</groupId>
-        	<artifactId>pdfbox</artifactId>
-        	<version>3.0.1</version>
-    	</dependency>
+		<dependency>
+			<groupId>org.apache.pdfbox</groupId>
+			<artifactId>pdfbox</artifactId>
+			<version>3.0.1</version>
+		</dependency>
 
-    	<!-- Spring Boot Starter Mail pour l'envoi des e-mails avec pièces jointes -->
-   	 	<dependency>
-        	<groupId>org.springframework.boot</groupId>
-        	<artifactId>spring-boot-starter-mail</artifactId>
-    	</dependency>
-    	
-    	<dependency>
-	        <groupId>io.jsonwebtoken</groupId>
-	        <artifactId>jjwt-api</artifactId>
-	        <version>0.12.5</version>
-    	</dependency>
-    	<dependency>
-	        <groupId>io.jsonwebtoken</groupId>
-	        <artifactId>jjwt-impl</artifactId>
-	        <version>0.12.5</version>
-	        <scope>runtime</scope>
-    	</dependency>
-    	<dependency>
-        	<groupId>io.jsonwebtoken</groupId>
-        	<artifactId>jjwt-jackson</artifactId>
-        	<version>0.12.5</version>
-        	<scope>runtime</scope>
-    	</dependency>
-    	
+		<!-- Spring Boot Starter Mail pour l'envoi des e-mails avec pièces jointes -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-mail</artifactId>
+		</dependency>
 		
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-api</artifactId>
+			<version>0.12.5</version>
+		</dependency>
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-impl</artifactId>
+			<version>0.12.5</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-jackson</artifactId>
+			<version>0.12.5</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.5.0</version>
+		</dependency>
+		<dependency>
+			<groupId>io.gatling</groupId>
+			<artifactId>gatling-test-framework</artifactId>
+			<version>3.10.3</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.gatling.highcharts</groupId>
+			<artifactId>gatling-charts-highcharts</artifactId>
+			<version>3.10.3</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -123,7 +138,7 @@
 				</configuration>
 			</plugin>
 
-			<!-- Surcharge du compilateur pour casser le bug de compatibilité d'Ubuntu -->
+			<!-- Surcharge du compilateur -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -135,7 +150,68 @@
 					</compilerArgs>
 				</configuration>
 			</plugin>
+
+			<!-- SonarQube Scanner -->
+			<plugin>
+				<groupId>org.sonarsource.scanner.maven</groupId>
+				<artifactId>sonar-maven-plugin</artifactId>
+				<version>3.10.0.2594</version>
+			</plugin>
+
+			<!-- PITest Mutation Testing -->
+			<plugin>
+				<groupId>org.pitest</groupId>
+				<artifactId>pitest-maven</artifactId>
+				<version>1.15.8</version>
+				<dependencies>
+					<dependency>
+						<groupId>org.pitest</groupId>
+						<artifactId>pitest-junit5-plugin</artifactId>
+						<version>1.2.1</version>
+					</dependency>
+				</dependencies>
+				<executions>
+					<execution>
+						<phase>verify</phase>
+						<goals><goal>mutationCoverage</goal></goals>
+					</execution>
+				</executions>
+				<configuration>
+					<targetClasses>
+						<param>com.paybank.hexagonal.*</param>
+					</targetClasses>
+					<targetTests>
+						<param>com.paybank.hexagonal.tests.*Test</param>
+					</targetTests>
+					<excludedTestClasses>
+						<param>com.paybank.hexagonal.tests.PaiementIntegrationTest</param>
+						<param>com.paybank.hexagonal.tests.SecuriteAspectTest</param>
+						<param>com.paybank.hexagonal.tests.DroitsAopIntegrationTest</param>
+						<param>com.paybank.hexagonal.tests.FinancialReportControllerTest</param>
+						<param>com.paybank.hexagonal.tests.JournalisationBDDAspectTest</param>
+					</excludedTestClasses>
+				</configuration>
+			</plugin>
+
+			<!-- Gatling Plugin -->
+			<plugin>
+				<groupId>io.gatling</groupId>
+				<artifactId>gatling-maven-plugin</artifactId>
+				<version>4.6.0</version>
+			</plugin>	
+
+			<!-- OWASP Dependency-Check -->
+			<plugin>
+				<groupId>org.owasp</groupId>
+				<artifactId>dependency-check-maven</artifactId>
+				<version>9.0.9</version>
+				<configuration>
+					<nvdApiKey>C0C5AC4C-C62B-4873-BCF0-101AD0731400</nvdApiKey>
+					<nvdApiDelay>5000</nvdApiDelay>
+				</configuration>
+			</plugin>
 		</plugins>
+
 		<resources>
 			<resource>
 				<directory>src/main/resources</directory>
