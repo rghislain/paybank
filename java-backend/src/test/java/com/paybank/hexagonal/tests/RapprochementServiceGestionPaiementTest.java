@@ -2,6 +2,12 @@ package com.paybank.hexagonal.tests;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
+
+import com.paybank.hexagonal.main.PaiementApplication;
+
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -11,6 +17,15 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * CLASSE DE TEST
  */
+@SpringBootTest(classes = PaiementApplication.class) // 👈 On lui donne la classe de configuration explicitement
+//@ActiveProfiles("test")
+/*
+@TestPropertySource(properties = {
+	    "spring.datasource.url=jdbc:postgresql://localhost:54322/postgres",
+	    "spring.datasource.username=postgres",
+	    "spring.datasource.password=postgres"
+	})
+*/
 class RapprochementServiceGestionPaiementTest {
 
     private LocalServiceGestionPaiement serviceTest;

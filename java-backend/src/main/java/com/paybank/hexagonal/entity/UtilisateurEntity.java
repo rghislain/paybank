@@ -25,12 +25,14 @@ public class UtilisateurEntity {
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    /*
     private boolean creer;
     private boolean modifier;
     private boolean supprimer;
     private boolean lire;
     private boolean sauvegarder;
     private boolean imprimer;
+    */
 
     //@ToString.Exclude
     //@EqualsAndHashCode.Exclude
@@ -38,8 +40,8 @@ public class UtilisateurEntity {
     //@OneToMany(fetch = FetchType.LAZY)
     //private RessourcesEntity ressource;
     
-    @OneToMany(mappedBy = "utilisateur", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<RessourcesEntity> ressources = new ArrayList<>();
+    //@OneToMany(mappedBy = "utilisateur", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    //private List<RessourcesEntity> ressources = new ArrayList<>();
 
     // --- Méthodes de mapping Domain <-> Entity ---
 
@@ -52,12 +54,14 @@ public class UtilisateurEntity {
         domaine.setPassword(this.password);
         domaine.setActif(this.actif);
         domaine.setRole(this.role);
+        /*
         domaine.setCreer(this.creer);
         domaine.setModifier(this.modifier);
         domaine.setSupprimer(this.supprimer);
         domaine.setLire(this.lire);
         domaine.setSauvegarder(this.sauvegarder);
         domaine.setImprimer(this.imprimer);
+        */
         return domaine;
     }
     
@@ -74,12 +78,14 @@ public class UtilisateurEntity {
         entity.setPassword(domaine.getPassword());
         entity.setActif(domaine.getActif());
         entity.setRole(domaine.getRole());
+        /*
         entity.setCreer(domaine.isCreer());
         entity.setModifier(domaine.isModifier());
         entity.setSupprimer(domaine.isSupprimer());
         entity.setLire(domaine.isLire());
         entity.setSauvegarder(domaine.isSauvegarder());
         entity.setImprimer(domaine.isImprimer());
+        */
         return entity;
     }
     
@@ -105,6 +111,7 @@ public class UtilisateurEntity {
     public Role getRole() { return role; }
     public void setRole(Role role) { this.role = role; }
 
+    /*
     public boolean isCreer() { return creer; }
     public void setCreer(boolean creer) { this.creer = creer; }
 
@@ -125,5 +132,5 @@ public class UtilisateurEntity {
 
     public List<RessourcesEntity> getRessources() { return ressources; }
     public void setRessources(List<RessourcesEntity> ressources) { this.ressources = ressources; }
-
+	*/
 }

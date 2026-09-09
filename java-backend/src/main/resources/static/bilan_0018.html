@@ -244,26 +244,38 @@
 		        if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}`);
 
 		        const listeDroits = await response.json();
+		        
+				
+		        listeDroits.forEach(ligne => {
+		            const role = ligne.role;
+		            if (!role) return;
 
-		        // On repart d'une grille vierge avant d'appliquer l'état réel
-		        // (évite qu'une case reste cochée par erreur si le rôle n'a plus ce droit)
-		        document.querySelectorAll('#matrice-tbody input[type="checkbox"]').forEach(cb => {
-		            cb.checked = false;
+		            const checkboxes = document.querySelectorAll(`input[data-role="${role.toUpperCase()}"]`);
+		            
+		            checkboxes.forEach(cb => {
+		                const ressource = cb.dataset.ressource;
+		                const action = cb.dataset.action;
+
+		                const ressourceActive = ressource ? Boolean(ligne[ressource]) : true;
+		                const actionActive = action ? Boolean(ligne[action]) : true;
+
+		                cb.checked = ressourceActive && actionActive;
+		            });
 		        });
+				
+				// Supposons que listeDroits est un tableau d'objets : { role: "EMPLOYE", ressource: "clients", action: "lire", granted: true/false }
+				/*
+				listeDroits.forEach(droit => {
+				     if (!droit.role || !droit.ressource || !droit.action) return;
 
-		        // listeDroits est un tableau d'objets : { role, ressource, action, granted }
-		        listeDroits.forEach(droit => {
-		            if (!droit.role || !droit.ressource || !droit.action) return;
-
-		            // Cible l'input unique correspondant précisément au triplet (rôle, ressource, action)
-		            const cb = document.querySelector(
-		                `input[data-role="${droit.role.toUpperCase()}"][data-ressource="${droit.ressource.toLowerCase()}"][data-action="${droit.action.toLowerCase()}"]`
-		            );
-
-		            if (cb) {
-		                cb.checked = Boolean(droit.granted);
-		            }
-		        });
+				     // Cibler l'input unique correspondant précisément au trio (rôle, ressource, action)
+				     const cb = document.querySelector(`input[data-role="${droit.role.toUpperCase()}"][data-ressource="${droit.ressource.toLowerCase()}"][data-action="${droit.action.toLowerCase()}"]`);
+				            
+				     if (cb) {
+				         cb.checked = Boolean(droit.granted);
+				     }
+				});
+				*/
 		    } catch (err) { // <-- C'est bien "catch" et non "caught"
 		        console.warn("⚠️ Impossible de charger les droits :", err);
 		    }

@@ -5,11 +5,10 @@ import com.paybank.hexagonal.domaine.MatchResult;
 import com.paybank.hexagonal.domaine.Transaction;
 import com.paybank.hexagonal.domaine.TransactionDetail;
 import com.paybank.hexagonal.domaine.annotation.AgainstBruteForce;
-import com.paybank.hexagonal.domaine.annotation.CheckDroit;
 import com.paybank.hexagonal.domaine.annotation.MasquerDonneesSensibles;
+import com.paybank.hexagonal.domaine.annotation.RequireDroit;
 import com.paybank.hexagonal.domaine.annotation.SecuredPermission;
 import com.paybank.hexagonal.domaine.annotation.Securise;
-import com.paybank.hexagonal.domaine.annotation.VerifierDroit;
 import com.paybank.hexagonal.port.PasserelleBancaireSPI;
 import com.paybank.hexagonal.port.PersistancePaiementSPI;
 import com.paybank.hexagonal.port.TransactionRepositorySPI;
@@ -18,10 +17,8 @@ import com.stripe.model.Balance;
 import com.stripe.model.PaymentIntent;
 import com.stripe.param.PaymentIntentCreateParams;
 import com.stripe.param.PaymentIntentUpdateParams;
-
 import org.aspectj.lang.annotation.Before;
 import org.springframework.stereotype.Service;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -46,7 +43,8 @@ public class GestionPaiementService {
     
     // C - CRÉER UN INTENT DE PAIEMENT
     @MasquerDonneesSensibles
-    @CheckDroit(ressource = "paiements")
+    //@CheckDroit(ressource = "paiements")
+    @RequireDroit(ressource = "paiements")
     //@SecuredPermission(ressource = "paiements", action = "creer")
     //@CheckDroit(ressource = "paiements")
     public Map<String, String> creerIntentionPaiement(UUID clientId, long montantCentimes) throws StripeException {
@@ -475,9 +473,10 @@ public class GestionPaiementService {
     */
     
     @MasquerDonneesSensibles
-    //@Securise(roles = {"MANAGER", "ADMIN"})
-    //@CheckDroit(ressource = "rapports_financiers")
-    @VerifierDroit(action = "creer")
+    // Défense en profondeur : cette annotation protège aussi les appels directs à cette
+    // méthode (ex. tests, futurs appels internes) qui ne passeraient pas par
+    // PaiementControleur.executerRapprochementBancaire() (déjà protégé de façon identique).
+    @RequireDroit(action = "creer", ressource = "rapports_financiers")
     public List<MatchResult> executerRapprochementDepuisSources()
             throws com.stripe.exception.StripeException {
 

@@ -2,7 +2,6 @@ package com.paybank.hexagonal.domaine.service;
 
 import java.util.List;
 import java.util.UUID;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
@@ -14,7 +13,6 @@ import com.paybank.hexagonal.domaine.Client;
 import com.paybank.hexagonal.domaine.Permission;
 import com.paybank.hexagonal.domaine.Role;
 import com.paybank.hexagonal.domaine.Utilisateur;
-import com.paybank.hexagonal.domaine.annotation.CheckDroit;
 import com.paybank.hexagonal.domaine.annotation.MasquerDonneesSensibles;
 import com.paybank.hexagonal.domaine.annotation.SecuredPermission;
 import com.paybank.hexagonal.domaine.annotation.Securise;

@@ -58,6 +58,19 @@ import java.util.UUID;
 */
 //@SpringBootTest
 //@ActiveProfiles("test")
+//@SpringBootTest(classes = PaiementApplication.class) // 👈 On lui donne la classe de configuration explicitement
+//@ActiveProfiles("test")
+
+//localhost + 54322
+//ou
+//supabase_db_java-backend-api + 5432
+/*
+@TestPropertySource(properties = {
+	    "spring.datasource.url=jdbc:postgresql://localhost:54322/postgres",
+	    "spring.datasource.username=postgres",
+	    "spring.datasource.password=postgres"
+	})
+*/
 class PaiementIntegrationTest {
 
     @Autowired

@@ -18,6 +18,7 @@ import com.paybank.hexagonal.port.PersistancePaiementSPI;
 @ComponentScan(basePackages = {"com.paybank.hexagonal"})
 @EnableJpaRepositories(basePackages = "com.paybank.hexagonal.repository")
 @EntityScan(basePackages = "com.paybank.hexagonal.entity")
+//@EntityScan(basePackages = "com.paybank.hexagonal.entity.*")
 public class PaiementApplication {
 
 	public static void main(String[] args) {

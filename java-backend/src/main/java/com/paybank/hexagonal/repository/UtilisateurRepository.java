@@ -35,6 +35,7 @@ public interface UtilisateurRepository extends JpaRepository<UtilisateurEntity, 
     @Query("UPDATE UtilisateurEntity u SET u.password = :nouveauMdp WHERE u.role = :role")
     void mettreAJourMotDePasseParRole(@Param("role") Role role, @Param("nouveauMdp") String nouveauMdp);
 
+    /*
     @Modifying
     @Transactional
     @Query("UPDATE UtilisateurEntity u SET u.lire = :valeur WHERE u.role = :role")
@@ -64,5 +65,5 @@ public interface UtilisateurRepository extends JpaRepository<UtilisateurEntity, 
     @Transactional
     @Query("UPDATE UtilisateurEntity u SET u.imprimer = :valeur WHERE u.role = :role")
     void mettreAJourDroitImprimerParRole(@Param("role") Role role, @Param("valeur") boolean valeur);
- 
+ 	*/
 }

@@ -12,20 +12,34 @@ import org.mockito.Mockito;
 import com.paybank.hexagonal.domaine.Role;
 import com.paybank.hexagonal.domaine.Utilisateur;
 import com.paybank.hexagonal.domaine.service.MultiUtilisateursPaiementService;
+import com.paybank.hexagonal.main.PaiementApplication;
 import com.paybank.hexagonal.port.ClientSPI;
 import com.paybank.hexagonal.port.UtilisateurSPI;
 import com.paybank.hexagonal.domaine.Role;
 import com.paybank.hexagonal.domaine.Utilisateur;
+
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import java.util.Collections;
 import org.junit.jupiter.api.AfterEach;
 
+@SpringBootTest(classes = PaiementApplication.class) // 👈 On lui donne la classe de configuration explicitement
+//@ActiveProfiles("test")
+/*
+@TestPropertySource(properties = {
+	    "spring.datasource.url=jdbc:postgresql://localhost:54322/postgres",
+	    "spring.datasource.username=postgres",
+	    "spring.datasource.password=postgres"
+	})
+*/
 class MultiUtilisateursPaiementTest {
 
     private UtilisateurSPI utilisateurSPI;

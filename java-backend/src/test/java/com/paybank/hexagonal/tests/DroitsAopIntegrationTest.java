@@ -8,6 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 import com.paybank.hexagonal.domaine.service.GestionPaiementService;
 import java.util.UUID;
@@ -15,8 +16,15 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest(classes = com.paybank.hexagonal.main.PaiementApplication.class)
-@ActiveProfiles("test")
+//@ActiveProfiles("test")
 @Transactional
+/*
+@TestPropertySource(properties = {
+	    "spring.datasource.url=jdbc:postgresql://localhost:54322/postgres",
+	    "spring.datasource.username=postgres",
+	    "spring.datasource.password=postgres"
+	})
+*/
 class DroitsAopIntegrationTest {
 
     @Autowired
@@ -32,7 +40,7 @@ class DroitsAopIntegrationTest {
     @BeforeEach
     void setUpData() {
         // Nettoyage préalable pour éviter les conflits
-        jdbcTemplate.update("DELETE FROM ressources WHERE utilisateurs_id IN (?, ?)", adminId.toString(), employeId.toString());
+        //jdbcTemplate.update("DELETE FROM ressources WHERE utilisateurs_id IN (?, ?)", adminId.toString(), employeId.toString());
         jdbcTemplate.update("DELETE FROM utilisateurs WHERE email IN (?, ?)", "admin@paybank.com", "employe@paybank.com");
         jdbcTemplate.update("DELETE FROM clients WHERE id = ?::uuid", clientId);
 
@@ -44,20 +52,22 @@ class DroitsAopIntegrationTest {
 
         // Insertion de l'utilisateur administrateur
         jdbcTemplate.update(
-            "INSERT INTO utilisateurs (id, email, role, actif, lire, creer, modifier, supprimer, imprimer, sauvegarder) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            adminId, "admin@paybank.com", "ADMIN", true, true, true, true, true, true, true
+            "INSERT INTO utilisateurs (id, email, role, actif) VALUES (?, ?, ?, ?)",
+            adminId, "admin@paybank.com", "ADMIN", true
         );
 
         // Insertion des ressources associées à l'admin
+        /*
         jdbcTemplate.update(
             "INSERT INTO ressources (id, utilisateurs_id, clients, paiements, produits) VALUES (?, ?, ?, ?, ?)",
             UUID.randomUUID(), adminId.toString(), true, true, true
         );
+        */
 
         // Insertion d'un utilisateur employe (sans droits de création ou sans ressources selon vos règles métier)
         jdbcTemplate.update(
-            "INSERT INTO utilisateurs (id, email, role, actif, lire, creer, modifier, supprimer, imprimer, sauvegarder) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            employeId, "employe@paybank.com", "EMPLOYE", true, true, false, false, false, false, false
+            "INSERT INTO utilisateurs (id, email, role, actif) VALUES (?, ?, ?, ?)",
+            employeId, "employe@paybank.com", "EMPLOYE", true
         );
     }
 
@@ -93,8 +103,8 @@ class DroitsAopIntegrationTest {
     void testAccesRefusePourUtilisateurInactif() {
         UUID inactifId = UUID.randomUUID();
         jdbcTemplate.update(
-            "INSERT INTO utilisateurs (id, email, role, actif, lire, creer, modifier, supprimer, imprimer, sauvegarder) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            inactifId, "inactif@paybank.com", "ADMIN", false, true, true, true, true, true, true
+            "INSERT INTO utilisateurs (id, email, role, actif) VALUES (?, ?, ?, ?)",
+            inactifId, "inactif@paybank.com", "ADMIN", false
         );
 
         assertThrows(Exception.class, () -> {

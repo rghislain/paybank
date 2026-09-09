@@ -4,7 +4,6 @@ import com.paybank.hexagonal.configuration.SecurityInterceptor;
 import com.paybank.hexagonal.domaine.Client;
 import com.paybank.hexagonal.domaine.Permission;
 import com.paybank.hexagonal.domaine.Role;
-import com.paybank.hexagonal.domaine.annotation.CheckDroit;
 import com.paybank.hexagonal.domaine.annotation.MasquerDonneesSensibles;
 import com.paybank.hexagonal.domaine.annotation.SecuredPermission;
 import com.paybank.hexagonal.port.ClientSPI;

@@ -3,13 +3,12 @@ package com.paybank.hexagonal.tests;
 import com.paybank.hexagonal.domaine.Utilisateur;
 import com.paybank.hexagonal.domaine.service.GestionPaiementService;
 import com.paybank.hexagonal.domaine.service.MultiUtilisateursPaiementService;
-import com.paybank.hexagonal.entity.RessourcesEntity;
 import com.paybank.hexagonal.entity.UtilisateurEntity;
+import com.paybank.hexagonal.main.PaiementApplication;
 import com.paybank.hexagonal.repository.UtilisateurRepository;
 import com.paybank.hexagonal.domaine.Role;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,20 +22,29 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 import org.springframework.transaction.support.TransactionTemplate;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(classes = com.paybank.hexagonal.main.PaiementApplication.class)
 @EnableAspectJAutoProxy
+//@SpringBootTest(classes = PaiementApplication.class) // 👈 On lui donne la classe de configuration explicitement
+//@ActiveProfiles("test")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+/*
+@TestPropertySource(properties = {
+	    "spring.datasource.url=jdbc:postgresql://localhost:54322/postgres",
+	    "spring.datasource.username=postgres",
+	    "spring.datasource.password=postgres"
+	})
+*/
 public class SecuriteAspectTest {
 
     @Autowired
@@ -66,7 +74,7 @@ public class SecuriteAspectTest {
 
     @BeforeEach
     public void setUp() {
-        nettoyerDonnees(); 
+        //nettoyerDonnees(); 
 
         SecurityContextHolder.clearContext();
 
@@ -91,17 +99,20 @@ public class SecuriteAspectTest {
         });
     }
 
+    /*
     @AfterEach
     public void tearDown() {
         SecurityContextHolder.clearContext();
         transactionTemplate.execute(new TransactionCallbackWithoutResult() {
             @Override
-            protected void doInTransactionWithoutResult(TransactionStatus status) {
-                nettoyerDonnees();
-            }
+            //protected void doInTransactionWithoutResult(TransactionStatus status) {
+                //nettoyerDonnees();
+            //}
         });
     }
+    */
 
+    /*
     private void nettoyerDonnees() {
         jdbcTemplate.update(
             "DELETE FROM ressources WHERE utilisateurs_id IN " +
@@ -109,6 +120,7 @@ public class SecuriteAspectTest {
         );
         jdbcTemplate.update("DELETE FROM utilisateurs WHERE email != 'ghislainrochette@paybank.com'");
     }
+    */
 
     @Test
     public void testAccesRefuse_QuandUtilisateurNonAuthentifie() {

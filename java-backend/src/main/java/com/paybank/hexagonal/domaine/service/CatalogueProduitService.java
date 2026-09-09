@@ -2,7 +2,6 @@ package com.paybank.hexagonal.domaine.service;
 
 import com.paybank.hexagonal.configuration.SecurityInterceptor;
 import com.paybank.hexagonal.domaine.Produit;
-import com.paybank.hexagonal.domaine.annotation.CheckDroit;
 import com.paybank.hexagonal.domaine.annotation.SecuredPermission;
 import com.paybank.hexagonal.port.ProduitSPI;
 import com.stripe.exception.StripeException;
@@ -12,7 +11,6 @@ import com.stripe.param.PriceCreateParams;
 import com.stripe.param.ProductCreateParams;
 import com.stripe.param.ProductUpdateParams;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.UUID;
 

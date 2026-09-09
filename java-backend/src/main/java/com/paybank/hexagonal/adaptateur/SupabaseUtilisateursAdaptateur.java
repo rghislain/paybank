@@ -22,6 +22,7 @@ import com.paybank.hexagonal.domaine.Utilisateur;
 import com.paybank.hexagonal.entity.RolePermissionsEntity;
 import com.paybank.hexagonal.entity.UtilisateurEntity;
 import com.paybank.hexagonal.port.UtilisateurSPI;
+import com.paybank.hexagonal.domaine.service.GestionDroitsService;
 
 @Component
 public class SupabaseUtilisateursAdaptateur implements UtilisateurSPI {
@@ -30,6 +31,9 @@ public class SupabaseUtilisateursAdaptateur implements UtilisateurSPI {
 	
     @Autowired
     private JdbcTemplate jdbcTemplate;
+    
+    @Autowired
+    private GestionDroitsService gestionDroitsService;
     
     // Injection propre du repository Spring Data (par le constructeur)
     public SupabaseUtilisateursAdaptateur(UtilisateurRepository utilisateurRepository) {
@@ -225,6 +229,7 @@ public class SupabaseUtilisateursAdaptateur implements UtilisateurSPI {
         jdbcTemplate.update(sql, creer, lire, modifier, supprimer, imprimer, sauvegarder, utilisateurId);
     }
     
+    /*
     @Override
     public void basculerDroitPourRole(Role role, String nomDroit, boolean valeur) {
         switch (nomDroit.toLowerCase()) {
@@ -249,6 +254,15 @@ public class SupabaseUtilisateursAdaptateur implements UtilisateurSPI {
             default:
                 throw new IllegalArgumentException("Droit inconnu : " + nomDroit);
         }
+    }
+    */
+    
+    @Override
+    public void basculerDroitPourRole(Role role, String nomDroit, boolean valeur) {
+        // Délègue à GestionDroitsService (role_permissions), seule source de vérité
+        // pour les droits. Comme cette méthode ne reçoit pas de ressource, elle
+        // applique la valeur sur TOUTES les ressources pour l'action demandée.
+        gestionDroitsService.mettreAJourActionPourToutesLesRessources(role, nomDroit, valeur);
     }
     
 

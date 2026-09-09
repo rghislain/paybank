@@ -12,15 +12,23 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 import java.util.UUID;
-
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(classes = PaiementApplication.class)
+//@ActiveProfiles("test")
 @Transactional
+/*
+@TestPropertySource(properties = {
+	    "spring.datasource.url=jdbc:postgresql://localhost:54322/postgres",
+	    "spring.datasource.username=postgres",
+	    "spring.datasource.password=postgres"
+	})
+*/
 class JournalisationBDDAspectTest {
 
     @Autowired
@@ -41,12 +49,10 @@ class JournalisationBDDAspectTest {
             utilisateur.setPassword("password");
             utilisateur.setActif(true);
             utilisateur.setRole(Role.ADMIN);
-            utilisateur.setCreer(true);
-            utilisateur.setLire(true);
-            utilisateur.setModifier(true);
-            utilisateur.setSupprimer(true);
-            utilisateur.setImprimer(true);
-            utilisateur.setSauvegarder(true);
+            // Les droits (creer/lire/modifier/supprimer/imprimer/sauvegarder) ne sont plus
+            // portés par UtilisateurEntity : ils vivent désormais dans role_permissions,
+            // gérée via GestionDroitsService. Ce test ne vérifie que la journalisation,
+            // donc aucun droit particulier n'est nécessaire pour ce compte de test.
             utilisateurRepository.save(utilisateur);
         }
 

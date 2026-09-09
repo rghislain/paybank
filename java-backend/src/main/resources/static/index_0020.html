@@ -350,45 +350,45 @@
 		    try {
 		        const response = await fetchSecurise(`${API_BASE_URL}/api/droits`, { headers: obtenirHeadersSecurises() });
 		        if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}`);
-		        const listeDroits = await response.json();
+		        const matrice = await response.json();
 
-		        // listeDroits est un tableau de triplets : [{ role, ressource, action, granted }, ...]
-		        // (format renvoyé par DroitsControleur/GestionDroitsService depuis role_permissions).
-		        // On construit un lookup rapide "ROLE|ressource|action" -> granted.
-		        const lookup = {};
-		        listeDroits.forEach(d => {
-		            if (!d.role || !d.ressource || !d.action) return;
-		            const cle = `${d.role.toUpperCase()}|${d.ressource.toLowerCase()}|${d.action.toLowerCase()}`;
-		            lookup[cle] = Boolean(d.granted);
-		        });
-
-		        const estAutorise = (ressource, action) =>
-		            Boolean(lookup[`${roleActif}|${ressource.toLowerCase()}|${action.toLowerCase()}`]);
+		        // Recherche souple du rôle (gère les variations de casse ou de format)
+		        const ligneRole = matrice.find(l => (l.role || l.nom || '').toUpperCase() === roleActif);
 
 		        Object.entries(MAPPING_BOUTONS_DROITS).forEach(([id, regle]) => {
-		            const autorise = estAutorise(regle.ressource, regle.action);
+		            let autorise = false;
+		            if (ligneRole) {
+		                const actionOk = regle.action ? Boolean(ligneRole[regle.action]) : true;
+		                const ressourceOk = regle.ressource ? Boolean(ligneRole[regle.ressource]) : true;
+		                autorise = actionOk && ressourceOk;
+		            } else {
+		                // Comble de sécurité si le rôle exact n'est pas trouvé dans la matrice : autoriser par défaut pour ADMIN/MANAGER si besoin, ou restreindre
+		                autorise = (roleActif === 'ADMIN'); 
+		            }
 		            etatBoutonsDroits[id] = autorise;
 		            appliquerApparenceBouton(id, autorise);
 		        });
 
-		        // Droits de lecture pour peupler les listes déroulantes (ressource + action 'lire')
-		        if (estAutorise('utilisateurs', 'lire')) {
-		            chargerListeSalaries();
-		        } else {
-		            const selectSalaries = document.getElementById('selectSalariesExistants');
-		            if (selectSalaries) selectSalaries.innerHTML = '<option value="">🚫 Droits de lecture insuffisants</option>';
-		        }
+		        if (ligneRole) {
+		            const droitUtilisateurs = ligneRole.utilisateurs !== undefined ? ligneRole.utilisateurs : ligneRole.salaries;
+		            if (droitUtilisateurs) {
+		                chargerListeSalaries();
+		            } else {
+		                const selectSalaries = document.getElementById('selectSalariesExistants');
+		                if (selectSalaries) selectSalaries.innerHTML = '<option value="">🚫 Droits de lecture insuffisants</option>';
+		            }
 
-		        if (estAutorise('clients', 'lire')) {
-		            chargerListeClients();
-		        } else {
-		            document.getElementById('selectClientsExistants').innerHTML = '<option value="">🚫 Droits de lecture insuffisants</option>';
-		        }
+		            if (ligneRole.clients) {
+		                chargerListeClients();
+		            } else {
+		                document.getElementById('selectClientsExistants').innerHTML = '<option value="">🚫 Droits de lecture insuffisants</option>';
+		            }
 
-		        if (estAutorise('produits', 'lire')) {
-		            chargerListeProduits();
-		        } else {
-		            document.getElementById('selectProduitsExistants').innerHTML = '<option value="">🚫 Droits de lecture insuffisants</option>';
+		            if (ligneRole.produits) {
+		                chargerListeProduits();
+		            } else {
+		                document.getElementById('selectProduitsExistants').innerHTML = '<option value="">🚫 Droits de lecture insuffisants</option>';
+		            }
 		        }
 		        
 		    } catch (err) {

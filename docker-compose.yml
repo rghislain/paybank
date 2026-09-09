@@ -9,9 +9,9 @@ services:
     environment:
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
       # Mots de passe initiaux pour le premier lancement (création unique)
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD:adminPass01}
-      - MANAGER1_PASSWORD=${MANAGER1_PASSWORD:managerPass01}
-      - EMPLOYE1_PASSWORD=${EMPLOYE1_PASSWORD:employePass01}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-adminPass01}
+      - MANAGER1_PASSWORD=${MANAGER1_PASSWORD:-managerPass01}
+      - EMPLOYE1_PASSWORD=${EMPLOYE1_PASSWORD:-employePass01}
     external_links:
       - supabase_db_projet-paiement-hexagonal:database-supabase-pg
     networks:

@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 
 import com.paybank.hexagonal.domaine.MontantCentimes;
 import com.paybank.hexagonal.domaine.TransactionPaiement;
-import com.paybank.hexagonal.domaine.annotation.CheckDroit;
 import com.paybank.hexagonal.domaine.annotation.MasquerDonneesSensibles;
 import com.paybank.hexagonal.port.ModifierPaiementSPI;
 import com.paybank.hexagonal.port.PersistancePaiementSPI;
