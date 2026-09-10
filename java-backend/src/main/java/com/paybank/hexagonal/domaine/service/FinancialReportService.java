@@ -11,7 +11,6 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.printing.PDFPageable;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-
 import com.paybank.hexagonal.domaine.FinancialReport;
 import com.paybank.hexagonal.domaine.TransactionDetail;
 import com.paybank.hexagonal.domaine.annotation.SecuredPermission;
@@ -41,7 +40,6 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-
 import com.paybank.hexagonal.repository.TransactionRepository;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -58,7 +56,6 @@ public class FinancialReportService implements FinancialReportSPI {
     }
     
     @Override
-    //@SecuredPermission(ressource = "rapports_financiers", action = "lire")
     public FinancialReport generateReport(UUID clientId, LocalDate start, LocalDate end) {
         List<TransactionDetail> transactions = transRepo.findTransactionsByDateRange(clientId, start, end);
         
@@ -77,19 +74,18 @@ public class FinancialReportService implements FinancialReportSPI {
         return new FinancialReport(start, end, debits, credits, finalBalance, transactions);
     }
 
-    @Override
-    //@SecuredPermission(ressource = "rapports_financiers", action = "creer")
+    @Override  
     public void issueInvoice(UUID clientId, UUID transactionId) {
-        // 1. Récupération sécurisée de la transaction
+        //1. Récupération sécurisée de la transaction
         TransactionDetail transaction = transRepo.findById(transactionId)
             .orElseThrow(() -> new IllegalArgumentException("Transaction introuvable pour l'ID : " + transactionId));
 
         try {
-            // 2. Génération du PDF en mémoire
+            //2. Génération du PDF en mémoire
             byte[] pdfBytes = generatePdfBytes(clientId, transaction);
             String fileName = "facture-" + transactionId + ".pdf";
 
-            // 3. Envoi de l'e-mail aux 3 destinataires
+            //3. Envoi de l'e-mail aux 3 destinataires
             String[] destinataires = {
                 "client@paybank.com", 
                 "comptabilite@paybank.com", 
@@ -97,7 +93,7 @@ public class FinancialReportService implements FinancialReportSPI {
             };
             sendEmailWithPdf(destinataires, pdfBytes, fileName);
 
-            // 4. Impression physique du document sur le serveur
+            //4. Impression physique du document sur le serveur
             printPdf(pdfBytes);
 
         } catch (Exception e) {
@@ -162,5 +158,4 @@ public class FinancialReportService implements FinancialReportSPI {
             System.err.println("Échec de l'impression physique : " + e.getMessage());
         }
     }
-    
 }

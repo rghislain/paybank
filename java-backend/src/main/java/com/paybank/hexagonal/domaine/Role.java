@@ -12,11 +12,11 @@ public enum Role {
         Permission.ROLE_UPDATE
     )),
     MANAGER(Set.of(
-        Permission.USER_CREATE, Permission.USER_UPDATE, // Limité au périmètre de son équipe
+        Permission.USER_CREATE, Permission.USER_UPDATE, //Limité au périmètre de son équipe
         Permission.CLIENT_CREATE, Permission.CLIENT_UPDATE
     )),
     EMPLOYE(Set.of(
-        Permission.CLIENT_CREATE // Droits restreints aux opérations clients de base
+        Permission.CLIENT_CREATE //Droits restreints aux opérations clients de base
     ));
 
     private final Set<Permission> permissions;

@@ -4,7 +4,6 @@ import com.paybank.hexagonal.domaine.service.FactureService;
 import com.paybank.hexagonal.entity.FactureEntity;
 import com.paybank.hexagonal.port.FactureRepositorySPI;
 import com.paybank.hexagonal.repository.SpringDataFactureRepository;
-
 import org.springframework.stereotype.Repository;
 
 @Repository

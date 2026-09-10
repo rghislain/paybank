@@ -14,7 +14,7 @@ import java.util.Date;
 @Service
 public class JwtService {
 
-    // Remplacez par une clé secrète robuste d'au moins 256 bits (32 caractères minimum)
+    //Remplacez par une clé secrète robuste d'au moins 256 bits (32 caractères minimum)
     private final String SECRET_KEY_STRING = "cqo5B75Y+m4UgpVzeRcLvviCOGNVPLwCcLWWGt8weag=";
 
     private SecretKey getSigningKey() {
@@ -55,7 +55,7 @@ public class JwtService {
         return Jwts.builder()
                 .subject(username)
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24)) // Valide 24 heures
+                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24)) //Valide 24 heures
                 .signWith(getSigningKey())
                 .compact();
     }
@@ -71,7 +71,7 @@ public class JwtService {
                 .subject(username)
                 .claim("activeRole", role)
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 8)) // Valide 8 heures
+                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 8)) //Valide 8 heures
                 .signWith(getSigningKey())
                 .compact();
     }

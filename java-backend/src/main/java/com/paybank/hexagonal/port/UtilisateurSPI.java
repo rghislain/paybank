@@ -2,7 +2,6 @@ package com.paybank.hexagonal.port;
 
 import java.util.List;
 import java.util.Optional;
-
 import com.paybank.hexagonal.domaine.Role;
 import com.paybank.hexagonal.domaine.Utilisateur;
 import com.paybank.hexagonal.entity.UtilisateurEntity;

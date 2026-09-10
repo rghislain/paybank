@@ -1,13 +1,11 @@
 package com.paybank.hexagonal.DTO;
 
-public class LoginRequestDTO {
-    
+public class LoginRequestDTO {    
     private String username;
     private String password;
-    private String email; // ou username selon votre base
+    private String email; 
    
-
-    // Getters et Setters obligatoires pour que Spring puisse mapper le JSON
+    //Getters & Setters obligatoires pour que Spring puisse mapper le JSON
     public String getUsername() {
         return username;
     }

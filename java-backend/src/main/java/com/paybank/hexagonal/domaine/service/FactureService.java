@@ -18,7 +18,6 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-
 import com.paybank.hexagonal.domaine.Client;
 import com.paybank.hexagonal.entity.FactureEntity;
 import com.paybank.hexagonal.repository.SpringDataFactureRepository;
@@ -30,9 +29,9 @@ import jakarta.mail.internet.MimeMessage;
  * Génère et envoie les factures au format PDF (Apache PDFBox).
  *
  * Les données du paiement sont lues directement chez Stripe via PaymentIntent.retrieve(),
- * ce qui évite de dépendre d'une entité locale "Paiement" dont je n'ai pas la structure exacte.
+ * ce qui évite de dépendre d'une entité locale "Paiement"
  *
- * ⚠️ Hypothèses à vérifier :
+ * Hypothèses à vérifier :
  *    - Client possède bien getNom() et getEmail().
  *    - PDFBox 3.x (confirmé via pom.xml) : les polices standard s'instancient désormais via
  *      "new PDType1Font(Standard14Fonts.FontName.HELVETICA)" au lieu des anciennes constantes
@@ -43,19 +42,17 @@ public class FactureService {
 
     private static final PDType1Font HELVETICA = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
     private static final PDType1Font HELVETICA_BOLD = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
-
     private final GestionClientService serviceGestionClient;
     private final OperateurCourantService operateurCourantService;
     private final JavaMailSender javaMailSender;
 
-    // 👇 À renseigner dans application.properties avec les vraies adresses souhaitées.
-    @Value("${facture.email.compta:ghislainrochette44@gmail.com}") //compta@paybank.com
+    @Value("${facture.email.compta:ghislainrochette44@gmail.com}")
     private String emailCompta;
 
-    @Value("${facture.email.direction:ghislainrochette44@gmail.com}") //direction@paybank.com
+    @Value("${facture.email.direction:ghislainrochette44@gmail.com}")
     private String emailDirection;
     
-    private final SpringDataFactureRepository factureRepository; // 👈 Injection du Repository pour la BDD
+    private final SpringDataFactureRepository factureRepository; //Injection du Repository pour la BDD
 
     private static final DateTimeFormatter FORMAT_DATE =
             DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm").withZone(ZoneId.of("Europe/Paris"));
@@ -86,8 +83,7 @@ public class FactureService {
         return construirePdf(paiementId, client, montantFormate, devise, statut, dateFormatee);
     }
     
-    private void sauvegarderFactureEnBdd(String paiementId, Client client, long montantCentimes, String devise, String statut) {
-        // Vérifiez si la facture existe déjà pour éviter les doublons lors d'un nouvel envoi
+    private void sauvegarderFactureEnBdd(String paiementId, Client client, long montantCentimes, String devise, String statut) {     
         if (!factureRepository.existsByPaiementsId(paiementId)) {
             FactureEntity facture = new FactureEntity();
             facture.setPaiementId(paiementId);
@@ -97,8 +93,7 @@ public class FactureService {
             facture.setMontantTotal(BigDecimal.valueOf(montantCentimes / 100));
             facture.setDevise(devise);
             facture.setStatut(statut);
-            facture.setDateEmission(Instant.now());
-            
+            facture.setDateEmission(Instant.now());         
             factureRepository.save(facture);
         }
     }
@@ -131,23 +126,23 @@ public class FactureService {
 
             try (PDPageContentStream cs = new PDPageContentStream(document, page)) {
 
-                // Titre
+                //Titre
                 cs.setFont(HELVETICA_BOLD, 22);
                 ecrireTexte(cs, MARGE, y, "FACTURE");
                 y -= 45;
 
-                // Bloc référence / date
+                //Bloc référence / date
                 cs.setFont(HELVETICA, 11);
                 y = ecrireLigne(cs, y, "Référence : " + paiementId);
                 y = ecrireLigne(cs, y, "Date : " + dateFormatee);
                 y -= 15;
 
-                // Bloc client
+                //Bloc client
                 y = ecrireLigne(cs, y, "Client : " + client.getNom());
                 y = ecrireLigne(cs, y, "Email : " + client.getEmail());
                 y -= 25;
 
-                // En-tête du tableau
+                //En-tête du tableau
                 float col1 = MARGE, col2 = MARGE + 300, col3 = MARGE + 420;
 
                 cs.setFont(HELVETICA_BOLD, 10);
@@ -160,7 +155,7 @@ public class FactureService {
                 cs.lineTo(MARGE + largeurUtile, y - 6);
                 cs.stroke();
 
-                // Ligne de détail
+                //Ligne de détail
                 y -= 26;
                 cs.setFont(HELVETICA, 10);
                 ecrireTexte(cs, col1, y, "Transaction PayBank");
@@ -171,7 +166,7 @@ public class FactureService {
                 cs.lineTo(MARGE + largeurUtile, y - 10);
                 cs.stroke();
 
-                // Total
+                //Total
                 y -= 45;
                 cs.setFont(HELVETICA_BOLD, 14);
                 ecrireTexte(cs, MARGE + largeurUtile - 180, y, "Total : " + montantFormate + " " + devise);
@@ -195,5 +190,4 @@ public class FactureService {
         cs.showText(texte);
         cs.endText();
     }
-    
 }

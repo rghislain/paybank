@@ -2,7 +2,6 @@ package com.paybank.hexagonal.adaptateur;
 
 import com.paybank.hexagonal.domaine.MontantCentimes;
 import com.paybank.hexagonal.port.PasserelleBancaireSPI;
-
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -18,7 +17,6 @@ import org.springframework.web.client.RestTemplate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-
 import org.springframework.beans.factory.annotation.Value;
 
 @Component
@@ -26,19 +24,15 @@ public class StripeMokbankAdaptateur implements PasserelleBancaireSPI {
 	
 	/*
 	 * RestTemplate est une classe de Spring (Spring Web) qui sert à faire des appels HTTP vers d’autres services.
-	   c’est un client HTTP Java. On peux appeler une API externe comme si on faisait un curl.
+	   c’est un client HTTP Java.
 	 */
     private final RestTemplate restTemplate;
-    
-    // URL cible du mock banque défini dans le dossier de conception
-    //private final String MOKBANK_API_URL = "https://api.mokbank.internal/v1/charges";
-
- // 💡 L'URL devient configurable via application.properties. Si absente, elle garde sa valeur par défaut.
+  
+    //L'URL devient configurable via application.properties. Si absente, elle garde sa valeur par défaut.
     @Value("${stripe.api.url:https://api.mokbank.internal/v1/charges}")
     private String stripeApiUrl;
     
     //vraie clé secrète de test Stripe (disponible sur le tableau de bord Stripe)
-    //@Value("${stripe.secret.key}")
     private final String STRIPE_SECRET_KEY= "sk_test_51TBX0dEWZ4iSroOBwXh3i6MtrqnOWGKmGTal2SMcF9Guh3Jh0Hc6dIFCajDJ97ON3u5xnAH2hhaiePSjkPlBhYZZ00JgpiV3OU";
     
     public StripeMokbankAdaptateur(RestTemplate restTemplate) {
@@ -48,61 +42,42 @@ public class StripeMokbankAdaptateur implements PasserelleBancaireSPI {
     @Override
     public String executerTransactionBancaire(MontantCentimes montant, String tokenCarteMokbank) {
         try {
-            // 1. Configuration des Headers pour Stripe (Form URL Encoded + Clé Secrète)
+            //1. Configuration des Headers pour Stripe (Form URL Encoded + Clé Secrète)
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-            headers.setBearerAuth(STRIPE_SECRET_KEY); // Injection automatique de "Bearer sk_test_..."
+            headers.setBearerAuth(STRIPE_SECRET_KEY); //Injection automatique de "Bearer sk_test_..."
 
-            // 2. Construction du corps de la requête au format Form Data (MultiValueMap)
+            //2. Construction du corps de la requête au format Form Data (MultiValueMap)
             MultiValueMap<String, String> requestBody = new LinkedMultiValueMap<>();
-            requestBody.add("amount", String.valueOf(montant.getValeur())); // Montant pur en centimes
+            requestBody.add("amount", String.valueOf(montant.getValeur())); //Montant en centimes
             requestBody.add("currency", "eur");
-            requestBody.add("source", tokenCarteMokbank); // Le token commençant par 'tok_...' généré par Stripe Elements côté client
+            requestBody.add("source", tokenCarteMokbank); //Le token commençant par 'tok_...' généré par Stripe Elements côté client
             requestBody.add("description", "Paiement sécurisé PayBank - Environnement Test");
 
             HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(requestBody, headers);
 
-            // 3. Appel de l'API Stripe
+            //3. Appel de l'API Stripe
             ResponseEntity<Map> reponse = restTemplate.postForEntity(stripeApiUrl, entity, Map.class); 
-            // 4. Analyse du statut de la réponse Stripe
+            //4. Analyse du statut de la réponse Stripe
             if (reponse.getStatusCode().is2xxSuccessful() && reponse.getBody() != null) {
-                // Stripe renvoie un champ "paid" (booléen) ou un champ "status" égal à "succeeded"
+                //Stripe renvoie un champ "paid" (booléen) ou un champ "status" égal à "succeeded"
                 Boolean estPaye = (Boolean) reponse.getBody().get("paid");
                 Object statut = (String) reponse.getBody().get("status");
                 String paymentIntentId = (String) reponse.getBody().get("id");
-                return paymentIntentId;  //"succeeded".equalsIgnoreCase(String.valueOf(statut));
-            }
-            //return false;
+                return paymentIntentId;
+            }            
             throw new RuntimeException("Paiement stripe echoue");
 
         } catch (RestClientException e) {
-            // En cas d'erreur de carte (fonds insuffisants, carte expirée...), Stripe lève une exception HTTP 402
-            //System.err.println("Échec ou refus de la transaction Stripe : " + e.getMessage());
-            //return false;
+            //En cas d'erreur de carte (fonds insuffisants, carte expirée...), Stripe lève une exception HTTP 402          
         	throw new RuntimeException("Erreur stripe:"+e.getMessage());
         }
     }
-
-    /*
-	@Override
-	public boolean annulerPaiement(UUID transactionId) {
-		// Construction de l'URL d'annulation (ex: /api/v1/payments/{id}/refund)
-        String url = stripeApiUrl + "/" + transactionId + "/refund";
-        try {
-            // Envoi de la requête POST pour l'annulation
-            restTemplate.postForEntity(url, null, Void.class);
-            return true;
-        } catch (Exception e) {
-            System.err.println("Échec de l'annulation sur Mokbank : " + e.getMessage());
-            return false;
-        }
-	}
-	*/
     
     @Override
     public boolean annulerPaiement(String paymentIntentId) {
     	//Cibler l'endpoint des remboursements (refunds)
-        String url = "http://api.mokbank.internal:8080/v1/refunds"; //"http://api.mokbank.internal/v1/refunds";
+        String url = "http://api.mokbank.internal:8080/v1/refunds";
     	
         try {
             HttpHeaders headers = new HttpHeaders();
@@ -117,7 +92,7 @@ public class StripeMokbankAdaptateur implements PasserelleBancaireSPI {
 
         } catch (Exception e) {
             System.err.println("Refund Stripe échoué : " + e.getMessage());
-            return false; //false > on return true dans tous les cas pour tester l'annulation
+            return false;
         }
     }
 

@@ -14,7 +14,6 @@ import com.stripe.param.CustomerCreateParams;
 import com.stripe.param.CustomerUpdateParams;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.UUID;
 
@@ -28,7 +27,7 @@ public class GestionClientService {
         Stripe.apiKey = apiKey;
     }
     
-    // Méthode utilitaire interne de vérification des permissions
+    //Méthode utilitaire interne de vérification des permissions
     @MasquerDonneesSensibles
     private void verifierPermission(Permission permissionRequise) {
         String headerRole = null;
@@ -57,64 +56,33 @@ public class GestionClientService {
         }
     }
 
-    // C - CRÉER
+    //CRÉER
     @MasquerDonneesSensibles
-    //@CheckDroit(ressource = "clients")
-    public Client creerClient(String nom, String email, String role) throws StripeException {
-        //verifierPermission(Permission.CLIENT_CREATE);
-
+    public Client creerClient(String nom, String email, String role) throws StripeException {      
         CustomerCreateParams params = CustomerCreateParams.builder()
                 .setName(nom)
                 .setEmail(email)
                 .build();
         Customer stripeCustomer = Customer.create(params);
-
         Client client = new Client(null, nom, email, stripeCustomer.getId());
         clientSPI.sauvegarder(client);
         return client;
     }
 
-    // R - LIRE
+    //LIRE
     @MasquerDonneesSensibles
-    //@SecuredPermission(ressource = "clients", action = "lire")
     public Client obtenirClient(UUID id, String role) {
         return clientSPI.trouverParId(id)
                 .orElseThrow(() -> new IllegalArgumentException("Client introuvable pour l'id : " + id));
     }
-
-    /*
-    // U - MODIFIER
+ 
+    //MODIFIER
     @MasquerDonneesSensibles
-    public void modifierClient(UUID id, String nouveauNom, String nouvelEmail, String role) throws StripeException {
-        verifierPermission(Permission.CLIENT_UPDATE);
-        
+    public void modifierClient(UUID id, String nouveauNom, String nouvelEmail, String role) throws StripeException {          
         Client clientExistant = obtenirClient(id, role);
-
-        Customer stripeCustomer = Customer.retrieve(clientExistant.getStripeCustomerId());
-        CustomerUpdateParams params = CustomerUpdateParams.builder()
-                .setName(nouveauNom)
-                .setEmail(nouvelEmail)
-                .build();
-        stripeCustomer.update(params);
-
-        Client clientModifie = new Client(clientExistant.getId(), nouveauNom, nouvelEmail, clientExistant.getStripeCustomerId());
-        clientSPI.sauvegarder(clientModifie);
-    }
-    */
-    
-    // U - MODIFIER
-    @MasquerDonneesSensibles
-    //@CheckDroit(ressource = "clients")
-    //@SecuredPermission(ressource = "clients", action = "modifier")
-    public void modifierClient(UUID id, String nouveauNom, String nouvelEmail, String role) throws StripeException {
-        //verifierPermission(Permission.CLIENT_UPDATE);
-        
-        Client clientExistant = obtenirClient(id, role);
-
-        String stripeCustomerId = clientExistant.getStripeCustomerId();
-        
+        String stripeCustomerId = clientExistant.getStripeCustomerId();       
         if (stripeCustomerId == null || stripeCustomerId.trim().isEmpty()) {
-            // --- CAS A : Aucun ID Stripe n'existe, on le crée sur Stripe ---
+            //--- CAS A : Aucun ID Stripe n'existe, on le crée sur Stripe ---
             CustomerCreateParams createParams = CustomerCreateParams.builder()
                     .setName(nouveauNom)
                     .setEmail(nouvelEmail)
@@ -122,7 +90,7 @@ public class GestionClientService {
             Customer newStripeCustomer = Customer.create(createParams);
             stripeCustomerId = newStripeCustomer.getId();
         } else {
-            // --- CAS B : Le client a déjà un ID Stripe, on met à jour ---
+            //--- CAS B : Le client a déjà un ID Stripe, on met à jour ---
             Customer stripeCustomer = Customer.retrieve(stripeCustomerId);
             CustomerUpdateParams updateParams = CustomerUpdateParams.builder()
                     .setName(nouveauNom)
@@ -130,36 +98,16 @@ public class GestionClientService {
                     .build();
             stripeCustomer.update(updateParams);
         }
-
-        // On sauvegarde en base avec le stripeCustomerId (qu'il soit nouveau ou mis à jour)
+        //On sauvegarde en base avec le stripeCustomerId (qu'il soit nouveau ou mis à jour)
         Client clientModifie = new Client(clientExistant.getId(), nouveauNom, nouvelEmail, stripeCustomerId);
         clientSPI.sauvegarder(clientModifie);
     }
-
-    /*
-    // D - SUPPRIMER
-    @MasquerDonneesSensibles
-    public void supprimerClient(UUID id, String role) throws StripeException {
-        verifierPermission(Permission.CLIENT_DELETE);
-        
-        Client clientExistant = obtenirClient(id, role);
-        Customer stripeCustomer = Customer.retrieve(clientExistant.getStripeCustomerId());
-        stripeCustomer.delete();
-
-        clientSPI.supprimer(id);
-    }
-    */
     
-    // D - SUPPRIMER
+    //SUPPRIMER
     @MasquerDonneesSensibles
-    //@CheckDroit(ressource = "clients")
-    //@SecuredPermission(ressource = "utilisateurs", action = "supprimer")
-    public void supprimerClient(UUID id, String role) throws StripeException {
-        //verifierPermission(Permission.CLIENT_DELETE);
-        
-        Client clientExistant = obtenirClient(id, role);
-        
-        // Sécurité : Vérifier si un ID Stripe existe avant d'appeler l'API Stripe
+    public void supprimerClient(UUID id, String role) throws StripeException {        
+        Client clientExistant = obtenirClient(id, role);       
+        //Sécurité : Vérifier si un ID Stripe existe avant d'appeler l'API Stripe
         String stripeId = clientExistant.getStripeCustomerId();
         if (stripeId != null && !stripeId.trim().isEmpty()) {
             try {
@@ -168,11 +116,10 @@ public class GestionClientService {
                     stripeCustomer.delete();
                 }
             } catch (Exception e) {
-                // Si le client n'existe déjà plus sur Stripe, on logue l'avertissement mais on continue la suppression en BDD
+                //Si le client n'existe déjà plus sur Stripe, on logue l'avertissement mais on continue la suppression en BDD
                 System.err.println("Avertissement Stripe : Impossible de supprimer le client sur Stripe (peut-être déjà supprimé) : " + e.getMessage());
             }
         }
-
         // Suppression en base locale
         clientSPI.supprimer(id);
     }

@@ -1,9 +1,7 @@
 package com.paybank.hexagonal.domaine.service;
 
 import java.util.UUID;
-
 import org.springframework.stereotype.Service;
-
 import com.paybank.hexagonal.domaine.MontantCentimes;
 import com.paybank.hexagonal.domaine.TransactionPaiement;
 import com.paybank.hexagonal.domaine.annotation.MasquerDonneesSensibles;
@@ -18,12 +16,10 @@ public class ModifierPaiementService implements ModifierPaiementSPI {
     }
 
     @MasquerDonneesSensibles
-    //@CheckDroit(ressource = "paiements")
     public void modifier(UUID paiementId, MontantCentimes nouveauMontant) {
     	TransactionPaiement paiement = persistancePaiementSPI.chercherParId(paiementId)
                 .orElseThrow(() -> new IllegalArgumentException("Paiement introuvable"));
         paiement.modifierMontant(nouveauMontant);
         persistancePaiementSPI.modifierPaiement(paiement);
     }
-
 }

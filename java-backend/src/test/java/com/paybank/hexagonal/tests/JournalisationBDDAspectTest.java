@@ -20,15 +20,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(classes = PaiementApplication.class)
-//@ActiveProfiles("test")
 @Transactional
-/*
-@TestPropertySource(properties = {
-	    "spring.datasource.url=jdbc:postgresql://localhost:54322/postgres",
-	    "spring.datasource.username=postgres",
-	    "spring.datasource.password=postgres"
-	})
-*/
 class JournalisationBDDAspectTest {
 
     @Autowired
@@ -49,10 +41,10 @@ class JournalisationBDDAspectTest {
             utilisateur.setPassword("password");
             utilisateur.setActif(true);
             utilisateur.setRole(Role.ADMIN);
-            // Les droits (creer/lire/modifier/supprimer/imprimer/sauvegarder) ne sont plus
-            // portés par UtilisateurEntity : ils vivent désormais dans role_permissions,
-            // gérée via GestionDroitsService. Ce test ne vérifie que la journalisation,
-            // donc aucun droit particulier n'est nécessaire pour ce compte de test.
+            //Les droits (creer/lire/modifier/supprimer/imprimer/sauvegarder) ne sont plus
+            //portés par UtilisateurEntity : ils vivent désormais dans role_permissions,
+            //gérée via GestionDroitsService. Ce test ne vérifie que la journalisation,
+            //donc aucun droit particulier n'est nécessaire pour ce compte de test
             utilisateurRepository.save(utilisateur);
         }
 

@@ -1,7 +1,6 @@
 package com.paybank.hexagonal.domaine;
 
 import java.util.UUID;
-
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 public class Utilisateur {
@@ -36,7 +35,7 @@ public class Utilisateur {
     
     public boolean aLeDroit(String action) {
         if (this.role == Role.ADMIN) {
-            return true; // L'Admin a tous les droits par défaut, ou adaptez selon vos règles
+            return true; //L'Admin a tous les droits par définition mais on adapte selon les choix
         }
         switch (action.toUpperCase()) {
             case "LIRE":
@@ -56,7 +55,7 @@ public class Utilisateur {
         }
     }
     
-    // Getters & Setters purement Java
+    //Getters & Setters
     public String getId() { return id; }
     public String getEmail() { return this.email; }
     public String getNom() { return this.nom; }
@@ -66,7 +65,6 @@ public class Utilisateur {
         return this.password;
     }   
     public void setRole(Role role) { this.role = role; }
-    //public void setName(String name) { this.nom = name; }
     public void deactivate() { this.actif = false; }
 	public void setEmail(String string) {
 		this.email=string;

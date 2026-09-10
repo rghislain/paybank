@@ -3,9 +3,7 @@ package com.paybank.hexagonal.configuration;
 import com.paybank.hexagonal.domaine.Role;
 import com.paybank.hexagonal.entity.UtilisateurEntity;
 import com.paybank.hexagonal.repository.UtilisateurRepository;
-
 import java.util.UUID;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -43,7 +41,6 @@ public class InitialiseurUtilisateurs {
     private void creerSiAbsent(UtilisateurRepository repo, BCryptPasswordEncoder encoder, String email, String nom, String passwordClair, Role role) {
         if (repo.findByEmail(email).isEmpty()) {
             UtilisateurEntity nouveau = new UtilisateurEntity();
-            //nouveau.setId(email.split("@")[0]);
             nouveau.setId(UUID.randomUUID().toString());
             nouveau.setEmail(email);
             nouveau.setNom(nom);

@@ -23,26 +23,23 @@ public class StripeWebhookControleur {
         if (sigHeader == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing Stripe-Signature header");
         }
-
         Event event;
         try {
-            // Vérification cryptographique officielle de Stripe
+            //Vérification cryptographique officielle de Stripe
             event = Webhook.constructEvent(payload, sigHeader, endpointSecret);
         } catch (SignatureVerificationException e) {
-            // Signature invalide -> Attaque potentielle ou payload corrompu
+            //Signature invalide -> Attaque potentielle ou payload corrompu
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid signature");
         }
-
-        // Traitement de l'événement validé
+        //Traitement de l'événement validé
         switch (event.getType()) {
             case "payment_intent.succeeded":
-                // Traiter le succès du paiement
+                //Traiter le succès du paiement
                 break;
             default:
-                // Événement non géré
+                //Événement non géré
                 break;
         }
-
         return ResponseEntity.ok("Webhook handled successfully");
     }
 }

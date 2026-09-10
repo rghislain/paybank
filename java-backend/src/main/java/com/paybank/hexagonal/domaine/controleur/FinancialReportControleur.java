@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.paybank.hexagonal.domaine.CustomUserDetails;
 import com.paybank.hexagonal.domaine.FinancialReport;
 import com.paybank.hexagonal.domaine.annotation.SecuredPermission;
@@ -28,7 +27,6 @@ public class FinancialReportControleur {
 
     // Récupérer le bilan filtré
     @GetMapping
-    //@SecuredPermission(ressource = "rapports_financiers", action = "lire")
     public ResponseEntity<FinancialReport> getBilan(
             @AuthenticationPrincipal CustomUserDetails user,
             @RequestParam LocalDate start,
@@ -38,7 +36,6 @@ public class FinancialReportControleur {
 
     // Émettre une facture depuis le bilan
     @PostMapping("/{transactionId}/invoice")
-    //@SecuredPermission(ressource = "rapports_financiers", action = "creer")
     public ResponseEntity<Void> generateInvoice(
             @AuthenticationPrincipal CustomUserDetails user,
             @PathVariable UUID transactionId) {
@@ -47,7 +44,6 @@ public class FinancialReportControleur {
     }
     
     @PostMapping("/clients/{clientId}/transactions/{transactionId}/invoice")
-    //@SecuredPermission(ressource = "rapports_financiers", action = "creer")
     public ResponseEntity<String> emitInvoice(
             @PathVariable UUID clientId, 
             @PathVariable UUID transactionId) {

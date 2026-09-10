@@ -16,75 +16,57 @@ import java.util.UUID;
 
 /*
  * Lors d'une modification de prix, 
- * Stripe interdit de modifier un Price existant
- * (pour des raisons d'historique de facturation). 
+ * Stripe interdit de modifier un Prix existant
+ * (pour des raisons d'historique de facturation).
  * La bonne pratique Stripe consiste à créer un nouveau
  * tarif et à désactiver l'ancien, ou simplement mettre
  * à jour le produit localement.
  */
 @Service
-public class CatalogueProduitService {
-	
+public class CatalogueProduitService {	
 	private ProduitSPI produitSPI = null;
 
     public CatalogueProduitService(ProduitSPI produitRepository) {
         this.produitSPI = produitRepository;
     }
 
-    // C - CRÉER PRODUIT + TARIF
-    //@CheckDroit(ressource = "produits")
-    //@SecuredPermission(ressource = "produits", action = "creer")
-    public Produit creerProduit(String nom, long prixCentimes) throws StripeException {
-    	//String role = SecurityInterceptor.getContextRole();
-    	//if (!"MANAGER".equals(role)) {
-    	    //throw new IllegalArgumentException("Interdit par le domaine : seuls les managers peuvent gérer les articles");
-    	//}
-    	// 1. Créer le Produit sur Stripe
+    //- CRÉER PRODUIT + TARIF
+    public Produit creerProduit(String nom, long prixCentimes) throws StripeException {   	
+    	//1. Créer le Produit sur Stripe
         ProductCreateParams productParams = ProductCreateParams.builder()
                 .setName(nom)
                 .build();
         Product stripeProduct = Product.create(productParams);
-
-        // 2. Créer le Tarif lié à ce produit sur Stripe
+        //2. Créer le Tarif lié à ce produit sur Stripe
         PriceCreateParams priceParams = PriceCreateParams.builder()
                 .setProduct(stripeProduct.getId())
                 .setUnitAmount(prixCentimes)
                 .setCurrency("eur")
                 .build();
         Price stripePrice = Price.create(priceParams);
-
-        // 3. Sauvegarder dans ta BDD Supabase
+        //3. Sauvegarder dans ta BDD Supabase
         Produit produit = new Produit(null, nom, prixCentimes, stripeProduct.getId(), stripePrice.getId());
         produitSPI.sauvegarder(produit);
         return produit;
     }
 
-    // R - LIRE
-    //@SecuredPermission(ressource = "produits", action = "lire")
+    //- LIRE
     public Produit obtenirProduit(UUID id) {
         return produitSPI.trouverParId(id)
                 .orElseThrow(() -> new IllegalArgumentException("Produit introuvable"));
     }
 
-    // U - MODIFIER (Nom et/ou Nouveau Prix)
-    //@CheckDroit(ressource = "produits")
-    //@SecuredPermission(ressource = "produits", action = "modifier")
+    //- MODIFIER (Nom et/ou Nouveau Prix)
     public void modifierProduit(UUID id, String nouveauNom, long nouveauPrixCentimes) throws StripeException {
-    	//String role = SecurityInterceptor.getContextRole();
-    	//if (!"MANAGER".equals(role)) {
-    	    //throw new IllegalArgumentException("Interdit par le domaine : seuls les managers peuvent gérer les articles");
-    	//}
     	Produit produitExistant = obtenirProduit(id);
         String priceId = produitExistant.getStripePriceId();
-
-        // 1. Mettre à jour le nom sur Stripe
+        //1. Mettre à jour le nom sur Stripe
         Product stripeProduct = Product.retrieve(produitExistant.getStripeProductId());
         ProductUpdateParams productParams = ProductUpdateParams.builder()
                 .setName(nouveauNom)
                 .build();
         stripeProduct.update(productParams);
-
-        // 2. Si le prix a changé, on doit créer un NOUVEAU prix chez Stripe
+        //2. Si le prix a changé, on doit créer un NOUVEAU prix chez Stripe
         if (produitExistant.getPrixCentimes() != nouveauPrixCentimes) {
             PriceCreateParams priceParams = PriceCreateParams.builder()
                     .setProduct(produitExistant.getStripeProductId())
@@ -94,27 +76,18 @@ public class CatalogueProduitService {
             Price stripePrice = Price.create(priceParams);
             priceId = stripePrice.getId();
         }
-
-        // 3. Sauvegarde en BDD
+        //3. Sauvegarde en BDD
         Produit produitModifie = new Produit(produitExistant.getId(), nouveauNom, nouveauPrixCentimes, produitExistant.getStripeProductId(), priceId);
         produitSPI.sauvegarder(produitModifie);
     }
 
-    // D - SUPPRIMER  
-    //@CheckDroit(ressource = "produits")
-    //@SecuredPermission(ressource = "produits", action = "supprimer")
-    public void supprimerProduit(UUID id) throws StripeException {
-    	//String role = SecurityInterceptor.getContextRole();
-    	//if (!"MANAGER".equals(role)) {
-    	    //throw new IllegalArgumentException("Interdit par le domaine : seuls les managers peuvent gérer les articles");
-    	//}
+    //- SUPPRIMER  
+    public void supprimerProduit(UUID id) throws StripeException {  
     	Produit produit = obtenirProduit(id);
-
-        // Désactivation du produit sur Stripe (Stripe ne supprime pas définitivement les objets financiers)
+        //Désactivation du produit sur Stripe (Stripe ne supprime pas définitivement les objets financiers)
         Product stripeProduct = Product.retrieve(produit.getStripeProductId());
         ProductUpdateParams params = ProductUpdateParams.builder().setActive(false).build();
         stripeProduct.update(params);
-
         // Suppression locale
         produitSPI.supprimer(id);
     }
@@ -122,5 +95,4 @@ public class CatalogueProduitService {
     public List<Produit> listerTousLesProduits() {
         return produitSPI.listerTous();
     }
-
 }

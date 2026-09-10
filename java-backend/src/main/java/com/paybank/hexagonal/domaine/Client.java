@@ -15,7 +15,6 @@ public class Client {
         this.stripeCustomerId = stripeCustomerId;
     }
 
-    // Getters
     public UUID getId() { return id; }
     public String getNom() { return nom; }
     public String getEmail() { return email; }

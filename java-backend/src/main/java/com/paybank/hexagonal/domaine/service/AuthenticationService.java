@@ -18,8 +18,6 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class AuthenticationService {
-  
-	//private final AuthenticationConfiguration authenticationConfiguration;
     private final AuthenticationManager authenticationManager;  
     private final JwtService jwtService;
     
@@ -29,20 +27,16 @@ public class AuthenticationService {
     }
     
     public String authentifier(LoginRequestDTO request) {
-        try {
-            //AuthenticationManager authenticationManager = authenticationConfiguration.getAuthenticationManager();
-            
+        try {           
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             request.getUsername(),
                             request.getPassword()
                     )
             );
-
             return jwtService.generateToken(authentication.getName());
         } catch (Exception e) {
             throw new RuntimeException("Identifiants invalides", e);
         }
     }
-    
 }

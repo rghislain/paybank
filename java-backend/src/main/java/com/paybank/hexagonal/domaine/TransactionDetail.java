@@ -9,6 +9,6 @@ public record TransactionDetail(
     LocalDate date,
     String description,
     BigDecimal amount,
-    boolean isDebit,           // True si c'est un débit, False si c'est un crédit
-    String reconciliationStatus // Ex: "RAPPROCHE", "EN_ATTENTE" (pour le rapprochement bancaire)
+    boolean isDebit, //True si c'est un débit, False si c'est un crédit
+    String reconciliationStatus //Ex: "RAPPROCHE", "EN_ATTENTE" (pour le rapprochement bancaire)
 ) {}

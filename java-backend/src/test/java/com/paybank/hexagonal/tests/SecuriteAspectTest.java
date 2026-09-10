@@ -35,18 +35,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(classes = com.paybank.hexagonal.main.PaiementApplication.class)
 @EnableAspectJAutoProxy
-//@SpringBootTest(classes = PaiementApplication.class) // 👈 On lui donne la classe de configuration explicitement
-//@ActiveProfiles("test")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-/*
-@TestPropertySource(properties = {
-	    "spring.datasource.url=jdbc:postgresql://localhost:54322/postgres",
-	    "spring.datasource.username=postgres",
-	    "spring.datasource.password=postgres"
-	})
-*/
 public class SecuriteAspectTest {
-
     @Autowired
     private GestionPaiementService serviceGestionPaiement;
 
@@ -73,9 +63,7 @@ public class SecuriteAspectTest {
     }
 
     @BeforeEach
-    public void setUp() {
-        //nettoyerDonnees(); 
-
+    public void setUp() {  
         SecurityContextHolder.clearContext();
 
         transactionTemplate.execute(new TransactionCallbackWithoutResult() {
@@ -99,29 +87,6 @@ public class SecuriteAspectTest {
         });
     }
 
-    /*
-    @AfterEach
-    public void tearDown() {
-        SecurityContextHolder.clearContext();
-        transactionTemplate.execute(new TransactionCallbackWithoutResult() {
-            @Override
-            //protected void doInTransactionWithoutResult(TransactionStatus status) {
-                //nettoyerDonnees();
-            //}
-        });
-    }
-    */
-
-    /*
-    private void nettoyerDonnees() {
-        jdbcTemplate.update(
-            "DELETE FROM ressources WHERE utilisateurs_id IN " +
-            "(SELECT id FROM utilisateurs WHERE email != 'ghislainrochette@paybank.com')"
-        );
-        jdbcTemplate.update("DELETE FROM utilisateurs WHERE email != 'ghislainrochette@paybank.com'");
-    }
-    */
-
     @Test
     public void testAccesRefuse_QuandUtilisateurNonAuthentifie() {
         assertThrows(Exception.class, () -> {
@@ -140,176 +105,7 @@ public class SecuriteAspectTest {
             serviceGestionPaiement.executerRapprochementDepuisSources();
         });
     }
-
-    /*
-    @Test
-    public void testAccesAutorise_QuandRoleCorrect() {
-    	UtilisateurEntity utilisateur = new UtilisateurEntity();
-    	//utilisateur.setId("rg_test@paybank.com"); // Correction : l'ID doit correspondre à l'e-mail/principal recherché
-    	utilisateur.setCreer(true);
-    	utilisateur.setEmail("rg_test@paybank.com");
-    	utilisateur.setActif(true);
-    	BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-    	String hashedPassword = encoder.encode("adminPass1");
-    	utilisateur.setPassword(hashedPassword);
-    	utilisateur.setRole(Role.ADMIN);    	
-    	utilisateurRepository.save(utilisateur);
-    	
-    	
-        SecurityContextHolder.getContext()
-                .setAuthentication(new UsernamePasswordAuthenticationToken(utilisateur.getEmail(), utilisateur.getPassword(),
-                        List.of(new SimpleGrantedAuthority("ROLE_ADMIN"), new SimpleGrantedAuthority("ADMIN"))));
-		
-    	
-    	SecurityContextHolder.getContext()
-        .setAuthentication(new UsernamePasswordAuthenticationToken(
-                utilisateur.getEmail(), 
-                "adminPass1",
-                List.of(new SimpleGrantedAuthority("ROLE_ADMIN"), new SimpleGrantedAuthority("ADMIN"))
-        ));
-    	
-        assertDoesNotThrow(() -> {
-            serviceGestionPaiement.executerRapprochementDepuisSources();
-        });
-    }
-	*/
-    
-    /*
-    @Test
-    public void testAccesAutorise_QuandRoleCorrect() {
-        UtilisateurEntity utilisateur = new UtilisateurEntity();
-        utilisateur.setEmail("rg_test@paybank.com");
-        utilisateur.setCreer(true);
-        utilisateur.setLire(true);
-        utilisateur.setModifier(true);
-        utilisateur.setSupprimer(true);
-        utilisateur.setActif(true);
-        
-        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-        utilisateur.setPassword(encoder.encode("adminPass1"));
-        utilisateur.setRole(Role.ADMIN);        
-
-        // Associer les ressources et permissions spécifiques requises par l'aspect
-        RessourcesEntity ressources = new RessourcesEntity();
-        ressources.setUtilisateur(utilisateur);
-        ressources.setPaiements(true);
-        ressources.setClients(true);
-        ressources.setProduits(true);
-        ressources.setRapportsFinanciers(true);
-        ressources.setParametresSystemes(true);
-        ressources.setUtilisateurs(true);
-        
-        List<RessourcesEntity> liste=new ArrayList<RessourcesEntity>();
-        liste.add(ressources);
-        utilisateur.setRessources(liste); // Assurez-vous que le cascade persiste les ressources si configuré, ou sauvegardez-les séparément si besoin
-        
-        utilisateurRepository.save(utilisateur);
-        
-        SecurityContextHolder.getContext()
-                .setAuthentication(new UsernamePasswordAuthenticationToken(
-                        utilisateur.getEmail(), 
-                        "adminPass1",
-                        List.of(new SimpleGrantedAuthority("ROLE_ADMIN"), new SimpleGrantedAuthority("ADMIN"))
-                ));
-
-        assertDoesNotThrow(() -> {
-            serviceGestionPaiement.executerRapprochementDepuisSources();
-        });
-    }
-    */
-    
-    /*
-    @Test
-    public void testAccesAutorise_QuandRoleCorrect() {
-        UtilisateurEntity utilisateur = new UtilisateurEntity();
-        utilisateur.setEmail("rg_test@paybank.com");
-        utilisateur.setCreer(true);
-        utilisateur.setLire(true);
-        utilisateur.setModifier(true);
-        utilisateur.setSupprimer(true);
-        utilisateur.setActif(true);
-        
-        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-        utilisateur.setPassword(encoder.encode("adminPass1"));
-        utilisateur.setRole(Role.ADMIN);        
-
-        // Associer les ressources et permissions spécifiques requises par l'aspect
-        RessourcesEntity ressources = new RessourcesEntity();
-        ressources.setId(java.util.UUID.randomUUID()); // Assigner un identifiant unique manuellement si requis par l'entité
-        ressources.setUtilisateur(utilisateur);
-        ressources.setPaiements(true);
-        ressources.setClients(true);
-        ressources.setProduits(true);
-        ressources.setRapportsFinanciers(true);
-        ressources.setParametresSystemes(true);
-        ressources.setUtilisateurs(true);
-        
-        List<RessourcesEntity> liste=new ArrayList<RessourcesEntity>();
-        liste.add(ressources);
-        utilisateur.setRessources(liste); // Assurez-vous que le cascade persiste les ressources si configuré, ou sauvegardez-les séparément si besoin
-        
-        utilisateur.setRessources(liste);
-        
-        utilisateurRepository.save(utilisateur);
-        
-        SecurityContextHolder.getContext()
-                .setAuthentication(new UsernamePasswordAuthenticationToken(
-                        utilisateur.getEmail(), 
-                        "adminPass1",
-                        List.of(new SimpleGrantedAuthority("ROLE_ADMIN"), new SimpleGrantedAuthority("ADMIN"))
-                ));
-
-        assertDoesNotThrow(() -> {
-            serviceGestionPaiement.executerRapprochementDepuisSources();
-        });
-    }
-    */
-    
-    /*
-    @Test
-    public void testAccesAutorise_QuandRoleCorrect() {
-        UtilisateurEntity utilisateur = new UtilisateurEntity();
-        utilisateur.setId("rg_test@paybank.com"); // L'ID doit correspondre au principal (email) si l'aspect recherche par ID
-        utilisateur.setEmail("rg_test@paybank.com");
-        utilisateur.setCreer(true);
-        utilisateur.setLire(true);
-        utilisateur.setModifier(true);
-        utilisateur.setSupprimer(true);
-        utilisateur.setActif(true);
-        
-        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-        utilisateur.setPassword(encoder.encode("adminPass1"));
-        utilisateur.setRole(Role.ADMIN);        
-
-        RessourcesEntity ressources = new RessourcesEntity();
-        ressources.setId(UUID.randomUUID());
-        ressources.setUtilisateur(utilisateur);
-        ressources.setPaiements(true);
-        ressources.setClients(true);
-        ressources.setProduits(true);
-        ressources.setRapportsFinanciers(true);
-        ressources.setParametresSystemes(true);
-        ressources.setUtilisateurs(true);
-        
-        List<RessourcesEntity> liste = new ArrayList<>();
-        liste.add(ressources);
-        utilisateur.setRessources(liste);
-        
-        utilisateurRepository.save(utilisateur);
-        
-        SecurityContextHolder.getContext()
-                .setAuthentication(new UsernamePasswordAuthenticationToken(
-                        utilisateur.getEmail(), 
-                        "adminPass1",
-                        List.of(new SimpleGrantedAuthority("ROLE_ADMIN"), new SimpleGrantedAuthority("ADMIN"))
-                ));
-
-        assertDoesNotThrow(() -> {
-            serviceGestionPaiement.executerRapprochementDepuisSources();
-        });
-    }
-    */
-
+      
     @Test
     @WithMockUser(roles = {"ADMIN", "MANAGER", "EMPLOYE"})
     public void testAntiInjection_QuandScriptXSSDetecte() {

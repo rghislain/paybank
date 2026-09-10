@@ -10,5 +10,5 @@ public record FinancialReport(
     BigDecimal totalDebits,
     BigDecimal totalCredits,
     BigDecimal finalBalance,
-    List<TransactionDetail> transactions // Liste détaillée avec rapprochement
+    List<TransactionDetail> transactions //Liste détaillée avec rapprochement
 ) {}

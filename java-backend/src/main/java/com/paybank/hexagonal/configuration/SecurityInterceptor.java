@@ -8,7 +8,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 @Component
 public class SecurityInterceptor implements HandlerInterceptor {
     
-    // ThreadLocal permet de stocker le rôle de l'utilisateur pour la requête en cours
+    //ThreadLocal permet de stocker le rôle de l'utilisateur pour la requête en cours
     private static final ThreadLocal<String> evaluationContext = new ThreadLocal<>();
 
     @Override
@@ -20,7 +20,7 @@ public class SecurityInterceptor implements HandlerInterceptor {
 
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
-        evaluationContext.remove(); // Nettoyage après la requête
+        evaluationContext.remove(); //nettoyage après la requête
     }
 
     public static String getContextRole() {

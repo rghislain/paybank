@@ -4,7 +4,6 @@ import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.springframework.stereotype.Component;
-
 import com.paybank.hexagonal.domaine.Role;
 import com.paybank.hexagonal.domaine.annotation.RequireDroit;
 import com.paybank.hexagonal.domaine.service.OperateurCourantService;
@@ -35,7 +34,7 @@ public class DroitAspect {
 
     @Before("@annotation(requireDroit)")
     public void verifierDroit(JoinPoint joinPoint, RequireDroit requireDroit) {
-        Role role = operateurCourantService.getRoleConnecte(); // lève SecurityException si non authentifié
+        Role role = operateurCourantService.getRoleConnecte(); //lève SecurityException si non authentifié
 
         String action = requireDroit.action().isBlank() ? null : requireDroit.action();
         String ressource = requireDroit.ressource().isBlank() ? null : requireDroit.ressource();

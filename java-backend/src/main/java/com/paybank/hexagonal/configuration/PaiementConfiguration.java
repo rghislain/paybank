@@ -2,7 +2,6 @@ package com.paybank.hexagonal.configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
 import com.paybank.hexagonal.domaine.TransactionPaiement;
 import com.paybank.hexagonal.domaine.service.AnnulationService;
 import com.paybank.hexagonal.domaine.service.ModifierPaiementService;
@@ -18,7 +17,7 @@ import com.paybank.hexagonal.port.TransactionRepositorySPI;
 public class PaiementConfiguration {
 	@Bean
     public ExecutionPaiementSPI executionPaiementUseCase(PersistancePaiementSPI persistancePaiementSPI, PasserelleBancaireSPI passerelleBancaireSPI, TransactionRepositorySPI transactionRepositorySPI) {
-        // Instanciation du code métier pur avec ses deux adaptateurs
+        //Instanciation du code métier pur avec ses deux adaptateurs
         return new PaiementImplementationService(persistancePaiementSPI, passerelleBancaireSPI, transactionRepositorySPI);
     }
 	

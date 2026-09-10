@@ -23,8 +23,7 @@ public class CustomUserDetails implements UserDetails {
         this.password = password;
         this.authorities = authorities;
     }
-
-    // Méthode personnalisée indispensable pour récupérer l'UUID dans tes contrôleurs
+   
     public UUID getUserId() {
         return userId;
     }

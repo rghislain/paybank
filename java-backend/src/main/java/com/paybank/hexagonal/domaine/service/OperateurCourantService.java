@@ -5,7 +5,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-
 import com.paybank.hexagonal.domaine.Role;
 import com.paybank.hexagonal.domaine.Utilisateur;
 import com.paybank.hexagonal.entity.UtilisateurEntity;
@@ -16,10 +15,10 @@ import com.paybank.hexagonal.repository.UtilisateurRepository;
  * (rôle réel du compte, sauf si un rôle actif a été validé par mot de passe via le sélecteur
  * "opérateur actif" — auquel cas ce rôle actif prime, exactement comme un "sudo -u").
  *
- * ⚠️ Toujours utiliser ce service (ou directement SecurityContextHolder) pour connaître
- *    l'identité/le rôle de l'opérateur — jamais un header HTTP comme "X-Auth-Role", qui est
- *    entièrement contrôlé par le client et donc falsifiable. Le rôle actif, lui, EST fiable :
- *    il est signé côté serveur (voir JwtService.generateRoleToken) et vérifié à chaque requête
+ * Toujours utiliser ce service (ou directement SecurityContextHolder) pour connaître
+ * l'identité/le rôle de l'opérateur — jamais un header HTTP comme "X-Auth-Role", qui est
+ * entièrement contrôlé par le client et donc falsifiable. Le rôle actif, lui, EST fiable :
+ * il est signé côté serveur (voir JwtService.generateRoleToken) et vérifié à chaque requête
  *    par JwtCookieFilter, qui garantit qu'il est bien rattaché au même compte que le cookie
  *    de connexion.
  */

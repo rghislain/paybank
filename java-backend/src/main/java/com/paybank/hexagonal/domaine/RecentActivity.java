@@ -9,5 +9,5 @@ public record RecentActivity(
     String description,
     BigDecimal amount,
     LocalDateTime date,
-    String type // Exemple : "CREDIT" ou "DEBIT"
+    String type //Exemple : "CREDIT" ou "DEBIT"
 ) {}

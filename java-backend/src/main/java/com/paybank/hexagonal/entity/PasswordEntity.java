@@ -20,13 +20,13 @@ public class PasswordEntity {
     private OffsetDateTime updatedAt = OffsetDateTime.now();
 
     @Column(name = "updated_by")
-    private String updatedBy; // Stocke l'identifiant VARCHAR de l'utilisateur
+    private String updatedBy; //Stocke l'identifiant VARCHAR de l'utilisateur
 
     // Constructeur par défaut requis par JPA
     public PasswordEntity() {
     }
 
-    // Constructeur avec paramètres principaux
+    //Constructeur avec paramètres principaux
     public PasswordEntity(String id, String role, String passwordHash, String updatedBy) {
         this.id = id;
         this.role = role;
@@ -35,7 +35,7 @@ public class PasswordEntity {
         this.updatedBy = updatedBy;
     }
 
-    // Getters et Setters
+    //Getters & Setters
     public String getId() {
         return id;
     }

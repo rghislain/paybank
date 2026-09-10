@@ -43,7 +43,7 @@ docker run -d \
     maven:3.9-eclipse-temurin-17 \
     mvn clean spring-boot:run
 
-# Note : J'ai rajouté 'clean' avant 'spring-boot:run' pour s'assurer que vos modifications
+# Note : J'ai rajouté 'clean' avant 'spring-boot:run' pour s'assurer que les modifications
 # sur les contrôleurs ou le fichier index.html soient bien recompilées à chaque démarrage.
 
 echo "----------------------------------------------------"

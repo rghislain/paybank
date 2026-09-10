@@ -16,11 +16,9 @@ public class TransactionEntity {
     private BigDecimal amount;
     private boolean isDebit;
     private String reconciliationStatus;
-    
-    // --> AJOUTE CE CHAMP <--
-    private String status; // Ex: "PENDING", "COMPLETED"
+    private String status; //Ex: "PENDING", "COMPLETED"
 
-    // Getters
+    //Getters
     public UUID getId() { return id; }
     public UUID getClientId() { return clientId; }
     public LocalDate getDate() { return date; }
@@ -28,9 +26,9 @@ public class TransactionEntity {
     public BigDecimal getAmount() { return amount; }
     public boolean isDebit() { return isDebit; }
     public String getReconciliationStatus() { return reconciliationStatus; }
-    public String getStatus() { return status; } // <-- AJOUTE CE GETTER
+    public String getStatus() { return status; }
 
-    // Setters (très utiles pour le DataLoader ou la création)
+    //Setters (très utiles pour le DataLoader ou la création)
     public void setId(UUID id) { this.id = id; }
     public void setClientId(UUID clientId) { this.clientId = clientId; }
     public void setDate(LocalDate date) { this.date = date; }
@@ -38,5 +36,5 @@ public class TransactionEntity {
     public void setAmount(BigDecimal amount) { this.amount = amount; }
     public void setDebit(boolean debit) { isDebit = debit; }
     public void setReconciliationStatus(String reconciliationStatus) { this.reconciliationStatus = reconciliationStatus; }
-    public void setStatus(String status) { this.status = status; } // <-- AJOUTE CE SETTER
+    public void setStatus(String status) { this.status = status; }
 }

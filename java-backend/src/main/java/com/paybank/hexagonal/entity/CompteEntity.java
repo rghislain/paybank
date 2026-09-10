@@ -5,7 +5,7 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity
-@Table(name = "accounts") // Nom de ta table en BDD
+@Table(name = "accounts") //nom de la table en BDD
 public class CompteEntity {
     @Id
     private UUID id;
@@ -13,6 +13,5 @@ public class CompteEntity {
     @Column(name = "balance")
     private BigDecimal balance;
 
-    // Getters, Setters, et Constructeurs
     public BigDecimal getBalance() { return balance; }
 }

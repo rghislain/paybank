@@ -7,7 +7,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import com.paybank.hexagonal.domaine.annotation.RequireDroit;
 import com.paybank.hexagonal.domaine.service.FactureService;
 
@@ -21,7 +20,7 @@ public class FactureControleur {
         this.serviceFacture = serviceFacture;
     }
 
-    // --- 1. Générer facture (PDF affiché dans un nouvel onglet) ---
+    //--- 1. Générer facture (PDF affiché dans un nouvel onglet) ---
     @RequireDroit(action = "creer", ressource = "paiements")
     @GetMapping("/{paiementId}/generer")
     public ResponseEntity<byte[]> genererFacture(@PathVariable String paiementId, @RequestParam UUID clientId) {
@@ -38,7 +37,7 @@ public class FactureControleur {
         }
     }
 
-    // --- 2. Imprimer facture (même PDF, gate différente ; l'auto-impression est déclenchée côté front) ---
+    //--- 2. Imprimer facture (même PDF, l'auto-impression est déclenchée côté front) ---
     @RequireDroit(action = "imprimer", ressource = "paiements")
     @GetMapping("/{paiementId}/imprimer")
     public ResponseEntity<byte[]> imprimerFacture(@PathVariable String paiementId, @RequestParam UUID clientId) {
@@ -55,7 +54,7 @@ public class FactureControleur {
         }
     }
 
-    // --- 3. Envoyer facture par email (PDF en pièce jointe : client + 2 adresses fixes) ---
+    //--- 3. Envoyer facture par email (PDF en pièce jointe : client + 2 adresses fixes) ---
     @RequireDroit(action = "envoyer", ressource = "paiements")
     @PostMapping("/{paiementId}/envoyer")
     public ResponseEntity<?> envoyerFacture(@PathVariable String paiementId, @RequestBody EnvoyerFactureRequest req) {

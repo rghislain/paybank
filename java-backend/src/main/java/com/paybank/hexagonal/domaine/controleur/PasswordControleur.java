@@ -21,7 +21,7 @@ public class PasswordControleur {
 
     private PasswordRepository passwordRepository = null;
     private final UserAuditLogRepository auditLogRepository;
-    private final PasswordEncoder passwordEncoder; // Déclaration du bean d'encodage
+    private final PasswordEncoder passwordEncoder; 
     private final UtilisateurRepository utilisateurRepository; 
     
     public PasswordControleur(PasswordRepository passwordRepository, PasswordEncoder passwordEncoder, UserAuditLogRepository auditLogRepository, UtilisateurRepository utilisateurRepository) {
@@ -36,22 +36,15 @@ public class PasswordControleur {
     public ResponseEntity<?> updatePassword(
             @RequestBody PasswordUpdateRequest request, 
             @RequestHeader(value = "X-Auth-Role", required = false) String authRole,
-            @RequestHeader(value = "X-User-Id", required = false) String currentAdminId // Récupération optionnelle de l'ID de l'admin
+            @RequestHeader(value = "X-User-Id", required = false) String currentAdminId //Récupération optionnelle de l'ID de l'admin
     ) {
-        // Validation stricte de sécurité additionnelle côté serveur
+        //Validation stricte de sécurité additionnelle côté serveur
         if (authRole == null || !authRole.equalsIgnoreCase("ADMIN")) {
             return ResponseEntity.status(403).body("Accès refusé : Rôle ADMIN requis.");
-        }
-
-        //PasswordEntity pwdEntity = passwordRepository.findByRole(request.getAccountIdentifier())
-                //.orElse(new PasswordEntity());
-        
-        
-        
-        // Récupération sécurisée de l'ID de l'admin connecté en base pour satisfaire la clé étrangère
-        String adminIdToUse = currentAdminId;
-        
-        // Si aucun ID n'est fourni ou trouvé via le contexte, on cherche un administrateur par défaut en base
+        }    
+        //Récupération sécurisée de l'ID de l'admin connecté en base pour satisfaire la clé étrangère
+        String adminIdToUse = currentAdminId;        
+        //Si aucun ID n'est fourni ou trouvé via le contexte, on cherche un administrateur par défaut en base
         if (adminIdToUse == null || utilisateurRepository.findById(adminIdToUse).isEmpty()) {
             UtilisateurEntity defaultAdmin = utilisateurRepository.findAll().stream()
                 .filter(u -> "ADMIN".equalsIgnoreCase(u.getRole().toString()))
@@ -63,80 +56,42 @@ public class PasswordControleur {
             } else {
                 return ResponseEntity.status(400).body("Erreur : Aucun compte administrateur valide trouvé en base pour enregistrer cette action.");
             }
-        }
-        
-        
-        /*
-        if (adminIdToUse == null || adminIdToUse.isEmpty()) {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            if (auth != null && auth.getName() != null) {
-                // On cherche l'utilisateur par son email ou nom d'utilisateur dans le contexte
-                UtilisateurEntity adminUser = utilisateurRepository.findByEmail(auth.getName()).orElse(null);
-                if (adminUser != null) {
-                    adminIdToUse = adminUser.getId(); // ou getId() selon le type (String/UUID)
-                }
-            }
-        }
-        */
-        
-     // Sécurité ultime : si aucun ID valide n'est trouvé, on bloque pour éviter l'erreur SQL
-        //if (adminIdToUse == null || utilisateurRepository.findById(adminIdToUse).isEmpty()) {
-            //return ResponseEntity.status(400).body("Erreur : Impossible d'identifier l'administrateur effectuant l'action (contrainte de base de données).");
-        //}
-        
+        }                   
         PasswordEntity existingPwd = passwordRepository.findByRole(request.getAccountIdentifier()).orElse(null);
         String oldValueJson = (existingPwd != null) ? "{\"role\":\"" + existingPwd.getRole() + "\", \"updated_at\":\"" + existingPwd.getUpdatedAt() + "\"}" : null;
-
         PasswordEntity pwdEntity = (existingPwd != null) ? existingPwd : new PasswordEntity();
-
         if (pwdEntity.getId() == null) {
             pwdEntity.setId(UUID.randomUUID().toString());
             pwdEntity.setRole(request.getAccountIdentifier());
         }
-
         // Hachage sécurisé du mot de passe
         String hashedPassword = passwordEncoder.encode(request.getNewPassword());
         pwdEntity.setPasswordHash(hashedPassword);       
-        pwdEntity.setUpdatedAt(OffsetDateTime.now());
-        
-        // Enregistre l'identifiant réel de l'administrateur s'il est transmis, sinon valeur par défaut
-        //pwdEntity.setUpdatedBy(currentAdminId != null ? currentAdminId : "ADMIN_SYSTEM"); 
-
-        pwdEntity.setUpdatedBy(adminIdToUse);
-        
+        pwdEntity.setUpdatedAt(OffsetDateTime.now());           
+        pwdEntity.setUpdatedBy(adminIdToUse);       
         passwordRepository.save(pwdEntity);
-        
-     // 👉 Synchronisation avec la table utilisateurs pour que le login classique fonctionne
+        //Synchronisation avec la table utilisateurs pour que le login classique fonctionne
         try {
-            // Si accountIdentifier correspond à un rôle (ex: ADMIN, EMPLOYE, MANAGER)
+            //Si accountIdentifier correspond à un rôle (ex: ADMIN, EMPLOYE, MANAGER)
             com.paybank.hexagonal.domaine.Role roleEnum = com.paybank.hexagonal.domaine.Role.valueOf(request.getAccountIdentifier().toUpperCase());
             utilisateurRepository.mettreAJourMotDePasseParRole(roleEnum, hashedPassword);
         } catch (IllegalArgumentException e) {
-            // Si c'un email ou un identifiant utilisateur direct
+            //Si c'est un email ou un identifiant utilisateur direct
             utilisateurRepository.findByEmail(request.getAccountIdentifier()).ifPresent(user -> {
                 user.setPassword(hashedPassword);
                 utilisateurRepository.save(user);
             });
-        }
-        
-     // 3. Construire et enregistrer le log d'audit structuré
+        }      
+        //3. Construire et enregistrer le log d'audit structuré
         String newValueJson = "{\"role\":\"" + pwdEntity.getRole() + "\", \"updated_at\":\"" + pwdEntity.getUpdatedAt() + "\"}";
-
         UserAuditLogEntity auditLog = new UserAuditLogEntity();
-        // Si vous stockez des IDs textuels (VARCHAR), vous pouvez adapter le type de target/author dans l'entité UserAuditLogEntity si nécessaire, ou stocker un hash/identifiant
         auditLog.setActionType("UPDATE_PASSWORD_ROLE");
         auditLog.setCreatedAt(OffsetDateTime.now());
         auditLog.setNewValues(newValueJson);
         auditLog.setOldValues(oldValueJson);
         auditLog.setTargetUserId(request.getAccountIdentifier());
-        //auditLog.setAuthorUserId(currentAdminId != null ? currentAdminId : "ADMIN_SYSTEM");
-        auditLog.setAuthorUserId(adminIdToUse);
-               
-        // Pour correspondre aux types Long/String de votre base, assurez-vous que les champs cibles matchent. 
-        // Si target/author sont des String dans votre table user_audit_logs, ajustez l'entité UserAuditLogEntity en conséquence.
-        
+        auditLog.setAuthorUserId(adminIdToUse);                  
         auditLogRepository.save(auditLog);
-
         return ResponseEntity.ok().body("Mot de passe système mis à jour avec succès.");
     }
 

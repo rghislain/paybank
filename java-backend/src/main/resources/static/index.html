@@ -242,7 +242,7 @@
 		        loginModal.classList.add('hidden');
 		        mainContent.classList.remove('hidden');
 		        
-		        // Forcer en majuscules pour correspondre aux balises <option>
+		        //Forcer en majuscules pour correspondre aux balises <option>
 		        const roleConnecte = (localStorage.getItem('connectedUserRole') || 'EMPLOYE').toUpperCase();
 		        document.getElementById('badge-role-connecte').textContent = roleConnecte;
 		        document.getElementById('operateurRole').value = roleConnecte;
@@ -255,9 +255,9 @@
 
 		// --- GESTION DE LA MATRICE DE DROITS (synchronisée avec bilan.html) ---
 
-		// Correspondance bouton -> {action générique, ressource}.
-		// Un bouton n'est activé que si les DEUX valeurs sont vraies dans la matrice du rôle actif.
-		// (ressource=null => uniquement l'action générique est vérifiée)
+		//Correspondance bouton -> {action générique, ressource}.
+		//Un bouton n'est activé que si les DEUX valeurs sont vraies dans la matrice du rôle actif.
+		//(ressource=null => uniquement l'action générique est vérifiée)
 		const MAPPING_BOUTONS_DROITS = {
 		    'btn-clients-creer':          { action: 'creer',      ressource: 'clients' },
 		    'btn-clients-modifier':       { action: 'modifier',   ressource: 'clients' },
@@ -275,74 +275,10 @@
 		    'btn-facture-envoyer':        { action: 'envoyer',    ressource: 'paiements' }
 		};
 
-		// État courant des droits par bouton (rempli par chargerEtAppliquerDroits), utilisé par
-		// verifierDroitBouton() au moment du clic pour afficher un message clair si refusé.
+		//État courant des droits par bouton (rempli par chargerEtAppliquerDroits), utilisé par
+		//verifierDroitBouton() au moment du clic pour afficher un message clair si refusé.
 		let etatBoutonsDroits = {};
-
-		/*
-		async function chargerEtAppliquerDroits() {
-		    // 👇 'userRole' (le sélecteur "opérateur actif") reflète maintenant un rôle RÉELLEMENT
-		    // validé côté serveur (mot de passe vérifié, cookie signé activeRoleToken) — le backend
-		    // l'honore désormais vraiment, donc l'UI peut s'y fier en toute confiance.
-		    const roleActif = (localStorage.getItem('userRole') || 'EMPLOYE').toUpperCase();
-		    try {
-		        const response = await fetchSecurise(`${API_BASE_URL}/api/droits`, { headers: obtenirHeadersSecurises() });
-		        if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}`);
-		        const matrice = await response.json();
-
-		        const ligneRole = matrice.find(l => (l.role || '').toUpperCase() === roleActif);
-
-		        Object.entries(MAPPING_BOUTONS_DROITS).forEach(([id, regle]) => {
-		            let autorise;
-		            if (!ligneRole) {
-		                autorise = false;
-		            } else {
-		                const actionOk = regle.action ? Boolean(ligneRole[regle.action]) : true;
-		                const ressourceOk = regle.ressource ? Boolean(ligneRole[regle.ressource]) : true;
-		                autorise = actionOk && ressourceOk;
-		            }
-		            etatBoutonsDroits[id] = autorise;
-		            appliquerApparenceBouton(id, autorise);
-		        });
-				
-				if (ligneRole) {
-					// Vérification du droit de lecture pour les utilisateurs / salariés
-					        const droitUtilisateurs = ligneRole.utilisateurs !== undefined ? ligneRole.utilisateurs : ligneRole.salaries;
-							if (droitUtilisateurs) {
-					            chargerListeSalaries();
-					        } else {
-								const selectSalaries = document.getElementById('selectSalariesExistants');
-								if (selectSalaries) {
-								    selectSalaries.innerHTML = '<option value="">🚫 Droits de lecture insuffisants pour les utilisateurs</option>';
-								}
-					        }
-					
-				            // Clients (action 'lire' ou ressource globale 'clients')
-				            if (ligneRole.clients) {
-				                chargerListeClients();
-				            } else {
-				                document.getElementById('selectClientsExistants').innerHTML = '<option value="">🚫 Droits de lecture insuffisants</option>';
-				            }
-
-				            // Produits (action 'lire' ou ressource globale 'produits')
-				            if (ligneRole.produits) {
-				                chargerListeProduits();
-				            } else {
-				                document.getElementById('selectProduitsExistants').innerHTML = '<option value="">🚫 Droits de lecture insuffisants</option>';
-				            }
-				}
-				
-		    } catch (err) {
-		        console.warn("⚠️ Impossible de charger la matrice de droits, boutons désactivés par sécurité :", err);
-		        // Par sécurité, on considère tout comme refusé si la matrice n'a pas pu être récupérée
-		        Object.keys(MAPPING_BOUTONS_DROITS).forEach(id => {
-		            etatBoutonsDroits[id] = false;
-		            appliquerApparenceBouton(id, false);
-		        });
-		    }
-		}
-		*/
-		
+	
 		async function chargerEtAppliquerDroits() {
 		    const selectOperateur = document.getElementById('operateurRole');
 		    const roleActif = selectOperateur ? selectOperateur.value.toUpperCase() : (localStorage.getItem('userRole') || 'EMPLOYE').toUpperCase();
@@ -352,9 +288,9 @@
 		        if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}`);
 		        const listeDroits = await response.json();
 
-		        // listeDroits est un tableau de triplets : [{ role, ressource, action, granted }, ...]
-		        // (format renvoyé par DroitsControleur/GestionDroitsService depuis role_permissions).
-		        // On construit un lookup rapide "ROLE|ressource|action" -> granted.
+		        //listeDroits est un tableau de triplets : [{ role, ressource, action, granted }, ...]
+		        //(format renvoyé par DroitsControleur/GestionDroitsService depuis role_permissions).
+		        //On construit un lookup rapide "ROLE|ressource|action" -> granted.
 		        const lookup = {};
 		        listeDroits.forEach(d => {
 		            if (!d.role || !d.ressource || !d.action) return;
@@ -371,7 +307,7 @@
 		            appliquerApparenceBouton(id, autorise);
 		        });
 
-		        // Droits de lecture pour peupler les listes déroulantes (ressource + action 'lire')
+		        //Droits de lecture pour peupler les listes déroulantes (ressource + action 'lire')
 		        if (estAutorise('utilisateurs', 'lire')) {
 		            chargerListeSalaries();
 		        } else {
@@ -394,15 +330,15 @@
 		    } catch (err) {
 		        console.warn("⚠️ Impossible de charger la matrice de droits :", err);
 		        Object.keys(MAPPING_BOUTONS_DROITS).forEach(id => {
-		            etatBoutonsDroits[id] = true; // Par défaut à true en cas de panne réseau pour ne pas bloquer l'UI
+		            etatBoutonsDroits[id] = true; //Par défaut à true en cas de panne réseau pour ne pas bloquer l'UI
 		            appliquerApparenceBouton(id, true);
 		        });
 		    }
 		}
 
-		// Grise visuellement un bouton SANS bloquer le clic natif : c'est volontaire, pour que
-		// verifierDroitBouton() puisse afficher un message clair même sur un bouton grisé, au lieu
-		// que le navigateur ignore silencieusement le clic (comportement natif de l'attribut disabled).
+		//Grise visuellement un bouton SANS bloquer le clic natif : c'est volontaire, pour que
+		//verifierDroitBouton() puisse afficher un message clair même sur un bouton grisé, au lieu
+		//que le navigateur ignore silencieusement le clic (comportement natif de l'attribut disabled)
 		function appliquerApparenceBouton(id, autorise) {
 		    const bouton = document.getElementById(id);
 		    if (!bouton) return;
@@ -411,8 +347,8 @@
 		    bouton.title = autorise ? '' : "Vous n'avez pas les droits nécessaires pour cette action.";
 		}
 
-		// À appeler en tout premier dans chaque fonction déclenchée par un bouton de la matrice.
-		// Retourne true si l'action peut continuer, false si elle doit s'arrêter (message déjà affiché).
+		//À appeler en tout premier dans chaque fonction déclenchée par un bouton de la matrice.
+		//Retourne true si l'action peut continuer, false si elle doit s'arrêter (message déjà affiché).
 		function verifierDroitBouton(id) {
 		    if (etatBoutonsDroits[id] === false) {
 		        alert("🚫 Action refusée : vous n'avez pas les droits nécessaires pour cette action avec votre rôle actuel.");
@@ -425,18 +361,15 @@
             const token = localStorage.getItem('userToken');
             if (token) {
                 basculerInterface(true);
-                chargerSolde();
-                //chargerListeClients();
-                //chargerListeSalaries();
-                //chargerListeProduits();
+                chargerSolde();              
                 chargerEtAppliquerDroits();
             } else {
                 basculerInterface(false);
             }
         };
 
-        // Sécurité supplémentaire : si la page est restaurée depuis le cache du navigateur
-        // (bouton retour/précédent), on réapplique la matrice de droits à jour.
+        //Sécurité supplémentaire : si la page est restaurée depuis le cache du navigateur
+        //(bouton retour/précédent), on réapplique la matrice de droits à jour
         window.addEventListener('pageshow', function(event) {
             if (event.persisted) {
                 chargerEtAppliquerDroits();
@@ -445,25 +378,24 @@
 
 		function obtenirHeadersSecurises() {
 		    const token = localStorage.getItem('userToken');
-			const selectOperateur = document.getElementById('operateurRole');
-		    //const roleActif = localStorage.getItem('userRole') || 'ADMIN'; // 👈 Récupère le rôle sélectionné sur bilan.html
+			const selectOperateur = document.getElementById('operateurRole');		    
 			const roleActif = selectOperateur ? selectOperateur.value : (localStorage.getItem('userRole') || 'EMPLOYE');
 		    return {
 		        'Content-Type': 'application/json',
 		        'Authorization': 'Bearer ' + (token || ''),
-		        'X-Auth-Role': roleActif.toUpperCase() // 👈 Transmet le rôle attendu par l'aspect de sécurité
+		        'X-Auth-Role': roleActif.toUpperCase() //Transmet le rôle attendu par l'aspect de sécurité
 		    };
 		}
 
-		// 👇 Wrapper indispensable : force l'envoi du cookie HttpOnly (accessToken) sur CHAQUE appel API.
-		// Sans "credentials: 'include'", le back-end reçoit une requête anonyme et refuse l'accès (401/403).
+		//Wrapper indispensable : force l'envoi du cookie HttpOnly (accessToken) sur CHAQUE appel API.
+		//Sans "credentials: 'include'", le back-end reçoit une requête anonyme et refuse l'accès (401/403)
 		function fetchSecurise(url, options = {}) {
 		    return fetch(url, { ...options, credentials: 'include' });
 		}
 		
         // --- LOGIQUE DE VALIDATION DU RÔLE PAR MODALE ---
         function verifierChangementRole(selectElement) {
-			if (isInternalChange) return; // Ignore si le changement vient du code
+			if (isInternalChange) return; //Ignore si le changement vient du code
             const nouveauRole = selectElement.value;
             if (nouveauRole === rolePrecedentValide) return;
 
@@ -491,7 +423,7 @@
 		            }
 
 		            try {
-		                // Envoi d'une requête au serveur pour vérifier le mot de passe et le droit au rôle
+		                //Envoi d'une requête au serveur pour vérifier le mot de passe et le droit au rôle
 		                const response = await fetchSecurise(`${API_BASE_URL}/api/auth/verifier-role`, {
 		                    method: 'POST',
 		                    headers: { 'Content-Type': 'application/json' },
@@ -505,11 +437,11 @@
 		                if (response.ok) {
 		                    rolePrecedentValide = roleEnAttente;
 		                    document.getElementById('operateurRole').value = roleEnAttente;
-		                    localStorage.setItem('userRole', roleEnAttente); // 👈 Synchronise le rôle actif utilisé par les appels API
+		                    localStorage.setItem('userRole', roleEnAttente); //Synchronise le rôle actif utilisé par les appels API
 		                    document.getElementById('modal-role-password').classList.add('hidden');
 		                    document.getElementById('password-standard').value = "";
 		                    alert(`✅ Rôle opérateur mis à jour avec succès : ${roleEnAttente}`);
-		                    chargerEtAppliquerDroits(); // 👈 Réapplique immédiatement la matrice de droits sans recharger la page
+		                    chargerEtAppliquerDroits(); //Réapplique immédiatement la matrice de droits sans recharger la page
 		                } else {
 		                    const errorMsg = await response.text();
 		                    alert(`❌ Accès refusé par le serveur : ${errorMsg || 'Mot de passe incorrect pour ce rôle.'}`);
@@ -574,10 +506,10 @@
 
 		            localStorage.setItem('userToken', data.token);
 		            
-		            // Récupération directe du rôle renvoyé par le backend
+		            //Récupération directe du rôle renvoyé par le backend
 		            const roleRecupere = (data.role || 'EMPLOYE').toUpperCase();
 		            localStorage.setItem('connectedUserRole', roleRecupere);
-		            localStorage.setItem('userRole', roleRecupere); // 👈 Initialise le rôle actif (opérateur) au rôle réel de connexion
+		            localStorage.setItem('userRole', roleRecupere); //Initialise le rôle actif (opérateur) au rôle réel de connexion
 
 		            const selectOperateur = document.getElementById('operateurRole');
 		            if (selectOperateur) {
@@ -592,7 +524,7 @@
 		            chargerListeClients();
 		            chargerListeSalaries();
 		            chargerListeProduits();
-		            chargerEtAppliquerDroits(); // 👈 Applique la matrice de droits dès la connexion
+		            chargerEtAppliquerDroits(); //Applique la matrice de droits dès la connexion
 		        } else {
 		            alert("Identifiants incorrects ou compte inactif");
 		        }
@@ -612,20 +544,20 @@
             localStorage.removeItem('connectedUserRole');
             localStorage.removeItem('userRole');
             location.reload();
-			// Récupérer le bouton dans le DOM
+			//Récupérer le bouton dans le DOM
 			    const logoutButton = document.getElementById('logoutBtn');
 
-			    // Écouter le clic sur le bouton
+			    //Écouter le clic sur le bouton
 			    logoutButton.addEventListener('click', async () => {
 			        try {
-			            // C'est ici exactement que vous placez votre fetch
+			            //C'est ici exactement que l'on place le fetch
 			            const response = await fetchSecurise('/api/auth/logout', {
 			                method: 'POST',
-			                credentials: 'include' // Indispensable pour que le cookie HttpOnly soit pris en compte
+			                credentials: 'include' //Indispensable pour que le cookie HttpOnly soit pris en compte
 			            });
 
 			            if (response.ok) {
-			                // Si la déconnexion réussit, on redirige l'utilisateur vers la page de login
+			                //Si la déconnexion réussit, on redirige l'utilisateur vers la page de login
 			                window.location.href = '/login.html'; 
 			            } else {
 			                console.error('Erreur lors de la déconnexion');
@@ -655,28 +587,7 @@
                 document.getElementById('soldeMontant').innerText = "Erreur Connexion API";
             }
         }
-
-        // --- CLIENTS ---
-        /*
-		async function chargerListeClients() {
-            const select = document.getElementById('selectClientsExistants');
-            try {
-                const response = await fetchSecurise(`${API_BASE_URL}/api/clients`, { headers: obtenirHeadersSecurises() });
-                if (!response.ok) return;
-                const clients = await response.json();
-                select.innerHTML = '<option value="">-- Choisir un client dans la BDD --</option>';
-                clients.forEach(client => {
-                    const option = document.createElement('option');
-                    option.value = client.id;
-                    option.dataset.nom = client.nom;
-                    option.dataset.email = client.email;
-                    option.textContent = `${client.nom} (${client.email})`;
-                    select.appendChild(option);
-                });
-            } catch (err) { console.error("Erreur clients:", err); }
-        }
-		*/
-		
+     	
 		async function chargerListeClients() {
 		    const select = document.getElementById('selectClientsExistants');
 		    try {
@@ -700,7 +611,6 @@
 		    } catch (err) { console.error("Erreur clients:", err); }
 		}
 		
-
         function remplirChampsClientDepuisSelection() {
             const select = document.getElementById('selectClientsExistants');
             const opt = select.options[select.selectedIndex];
@@ -758,28 +668,7 @@
             }
         }
 
-        // --- PRODUITS & CATALOGUE ---
-		/*
-        async function chargerListeProduits() {
-            const select = document.getElementById('selectProduitsExistants');
-            try {
-                const response = await fetchSecurise(`${API_BASE_URL}/api/produits`, { headers: obtenirHeadersSecurises() });
-                if (!response.ok) return;
-                const produits = await response.json();
-                select.innerHTML = '<option value="">-- Choisir un produit --</option>';
-                produits.forEach(p => {
-                    const option = document.createElement('option');
-                    option.value = p.id;
-                    option.dataset.nom = p.nom;
-                    option.dataset.prix = p.prixCentimes;
-					const prixEuros = (p.prixCentimes / 100).toFixed(3) ; //(en euros)
-                    option.textContent = `${p.nom} (${prixEuros} EUR)`;
-                    select.appendChild(option);
-                });
-            } catch (err) { console.error("Erreur produits:", err); }
-        }
-		*/
-		
+        // --- PRODUITS & CATALOGUE ---		
 		async function chargerListeProduits() {
 		    const select = document.getElementById('selectProduitsExistants');
 		    try {
@@ -913,7 +802,7 @@
 		                document.getElementById('input-nom-cible').value = selectedOption.dataset.nom || '';
 		                document.getElementById('select-nouveau-role').value = selectedOption.dataset.role || '';
 		                
-		                // Déclenche l'affichage automatique du texte du mot de passe
+		                //Déclenche l'affichage automatique du texte du mot de passe
 		                gererChangementRoleCible();
 		            } else {
 		                document.getElementById('input-id-cible').value = '';
@@ -937,14 +826,14 @@
 				            }
 
 				            try {
-				                // Envoi des données au backend (nom, rôle et un mot de passe par défaut basé sur le rôle)
+				                //Envoi des données au backend (nom, rôle et un mot de passe par défaut basé sur le rôle)
 				                const response = await fetchSecurise(`${API_BASE_URL}/api/utilisateurs/${idCible}/modifier-droits`, {
 				                    method: 'PUT',
 				                    headers: obtenirHeadersSecurises(),
 				                    body: JSON.stringify({
 				                        nouveauNom: nouveauNom,
 				                        nouveauRole: nouveauRole,
-				                        password: "" // Laissé vide pour que le backend applique le mot de passe standard du rôle
+				                        password: "" //Laissé vide pour que le backend applique le mot de passe standard du rôle
 				                    })
 				                });
 
@@ -952,7 +841,7 @@
 				                    alert("✅ Droits et rôle mis à jour avec succès en BDD !");
 				                    document.getElementById('form-modifier-droits').reset();
 				                    document.getElementById('input-type-mdp-auto').value = "-- En attente du choix du rôle --";
-				                    chargerListeSalaries(); // Actualise le listing
+				                    chargerListeSalaries(); //Actualise le listing
 				                } else {
 				                    const err = await response.text();
 				                    alert("❌ Échec de la mise à jour : " + err);
@@ -1085,7 +974,7 @@
 
 		// --- FACTURATION (générer / imprimer / envoyer par email) ---
 		     // Les 3 actions ci-dessous s'appliquent à currentPaymentIntentId, donc uniquement
-		     // disponibles une fois un paiement chargé/payé (voir "1. Charger le formulaire").
+		     // disponibles une fois un paiement chargé (voir "1. Charger le formulaire").
 
 		     async function genererFacture() {
 		         if (!verifierDroitBouton('btn-facture-generer')) return;
@@ -1131,7 +1020,7 @@
 		             const blob = await response.blob();
 		             const url = URL.createObjectURL(blob);
 
-		             // Iframe caché : on charge le PDF puis on déclenche l'impression du navigateur automatiquement.
+		             //Iframe caché : on charge le PDF puis on déclenche l'impression du navigateur automatiquement.
 		             const iframe = document.createElement('iframe');
 		             iframe.style.display = 'none';
 		             iframe.src = url;

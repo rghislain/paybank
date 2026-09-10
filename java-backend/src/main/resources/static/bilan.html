@@ -245,17 +245,17 @@
 
 		        const listeDroits = await response.json();
 
-		        // On repart d'une grille vierge avant d'appliquer l'état réel
-		        // (évite qu'une case reste cochée par erreur si le rôle n'a plus ce droit)
+		        //On repart d'une grille vierge avant d'appliquer l'état réel
+		        //(évite qu'une case reste cochée par erreur si le rôle n'a plus ce droit)
 		        document.querySelectorAll('#matrice-tbody input[type="checkbox"]').forEach(cb => {
 		            cb.checked = false;
 		        });
 
-		        // listeDroits est un tableau d'objets : { role, ressource, action, granted }
+		        //listeDroits est un tableau d'objets : { role, ressource, action, granted }
 		        listeDroits.forEach(droit => {
 		            if (!droit.role || !droit.ressource || !droit.action) return;
 
-		            // Cible l'input unique correspondant précisément au triplet (rôle, ressource, action)
+		            //Cible l'input unique correspondant précisément au triplet (rôle, ressource, action)
 		            const cb = document.querySelector(
 		                `input[data-role="${droit.role.toUpperCase()}"][data-ressource="${droit.ressource.toLowerCase()}"][data-action="${droit.action.toLowerCase()}"]`
 		            );
@@ -264,7 +264,7 @@
 		                cb.checked = Boolean(droit.granted);
 		            }
 		        });
-		    } catch (err) { // <-- C'est bien "catch" et non "caught"
+		    } catch (err) { //C'est bien "catch" et non "caught"
 		        console.warn("⚠️ Impossible de charger les droits :", err);
 		    }
 		}

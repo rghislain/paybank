@@ -16,5 +16,4 @@ public record DemandePaiementDTO(UUID compteClientId, int montantCentimes, Strin
      public String getTokenCarteMokbank() {
     	 return tokenCarte;
      }
-	
 }

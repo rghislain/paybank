@@ -2,10 +2,8 @@ package com.paybank.hexagonal.adaptateur;
 
 import com.paybank.hexagonal.domaine.Produit;
 import com.paybank.hexagonal.port.ProduitSPI;
-
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;

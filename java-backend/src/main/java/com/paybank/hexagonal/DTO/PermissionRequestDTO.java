@@ -1,14 +1,12 @@
 package com.paybank.hexagonal.DTO;
 
 public class PermissionRequestDTO {
-
     private String ressource;
     private String roleCible;
     private String action;
     private boolean granted;
 
     // --- Getters et Setters ---
-
     public String getRessource() {
         return ressource;
     }
@@ -38,6 +36,6 @@ public class PermissionRequestDTO {
     }
 
     public void setGranted(boolean granted) {
-        granted = granted;
+        this.granted = granted;
     }
 }

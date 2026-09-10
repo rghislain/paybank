@@ -6,12 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
-
 import com.paybank.hexagonal.domaine.Role;
-
 import jakarta.transaction.Transactional;
 
 /**

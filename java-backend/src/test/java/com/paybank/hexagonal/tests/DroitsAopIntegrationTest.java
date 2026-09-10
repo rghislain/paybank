@@ -16,15 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest(classes = com.paybank.hexagonal.main.PaiementApplication.class)
-//@ActiveProfiles("test")
 @Transactional
-/*
-@TestPropertySource(properties = {
-	    "spring.datasource.url=jdbc:postgresql://localhost:54322/postgres",
-	    "spring.datasource.username=postgres",
-	    "spring.datasource.password=postgres"
-	})
-*/
 class DroitsAopIntegrationTest {
 
     @Autowired
@@ -39,32 +31,23 @@ class DroitsAopIntegrationTest {
 
     @BeforeEach
     void setUpData() {
-        // Nettoyage préalable pour éviter les conflits
-        //jdbcTemplate.update("DELETE FROM ressources WHERE utilisateurs_id IN (?, ?)", adminId.toString(), employeId.toString());
+        //Nettoyage préalable pour éviter les conflits
         jdbcTemplate.update("DELETE FROM utilisateurs WHERE email IN (?, ?)", "admin@paybank.com", "employe@paybank.com");
         jdbcTemplate.update("DELETE FROM clients WHERE id = ?::uuid", clientId);
 
-        // Insertion d'un client valide
+        //Insertion d'un client valide
         jdbcTemplate.update(
             "INSERT INTO clients (id, nom, email) VALUES (?::uuid, ?, ?)",
             clientId, "Client Test AOP", "client.test@paybank.com"
         );
 
-        // Insertion de l'utilisateur administrateur
+        //Insertion de l'utilisateur administrateur
         jdbcTemplate.update(
             "INSERT INTO utilisateurs (id, email, role, actif) VALUES (?, ?, ?, ?)",
             adminId, "admin@paybank.com", "ADMIN", true
         );
-
-        // Insertion des ressources associées à l'admin
-        /*
-        jdbcTemplate.update(
-            "INSERT INTO ressources (id, utilisateurs_id, clients, paiements, produits) VALUES (?, ?, ?, ?, ?)",
-            UUID.randomUUID(), adminId.toString(), true, true, true
-        );
-        */
-
-        // Insertion d'un utilisateur employe (sans droits de création ou sans ressources selon vos règles métier)
+      
+        //Insertion d'un utilisateur employe (sans droits de création ou sans ressources selon vos règles métier)
         jdbcTemplate.update(
             "INSERT INTO utilisateurs (id, email, role, actif) VALUES (?, ?, ?, ?)",
             employeId, "employe@paybank.com", "EMPLOYE", true

@@ -11,10 +11,9 @@ import com.paybank.hexagonal.domaine.TransactionDetail;
 
 public interface TransactionRepository {
     long countPending(UUID clientId);
- // Nouvelle méthode pour le calcul des revenus
+    //nouvelle méthode pour le calcul des revenus
     BigDecimal getMonthlyRevenue(UUID clientId, YearMonth month);
-    
-    // Nouvelle méthode pour l'historique
+    //méthode pour l'historique
     List<Transaction> findRecentActivities(UUID clientId, int limit);
     List<TransactionDetail> findTransactionsByDateRange(UUID clientId, LocalDate startDate, LocalDate endDate);
 	long countAllPending();

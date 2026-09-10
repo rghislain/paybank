@@ -14,7 +14,7 @@ public class TransactionPaiement {
         PENDING, SUCCESS, FAILED, REFUNDED, CANCELLED
     }
 
-    // Constructeur pour une nouvelle transaction
+    //Constructeur d'arité 0 pour une nouvelle transaction
     public TransactionPaiement(UUID compteClientId, MontantCentimes montant, String cleIdempotence) {
         this.id = UUID.randomUUID();
         this.compteClientId = compteClientId;
@@ -24,7 +24,7 @@ public class TransactionPaiement {
 		this.stripe_payment_intent_id = "";
     }
 
-    // Reconstitution depuis la base de données (Supabase)
+    //Constructeur d'arité 1 Reconstitution depuis la base de données (Supabase)
     public TransactionPaiement(UUID id, UUID compteClientId, MontantCentimes montant, StatutTransaction statut, String cleIdempotence) {
         this.id = id;
         this.compteClientId = compteClientId;
@@ -34,6 +34,7 @@ public class TransactionPaiement {
 		this.stripe_payment_intent_id = "";
     }
     
+  //Constructeur d'arité 2
     public TransactionPaiement(UUID id, UUID compteClientId, MontantCentimes montant, StatutTransaction statut, String cleIdempotence, String stripe_payment_intent_id) {
         this.id = id;
         this.compteClientId = compteClientId;

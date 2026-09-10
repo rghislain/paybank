@@ -5,9 +5,9 @@ import java.util.UUID;
 public class Produit {
     private final UUID id;
     private final String nom;
-    private final long prixCentimes; // Ex: 2000 pour 20.00€
-    private final String stripeProductId; // prod_XXXX
-    private final String stripePriceId;   // price_XXXX
+    private final long prixCentimes; //Ex: 2000 pour 20.00€
+    private final String stripeProductId; //prod_XXXX
+    private final String stripePriceId;   //price_XXXX
 
     public Produit(UUID id, String nom, long prixCentimes, String stripeProductId, String stripePriceId) {
         this.id = id == null ? UUID.randomUUID() : id;
@@ -17,7 +17,6 @@ public class Produit {
         this.stripePriceId = stripePriceId;
     }
 
-    // Getters
     public UUID getId() { return id; }
     public String getNom() { return nom; }
     public long getPrixCentimes() { return prixCentimes; }

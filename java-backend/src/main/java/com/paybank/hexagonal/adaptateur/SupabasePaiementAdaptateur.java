@@ -4,12 +4,10 @@ import com.paybank.hexagonal.domaine.MontantCentimes;
 import com.paybank.hexagonal.domaine.Transaction;
 import com.paybank.hexagonal.domaine.TransactionPaiement;
 import com.paybank.hexagonal.port.PersistancePaiementSPI;
-
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +30,7 @@ public class SupabasePaiementAdaptateur implements PersistancePaiementSPI {
         MontantCentimes montant = new MontantCentimes(rs.getInt("montant_centimes"));
         String cleIdempotence = rs.getString("cle_idempotence");
         
-        // Récupération et conversion du String PostgreSQL vers l'Enum du Domaine
+        //Récupération et conversion du String PostgreSQL vers l'Enum du Domaine
         TransactionPaiement.StatutTransaction statut = 
                 TransactionPaiement.StatutTransaction.valueOf(rs.getString("statut"));
 
@@ -41,23 +39,20 @@ public class SupabasePaiementAdaptateur implements PersistancePaiementSPI {
 
     @Override
     public Optional<TransactionPaiement> chercherParCleIdempotence(String cleIdempotence) {
-        // Code SQL d'interrogation natif PostgreSQL de la table 'payments'
+        //Code SQL d'interrogation natif PostgreSQL de la table 'payments'
     	String sql = "SELECT id, client_id, montant_centimes, cle_idempotence, statut FROM paiements WHERE cle_idempotence = ?";
 	   try {
 	       TransactionPaiement transaction = jdbcTemplate.queryForObject(sql, paiementRowMapper, cleIdempotence);
 	       return Optional.ofNullable(transaction);
 	   } catch (EmptyResultDataAccessException e) {
-	       // Si aucune ligne ne correspond à cette clé d'idempotence
+	       //Si aucune ligne ne correspond à cette clé d'idempotence
 	       return Optional.empty();
 	   }
-        //return Optional.empty(); // Remplacer par l'extraction et mapping rs -> TransactionPaiement
     }
 
     @Override
     public TransactionPaiement enregistrer(TransactionPaiement transaction) {
-        // Requête PostgreSQL UPSERT native
-    	// Utilisation d'un UPSERT natif PostgreSQL (ON CONFLICT) basé sur l'UUID (id)
-        // ou la clé d'idempotence (si définie comme UNIQUE en BDD)
+        //clé d'idempotence (si définie comme UNIQUE en BDD)
         String sql = "INSERT INTO paiements (id, client_id, montant_centimes, statut, cle_idempotence) VALUES (?::uuid, ?::uuid, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET statut = EXCLUDED.statut";
 
         jdbcTemplate.update(
@@ -115,25 +110,14 @@ public class SupabasePaiementAdaptateur implements PersistancePaiementSPI {
 	    }
 	}
 	
-	/*
-	@Override
-    public void creerPaiementLocal(UUID id, UUID clientId, long montant, String stripeIntentId, String statut) {
-        String sql = "INSERT INTO paiements (id, client_id, montant_centimes, stripe_payment_intent_id, statut) " +
-                     "VALUES (?::uuid, ?::uuid, ?, ?, ?) " +
-                     "ON CONFLICT (id) DO NOTHING";
-                     
-        jdbcTemplate.update(sql, id.toString(), clientId.toString(), montant, stripeIntentId, statut);
-    }
-    */
-	
 	@Override
 	public void creerPaiementLocal(UUID id, UUID clientId, long montantCentimes, String stripePaymentIntentId, String statut, String cleIdempotence) {
-	    // On ajoute la colonne et le point d'interrogation (?) dans le INSERT
+	    //On ajoute la colonne et le point d'interrogation (?) dans le INSERT
 	    String sql = "INSERT INTO paiements (id, client_id, montant_centimes, stripe_payment_intent_id, statut, cle_idempotence) " +
 	                 "VALUES (?::uuid, ?::uuid, ?, ?, ?, ?) " +
 	                 "ON CONFLICT (id) DO NOTHING";
 	                 
-	    // On passe 'cleIdempotence' à la fin du jdbcTemplate
+	    //On passe 'cleIdempotence' à la fin du jdbcTemplate
 	    jdbcTemplate.update(sql, id, clientId, montantCentimes, stripePaymentIntentId, statut, cleIdempotence);
 	}
 
@@ -151,7 +135,7 @@ public class SupabasePaiementAdaptateur implements PersistancePaiementSPI {
 
     @Override
     public void mettreAJourStatutLocal(String stripeId, String nouveauStatut) {
-        // On remplace "stripe_id" par "stripe_payment_intent_id"
+        //On remplace "stripe_id" par "stripe_payment_intent_id"
         String sql = "UPDATE paiements SET statut = ? WHERE stripe_payment_intent_id = ?"; 
         jdbcTemplate.update(sql, nouveauStatut, stripeId);
     }
@@ -161,7 +145,7 @@ public class SupabasePaiementAdaptateur implements PersistancePaiementSPI {
         try {
             return jdbcTemplate.queryForMap(sql, id);
         } catch (org.springframework.dao.EmptyResultDataAccessException e) {
-            return null; // Retourne null si aucun paiement ne correspond à cet ID
+            return null; //Retourne null si aucun paiement ne correspond à cet ID
         }
     }
   
@@ -196,7 +180,7 @@ public class SupabasePaiementAdaptateur implements PersistancePaiementSPI {
 	@Override
 	public boolean estRapprochementValide(String idIntentAttendu, String idIntentReel, long montantAttenduCentimes,
 			long montantReelCentimes, String stripeStatus) {
-		// On délègue à une instance ou à une logique pure du domaine
+		//On délègue à une instance ou à une logique pure du domaine
 	    boolean montantsEgaux = montantAttenduCentimes == montantReelCentimes;
 	    boolean stripeValide = "succeeded".equals(stripeStatus);
 	    return montantsEgaux && stripeValide;

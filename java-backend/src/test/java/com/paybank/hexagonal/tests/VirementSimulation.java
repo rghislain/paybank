@@ -5,15 +5,8 @@ import io.gatling.javaapi.http.HttpProtocolBuilder;
 import io.gatling.javaapi.core.ScenarioBuilder;
 import static io.gatling.javaapi.core.CoreDsl.*;
 import static io.gatling.javaapi.http.HttpDsl.*;
-
 import org.springframework.test.context.TestPropertySource;
-/*
-@TestPropertySource(properties = {
-	    "spring.datasource.url=jdbc:postgresql://localhost:54322/postgres",
-	    "spring.datasource.username=postgres",
-	    "spring.datasource.password=postgres"
-	})
-*/
+
 public class VirementSimulation extends Simulation {
 
     HttpProtocolBuilder httpProtocol = http

@@ -20,7 +20,6 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-
 import com.paybank.hexagonal.domaine.FinancialReport;
 import com.paybank.hexagonal.domaine.TransactionDetail;
 import com.paybank.hexagonal.domaine.annotation.SecuredPermission;
@@ -43,7 +42,6 @@ public class FinancialReportImpressionService implements FinancialReportSPI {
     }
 
     @Override
-    //@SecuredPermission(ressource = "bilan", action = "lire")
     public FinancialReport generateReport(UUID clientId, LocalDate start, LocalDate end) {
         List<TransactionDetail> transactions = transRepo.findTransactionsByDateRange(clientId, start, end);
         BigDecimal debits = transactions.stream().filter(TransactionDetail::isDebit).map(TransactionDetail::amount).reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -53,18 +51,15 @@ public class FinancialReportImpressionService implements FinancialReportSPI {
     }
 
     @Override
-    //@SecuredPermission(ressource = "rapports_financiers", action = "creer")
     public void issueInvoice(UUID clientId, UUID transactionId) {
         TransactionDetail transaction =  transRepo.findById(transactionId)
-        	    .orElseThrow(() -> new IllegalArgumentException("Transaction introuvable : " + transactionId)); //transRepo.findTransactionById(transactionId)
-            //.orElseThrow(() -> new IllegalArgumentException("Transaction introuvable : " + transactionId));
-
+        	    .orElseThrow(() -> new IllegalArgumentException("Transaction introuvable : " + transactionId));           
         try {
-            // 1. Générer le PDF en mémoire
+            //1. Générer le PDF en mémoire
             byte[] pdfBytes = generatePdfBytes(clientId, transaction);
             String fileName = "facture-" + transactionId + ".pdf";
 
-            // 2. Envoyer aux 3 adresses e-mail
+            //2. Envoyer aux 3 adresses e-mail
             String[] destinataires = {
                 "client@paybank.com", 
                 "comptabilite@paybank.com", 
@@ -72,7 +67,7 @@ public class FinancialReportImpressionService implements FinancialReportSPI {
             };
             sendEmailWithPdf(destinataires, pdfBytes, fileName);
 
-            // 3. Imprimer automatiquement le document sur l'imprimante par défaut du serveur
+            //3. Imprimer automatiquement le document sur l'imprimante par défaut du serveur
             printPdf(pdfBytes);
 
         } catch (Exception e) {
@@ -86,13 +81,10 @@ public class FinancialReportImpressionService implements FinancialReportSPI {
             document.addPage(page);
 
             try (PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
-                contentStream.beginText();
-                //contentStream.setFont(PDType1Font.HELVETICA_BOLD, 18);
+                contentStream.beginText();              
                 contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 18);
                 contentStream.newLineAtOffset(50, 750);
                 contentStream.showText("PAYBANK - FACTURE OFFICIELLE");
-
-                //contentStream.setFont(PDType1Font.HELVETICA, 12);
                 contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 12);
                 contentStream.newLineAtOffset(0, -40);
                 contentStream.showText("Client ID : " + clientId);
@@ -104,7 +96,6 @@ public class FinancialReportImpressionService implements FinancialReportSPI {
                 contentStream.showText("Date : " + LocalDate.now());
                 contentStream.endText();
             }
-
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             document.save(baos);
             return baos.toByteArray();
@@ -114,35 +105,12 @@ public class FinancialReportImpressionService implements FinancialReportSPI {
     private void sendEmailWithPdf(String[] toEmails, byte[] pdfBytes, String fileName) throws MessagingException {
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
         helper.setTo(toEmails);
         helper.setSubject("Votre Facture PayBank - Émission Automatique");
         helper.setText("Bonjour,\n\nVeuillez trouver ci-joint la facture relative à votre transaction récente.\n\nCordialement,\nL'équipe Paybank.");
         helper.addAttachment(fileName, new ByteArrayResource(pdfBytes));
-
         mailSender.send(message);
     }
-
-    /*
-    private void printPdf(byte[] pdfBytes) {
-        try (PDDocument document = PDDocument.load(new ByteArrayInputStream(pdfBytes))) {
-            java.awt.print.PrinterJob job = java.awt.print.PrinterJob.getPrinterJob();
-            job.setPageable(new PDFPageable(document));
-            
-            PrintService defaultService = PrintServiceLookup.lookupDefaultPrintService();
-            if (defaultService != null) {
-                job.setPrintService(defaultService);
-                job.print();
-            } else {
-                System.err.println("Aucune imprimante par défaut détectée sur le serveur.");
-            }
-        } catch (Exception e) {
-            System.err.println("Échec de l'impression physique : " + e.getMessage());
-        }
-    }
-    */
-    
-    
 
     private void printPdf(byte[] pdfBytes) {
         try (PDDocument document = Loader.loadPDF(pdfBytes)) {
@@ -160,6 +128,4 @@ public class FinancialReportImpressionService implements FinancialReportSPI {
             System.err.println("Échec de l'impression physique : " + e.getMessage());
         }
     }
-    
-    
 }

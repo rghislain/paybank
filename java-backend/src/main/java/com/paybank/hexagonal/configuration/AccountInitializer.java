@@ -20,15 +20,15 @@ public class AccountInitializer implements CommandLineRunner {
         System.out.println(">>> [INIT] Début de l'initialisation de la table accounts...");
 
         try {
-            // 1. Ajouter la colonne client_id à la table accounts si elle n'existe pas encore
+            //1. Ajouter la colonne client_id à la table accounts si elle n'existe pas encore
             jdbcTemplate.execute("ALTER TABLE accounts ADD COLUMN IF NOT EXISTS client_id UUID;");
             System.out.println(">>> [INIT] Colonne client_id vérifiée/ajoutée avec succès.");
 
-            // 2. Vider la table accounts pour éviter les doublons ou données obsolètes à chaque redémarrage
+            //2. Vider la table accounts pour éviter les doublons ou données obsolètes à chaque redémarrage
             jdbcTemplate.execute("DELETE FROM accounts;");
 
-            // 3. Remplir la table accounts en associant chaque client à ses paiements
-            // On calcule la somme de 'montant_centimes' de la table 'paiements' convertie en euros (divisée par 100.0)
+            //3. Remplir la table accounts en associant chaque client à ses paiements
+            //On calcule la somme de 'montant_centimes' de la table 'paiements' convertie en euros (divisée par 100.0)
             String populateSql = """
                 INSERT INTO accounts (id, client_id, balance)
                 SELECT 
