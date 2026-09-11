@@ -26,6 +26,6 @@ public class PaiementApplication {
 	
 	@Bean
 	public RestTemplate restTemplate() {
-	    return new RestTemplate();
+	    	return new RestTemplate();
 	}
 }
