@@ -8,15 +8,13 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.client.RestTemplate;
-import com.paybank.hexagonal.domaine.service.PaiementImplementationService;
-import com.paybank.hexagonal.port.ExecutionPaiementSPI;
-import com.paybank.hexagonal.port.PasserelleBancaireSPI;
-import com.paybank.hexagonal.port.PersistancePaiementSPI;
+import com.paybank.hexagonal.sortie.port.StripeMokankPaiementSPI;
+import com.paybank.hexagonal.sortie.port.PaiementSPI;
 
 @SpringBootApplication
 @ComponentScan(basePackages = {"com.paybank.hexagonal"})
-@EnableJpaRepositories(basePackages = "com.paybank.hexagonal.repository")
-@EntityScan(basePackages = "com.paybank.hexagonal.entity")
+@EnableJpaRepositories(basePackages = "com.paybank.hexagonal.jpaRepository")
+@EntityScan(basePackages = "com.paybank.hexagonal.entite")
 public class PaiementApplication {
 	public static void main(String[] args) {
 		BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();

@@ -11,16 +11,7 @@ import org.springframework.web.filter.CorsFilter;
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
-
-    private final SecurityInterceptor securityInterceptor;
-
-    public WebConfig(SecurityInterceptor securityInterceptor) {
-        this.securityInterceptor = securityInterceptor;
-    }
-
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(securityInterceptor);
-    }
-    
+    } 
 }

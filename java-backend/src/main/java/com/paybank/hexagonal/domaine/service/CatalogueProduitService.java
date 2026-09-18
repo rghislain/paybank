@@ -1,9 +1,8 @@
 package com.paybank.hexagonal.domaine.service;
 
-import com.paybank.hexagonal.configuration.SecurityInterceptor;
-import com.paybank.hexagonal.domaine.Produit;
-import com.paybank.hexagonal.domaine.annotation.SecuredPermission;
-import com.paybank.hexagonal.port.ProduitSPI;
+import com.paybank.hexagonal.annotation.SecuredPermission;
+import com.paybank.hexagonal.domaine.model.Produit;
+import com.paybank.hexagonal.sortie.port.ProduitSPI;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Price;
 import com.stripe.model.Product;

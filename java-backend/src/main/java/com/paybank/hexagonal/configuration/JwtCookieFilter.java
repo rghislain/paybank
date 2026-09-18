@@ -11,8 +11,10 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import com.paybank.hexagonal.entity.UtilisateurEntity;
-import com.paybank.hexagonal.repository.UtilisateurRepository;
+
+import com.paybank.hexagonal.entite.UtilisateurEntity;
+import com.paybank.hexagonal.jpaRepository.UtilisateurRepository;
+
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;

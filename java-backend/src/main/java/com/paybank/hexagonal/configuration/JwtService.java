@@ -4,6 +4,8 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
@@ -14,8 +16,8 @@ import java.util.Date;
 @Service
 public class JwtService {
 
-    //Remplacez par une clé secrète robuste d'au moins 256 bits (32 caractères minimum)
-    private final String SECRET_KEY_STRING = "cqo5B75Y+m4UgpVzeRcLvviCOGNVPLwCcLWWGt8weag=";
+	@Value("${security.jwt.secret}")
+	private String SECRET_KEY_STRING;
 
     private SecretKey getSigningKey() {
         byte[] keyBytes = SECRET_KEY_STRING.getBytes(StandardCharsets.UTF_8);

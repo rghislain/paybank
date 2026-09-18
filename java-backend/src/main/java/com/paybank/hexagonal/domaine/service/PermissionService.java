@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service;
 public class PermissionService {
 
     @Autowired
-    private GestionDroitsService gestionDroitsService;
+    private DroitsService gestionDroitsService;
 
     /**
      * Crée ou met à jour un droit précis pour un rôle donné.

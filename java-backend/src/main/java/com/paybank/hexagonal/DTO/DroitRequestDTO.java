@@ -1,6 +1,6 @@
 package com.paybank.hexagonal.DTO;
 
-import com.paybank.hexagonal.domaine.Role;
+import com.paybank.hexagonal.domaine.model.Role;
 
 public class DroitRequestDTO {
 	private String ressource;

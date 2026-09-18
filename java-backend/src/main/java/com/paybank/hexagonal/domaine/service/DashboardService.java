@@ -6,11 +6,12 @@ import java.time.YearMonth;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
-import com.paybank.hexagonal.domaine.DashboardStats;
-import com.paybank.hexagonal.domaine.Transaction;
-import com.paybank.hexagonal.port.GetDashboardSPI;
-import com.paybank.hexagonal.repository.AccountRepository;
-import com.paybank.hexagonal.repository.TransactionRepository;
+
+import com.paybank.hexagonal.domaine.model.DashboardStats;
+import com.paybank.hexagonal.domaine.model.Transaction;
+import com.paybank.hexagonal.jpaRepository.AccountRepository;
+import com.paybank.hexagonal.jpaRepository.TransactionRepository;
+import com.paybank.hexagonal.sortie.port.GetDashboardSPI;
 
 @Service
 public class DashboardService implements GetDashboardSPI {
@@ -51,21 +52,30 @@ public class DashboardService implements GetDashboardSPI {
         
         //nombre total d'opérations en attente
         long pendingOperations = transRepo.countAllPending();
-        
+              
         //Revenus globaux du mois
         BigDecimal monthlyRevenue = transRepo.calculateGlobalMonthlyRevenue();
         
+        //Calcul de la tendance
+        YearMonth currentMonth = YearMonth.now();
+        YearMonth previousMonth = currentMonth.minusMonths(1);       
+        BigDecimal currentRevenue = transRepo.calculateMonthlyRevenueDate(currentMonth);
+        BigDecimal previousRevenue = transRepo.calculateMonthlyRevenueDate(previousMonth);     
+        double trend = calculateTrend(currentRevenue, previousRevenue);
+        System.out.println("DEBUG - Current: " + currentRevenue + " | Previous: " + previousRevenue);
         //5 dernières activités récentes de toute la banque
         List<Transaction> recentActivities = transRepo.findTop5RecentActivities();
         
-        return new DashboardStats(totalBalance, pendingOperations, monthlyRevenue, 100.0, recentActivities);
+        return new DashboardStats(totalBalance, pendingOperations, monthlyRevenue, trend, recentActivities);
     }
     
     private double calculateTrend(BigDecimal current, BigDecimal previous) {
-        if (previous.compareTo(BigDecimal.ZERO) == 0) return 100.0; //Croissance totale si rien avant
+        if (previous.compareTo(BigDecimal.ZERO) == 0) {
+        	return current.compareTo(BigDecimal.ZERO) > 0 ? 100.0 : 0.0;
+        }
         return current.subtract(previous)
-                      .divide(previous, 2, RoundingMode.HALF_UP)
-                      .multiply(new BigDecimal("100"))
-                      .doubleValue();
+        		.multiply(new BigDecimal("100"))      
+        		.divide(previous, 2, RoundingMode.HALF_UP)
+                .doubleValue();
     }
 }

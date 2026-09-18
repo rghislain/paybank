@@ -8,22 +8,24 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import com.paybank.hexagonal.domaine.Client;
-import com.paybank.hexagonal.domaine.Permission;
-import com.paybank.hexagonal.domaine.Role;
-import com.paybank.hexagonal.domaine.Utilisateur;
-import com.paybank.hexagonal.domaine.annotation.MasquerDonneesSensibles;
-import com.paybank.hexagonal.domaine.annotation.SecuredPermission;
-import com.paybank.hexagonal.domaine.annotation.Securise;
-import com.paybank.hexagonal.entity.UtilisateurEntity;
-import com.paybank.hexagonal.port.ClientSPI;
-import com.paybank.hexagonal.port.UtilisateurSPI;
-import com.paybank.hexagonal.repository.UtilisateurRepository;
+
+import com.paybank.hexagonal.annotation.MasquerDonneesSensibles;
+import com.paybank.hexagonal.annotation.SecuredPermission;
+import com.paybank.hexagonal.annotation.Securise;
+import com.paybank.hexagonal.domaine.model.Client;
+import com.paybank.hexagonal.domaine.model.Permission;
+import com.paybank.hexagonal.domaine.model.Role;
+import com.paybank.hexagonal.domaine.model.Utilisateur;
+import com.paybank.hexagonal.entite.UtilisateurEntity;
+import com.paybank.hexagonal.jpaRepository.UtilisateurRepository;
+import com.paybank.hexagonal.sortie.port.ClientSPI;
+import com.paybank.hexagonal.sortie.port.UtilisateurSPI;
 
 @Service //Annotation ajoutée pour Spring
 public class MultiUtilisateursPaiementService {
+	@Value("${STANDARD_ADMIN_PASS:motDePasseParDefaut123}")
+	private String standardAdminPass;
     
-    //Remplacement de "= null" par "final"
     private final UtilisateurSPI utilisateurSPI;
     private final ClientSPI clientSPI;
     
@@ -32,13 +34,13 @@ public class MultiUtilisateursPaiementService {
     
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    @Value("${app.passwords.admin:adminPass1}")
+    @Value("${app.passwords.admin}")
     private String passwordAdminStandard;
 
-    @Value("${app.passwords.manager:managerPass1}")
+    @Value("${app.passwords.manager}")
     private String passwordManagerStandard;
 
-    @Value("${app.passwords.employe:employePass1}")
+    @Value("${app.passwords.employe}")
     private String passwordEmployeStandard;
       
     public MultiUtilisateursPaiementService(UtilisateurSPI utilisateurSPI, ClientSPI clientSPI) {

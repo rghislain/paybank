@@ -11,12 +11,14 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.printing.PDFPageable;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-import com.paybank.hexagonal.domaine.FinancialReport;
-import com.paybank.hexagonal.domaine.TransactionDetail;
-import com.paybank.hexagonal.domaine.annotation.SecuredPermission;
-import com.paybank.hexagonal.port.FinancialReportSPI;
-import com.paybank.hexagonal.port.TransactionRepositorySPI;
-import com.paybank.hexagonal.repository.TransactionRepository;
+
+import com.paybank.hexagonal.annotation.SecuredPermission;
+import com.paybank.hexagonal.domaine.model.FinancialReport;
+import com.paybank.hexagonal.domaine.model.TransactionDetail;
+import com.paybank.hexagonal.jpaRepository.TransactionRepository;
+import com.paybank.hexagonal.sortie.port.FinancialReportSPI;
+import com.paybank.hexagonal.sortie.port.TransactionSPI;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -40,17 +42,17 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-import com.paybank.hexagonal.repository.TransactionRepository;
+
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 
 @Primary
 @Service
 public class FinancialReportService implements FinancialReportSPI {
-    private final TransactionRepositorySPI transRepo;
+    private final TransactionSPI transRepo;
     private final JavaMailSender mailSender;
 
-    public FinancialReportService(TransactionRepositorySPI transRepo) {
+    public FinancialReportService(TransactionSPI transRepo) {
         this.transRepo = transRepo;
 		this.mailSender = null;
     }

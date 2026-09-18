@@ -378,12 +378,12 @@
 
 		function obtenirHeadersSecurises() {
 		    const token = localStorage.getItem('userToken');
-			const selectOperateur = document.getElementById('operateurRole');		    
-			const roleActif = selectOperateur ? selectOperateur.value : (localStorage.getItem('userRole') || 'EMPLOYE');
+			//const selectOperateur = document.getElementById('operateurRole');		    
+			//const roleActif = selectOperateur ? selectOperateur.value : (localStorage.getItem('userRole') || 'EMPLOYE');
 		    return {
 		        'Content-Type': 'application/json',
 		        'Authorization': 'Bearer ' + (token || ''),
-		        'X-Auth-Role': roleActif.toUpperCase() //Transmet le rôle attendu par l'aspect de sécurité
+		        //'X-Auth-Role': roleActif.toUpperCase() //Transmet le rôle attendu par l'aspect de sécurité > n'importe quel utilisateur peut usurper l'identité admin
 		    };
 		}
 

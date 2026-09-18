@@ -39,6 +39,8 @@ run_test "JournalisationBDDAspectTest"
 run_test "SecuriteAspectTest"
 run_test "FinancialReportControllerTest"
 run_test "DroitsAopIntegrationTest"
+run_test "MontantCentimesTest"
+run_test "ServicePaiementTest"
 
 # --- Résultat Global ---
 echo "========================================"

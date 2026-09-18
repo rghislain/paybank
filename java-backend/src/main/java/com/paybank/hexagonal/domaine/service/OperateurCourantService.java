@@ -5,10 +5,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-import com.paybank.hexagonal.domaine.Role;
-import com.paybank.hexagonal.domaine.Utilisateur;
-import com.paybank.hexagonal.entity.UtilisateurEntity;
-import com.paybank.hexagonal.repository.UtilisateurRepository;
+
+import com.paybank.hexagonal.domaine.model.Role;
+import com.paybank.hexagonal.domaine.model.Utilisateur;
+import com.paybank.hexagonal.entite.UtilisateurEntity;
+import com.paybank.hexagonal.jpaRepository.UtilisateurRepository;
 
 /**
  * Source unique pour savoir "qui appelle réellement" un endpoint, et avec QUEL rôle EFFECTIF

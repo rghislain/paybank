@@ -34,6 +34,7 @@ docker rm -f "$NOM_CONTENEUR" 2>/dev/null
 echo "🏗️ Lancement du conteneur Spring Boot (Port 8080)..."
 docker run -d \
     --name "$NOM_CONTENEUR" \
+    --env-file .env \
     -v "$DOSSIER_JAVA:/app" \
     -v "$HOME/.m2:/root/.m2" \
     -w /app \

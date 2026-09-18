@@ -3,9 +3,10 @@ package com.paybank.hexagonal.domaine.service;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import com.paybank.hexagonal.domaine.CustomUserDetails;
-import com.paybank.hexagonal.entity.UtilisateurEntity;
-import com.paybank.hexagonal.repository.UtilisateurRepository;
+
+import com.paybank.hexagonal.domaine.model.CustomUserDetails;
+import com.paybank.hexagonal.entite.UtilisateurEntity;
+import com.paybank.hexagonal.jpaRepository.UtilisateurRepository;
 
 import java.util.Collections;
 

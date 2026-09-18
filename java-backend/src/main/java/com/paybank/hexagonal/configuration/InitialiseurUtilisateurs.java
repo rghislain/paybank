@@ -1,8 +1,9 @@
 package com.paybank.hexagonal.configuration;
 
-import com.paybank.hexagonal.domaine.Role;
-import com.paybank.hexagonal.entity.UtilisateurEntity;
-import com.paybank.hexagonal.repository.UtilisateurRepository;
+import com.paybank.hexagonal.domaine.model.Role;
+import com.paybank.hexagonal.entite.UtilisateurEntity;
+import com.paybank.hexagonal.jpaRepository.UtilisateurRepository;
+
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;

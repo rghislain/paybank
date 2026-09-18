@@ -18,9 +18,10 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-import com.paybank.hexagonal.domaine.Client;
-import com.paybank.hexagonal.entity.FactureEntity;
-import com.paybank.hexagonal.repository.SpringDataFactureRepository;
+
+import com.paybank.hexagonal.domaine.model.Client;
+import com.paybank.hexagonal.entite.FactureEntity;
+import com.paybank.hexagonal.jpaRepository.SpringDataFactureRepository;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
 import jakarta.mail.internet.MimeMessage;
@@ -42,7 +43,7 @@ public class FactureService {
 
     private static final PDType1Font HELVETICA = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
     private static final PDType1Font HELVETICA_BOLD = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
-    private final GestionClientService serviceGestionClient;
+    private final ClientService serviceGestionClient;
     private final OperateurCourantService operateurCourantService;
     private final JavaMailSender javaMailSender;
 
@@ -59,7 +60,7 @@ public class FactureService {
 
     private static final float MARGE = 50;
 
-    public FactureService(GestionClientService serviceGestionClient,
+    public FactureService(ClientService serviceGestionClient,
                            OperateurCourantService operateurCourantService,
                            JavaMailSender javaMailSender, SpringDataFactureRepository springDataFactureRepository) {
         this.serviceGestionClient = serviceGestionClient;

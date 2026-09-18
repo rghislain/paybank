@@ -1,6 +1,6 @@
 package com.paybank.hexagonal.domaine.service;
 
-import com.paybank.hexagonal.domaine.annotation.MasquerDonneesSensibles;
+import com.paybank.hexagonal.annotation.MasquerDonneesSensibles;
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Customer;

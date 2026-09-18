@@ -4,12 +4,13 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
-import com.paybank.hexagonal.domaine.Role;
+
+import com.paybank.hexagonal.domaine.model.Role;
+
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
-import com.paybank.hexagonal.domaine.Role;
 
 /**
  * Source unique de vérité pour vérifier les droits d'un rôle, côté serveur.

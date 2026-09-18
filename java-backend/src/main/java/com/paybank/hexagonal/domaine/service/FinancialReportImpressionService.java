@@ -20,12 +20,14 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-import com.paybank.hexagonal.domaine.FinancialReport;
-import com.paybank.hexagonal.domaine.TransactionDetail;
-import com.paybank.hexagonal.domaine.annotation.SecuredPermission;
-import com.paybank.hexagonal.port.FinancialReportSPI;
-import com.paybank.hexagonal.port.TransactionRepositorySPI;
-import com.paybank.hexagonal.repository.TransactionRepository;
+
+import com.paybank.hexagonal.annotation.SecuredPermission;
+import com.paybank.hexagonal.domaine.model.FinancialReport;
+import com.paybank.hexagonal.domaine.model.TransactionDetail;
+import com.paybank.hexagonal.jpaRepository.TransactionRepository;
+import com.paybank.hexagonal.sortie.port.FinancialReportSPI;
+import com.paybank.hexagonal.sortie.port.TransactionSPI;
+
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.apache.pdfbox.Loader;
@@ -33,10 +35,10 @@ import org.apache.pdfbox.Loader;
 @Service
 public class FinancialReportImpressionService implements FinancialReportSPI {
 
-    private final TransactionRepositorySPI transRepo;
+    private final TransactionSPI transRepo;
     private final JavaMailSender mailSender;
 
-    public FinancialReportImpressionService(TransactionRepositorySPI transRepo, JavaMailSender mailSender) {
+    public FinancialReportImpressionService(TransactionSPI transRepo, JavaMailSender mailSender) {
         this.transRepo = transRepo;
         this.mailSender = mailSender;
     }

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	
 	<parent>
@@ -15,11 +15,6 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<name>paybank</name>
 	<description>Projet de paiement bancaire en ligne avec architecture hexagonale</description>
-
-	<properties>
-		<java.version>17</java.version>
-		<sonar.token>sqa_521dda619f886e33b5ec72b42e3784d8a28e8530</sonar.token>
-	</properties>
 
 	<dependencies>
 		<dependency>
@@ -196,14 +191,14 @@
 						<param>com.paybank.hexagonal.*</param>
 					</targetClasses>
 					<targetTests>
-						<param>com.paybank.hexagonal.tests.*Test</param>
+						<param>com.paybank.hexagonal.test.*Test</param>
 					</targetTests>
 					<excludedTestClasses>
-						<param>com.paybank.hexagonal.tests.PaiementIntegrationTest</param>
-						<param>com.paybank.hexagonal.tests.SecuriteAspectTest</param>
-						<param>com.paybank.hexagonal.tests.DroitsAopIntegrationTest</param>
-						<param>com.paybank.hexagonal.tests.FinancialReportControllerTest</param>
-						<param>com.paybank.hexagonal.tests.JournalisationBDDAspectTest</param>
+						<param>com.paybank.hexagonal.test.PaiementIntegrationTest</param>
+						<param>com.paybank.hexagonal.test.SecuriteAspectTest</param>
+						<param>com.paybank.hexagonal.test.DroitsAopIntegrationTest</param>
+						<param>com.paybank.hexagonal.test.FinancialReportControllerTest</param>
+						<param>com.paybank.hexagonal.test.JournalisationBDDAspectTest</param>
 					</excludedTestClasses>
 				</configuration>
 			</plugin>

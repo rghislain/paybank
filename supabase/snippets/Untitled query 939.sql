@@ -1,2 +1,1 @@
-SELECT * FROM role_permissions WHERE role = 'EMPLOYE' AND ressource = 'paiements';
-SELECT * FROM role_permissions WHERE role = 'EMPLOYE' AND ressource = 'rapports_financiers';
+SELECT * FROM role_permissions WHERE ressource LIKE '%rapprochement%' OR ressource LIKE '%rapports%';
